@@ -38,11 +38,11 @@ Expressions are the only non-optional types. These can used to impleent `while` 
 while (condition) {} // while (condition, () => {})
 
 function while (expression condition, success) {
-	!eval(condition) ? success(), condition : return
+	!condition() ? success(), condition : return
 }
 ```
 
-It is important to note that `eval` is not evil in that it cannot execute arbitrary strings in a privlaged context, eval cannot only `eval` expressions. That is to say could be considered to be equal to.
+Where the outer scope of this might look like in a language like JavaScript.
 
 ```
 while (i++) {}
@@ -92,8 +92,8 @@ for (i = 0, i < 20, i++) {
 }
 
 function for (expression initialize, expression condition, expression increment, body) {
-	while (eval(condition))
-		body (eval(increment))
+	while (condition())
+		body (increment())
 }
 ```
 
@@ -110,8 +110,8 @@ Allowing us to optionally also drop the explicit expression types we associated 
 
 ```
 function for (initialize, condition, expression increment, body) {
-	while (eval(condition))
-		body (eval(increment))
+	while (condition())
+		body (increment())
 }
 ```
 
@@ -191,8 +191,8 @@ function class (body) {
 }
 ```
 
+## Expressions
+
+Expressions are special invocable values that allow us to re-eval privilaged code from an unprivlaged context, i.e a function re evaluating an expression that was passed to it. This can be used to implement `while` like operators.
+
 This document is a work in progress design draft.
-
-## Examples
-
-
