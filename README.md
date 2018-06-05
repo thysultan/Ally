@@ -18,7 +18,7 @@ The implementation of the language assumes a few concerns.
 
 With these heursitics we can build any operator on top of this. To demonstrate this we will try to show how we could build a few common built-in operators in user-land.
 
-## Implementing `if` like operators
+# Implementing `if` like operators
 
 ```
 if (value) {} // if (value, () => {})
@@ -30,7 +30,7 @@ function if (value, success, failure) {
 }
 ```
 
-## Implementing `while` like operators
+# Implementing `while` like operators
 
 Expressions are the only non-optional types. These can used to impleent `while` like operators. As a note `while` like operators are the main reason tail calls are a nice to have as a fundational concern in order to make possible user-land implementations of `while` like operators.
 
@@ -38,8 +38,15 @@ Expressions are the only non-optional types. These can used to impleent `while` 
 while (condition) {} // while (condition, () => {})
 
 function while (expression condition, success) {
-	!condition ? eval(condition) : return
+	!eval(condition) ? success(), condition : return
 }
+```
+
+It is important to note that `eval` is not evil in that it cannot execute arbitrary strings in a privlaged context, eval cannot only `eval` expressions. That is to say could be considered to be equal to.
+
+```
+while (i++) {}
+while (() => i++, () => {})
 ```
 
 ## Implementing `switch` like operators
@@ -185,3 +192,7 @@ function class (body) {
 ```
 
 This document is a work in progress design draft.
+
+## Examples
+
+
