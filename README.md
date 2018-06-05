@@ -6,7 +6,7 @@ This means that we can create new operators and extend existing operators. The l
 
 ```
 operator (value) {} label {} // operator(value, () => {}, () => {})
-typeof if === 'function' // true
+typeof if == 'function' // true
 ```
 
 This document serves as an initial draft for the languages design. The comments on the side of some code snippets serve to model a point of view for how operators are composed.
@@ -68,9 +68,9 @@ function try (main, fail, final) {
 	try
 		main()
 	catch (e)
-		fail['name'] !== 'catch' ? throw e : catch(e)
+		fail[Symbol.name] != 'catch' ? throw e : catch(e)
 	finally
-		fail['name'] === 'finally' ? fail() : final()
+		fail[Symbol.name] == 'finally' ? fail() : final()
 }
 ```
 
@@ -120,7 +120,7 @@ function for (initialize, condition, expression increment, body) {
 This assumes the existance of a special built-in `in` operator that creates a iterator and the existance of named parameters.
 
 ```
-for (a in b) {print(a)} // for(Iterator(b), (a) => {})
+for (a in b) {console.write(a)} // for(Iterator(b), (a) => {})
 
 function for (iterator, block) {
 	iterator.forEach(a: block)
@@ -131,7 +131,7 @@ Named parameters as in when executing a block, i can pass named parameters that 
 
 ```
 example {
-	print(a)
+	console.write(a)
 }
 
 function example (block) {
@@ -143,30 +143,44 @@ Would print 1, where the name we give `a` to the value `1` when we pass it to th
 
 ## Types
 
+The foundational types include
+
 ```
-function (param: type): return type {
+void
+function
+string
+number
+boolean
+symbol
+object
+any
+```
+
+```
+function (type param) type {
 
 }
 
 let variable: type = value
-let object: Type = {
+let object: type = {
 	key: value
 }
 ```
 
-# Miscellaneous
-
-> What about classes, what if we wanted to implement classes in user-land. i.e having a non-built in class operator.
-
-So imagine the following scenario.
+# Classes and Instannces
 
 ```
-class A {
-	method () {}
+function A () {
+	secret = 'implicit private and hidden from the private this namespace'
+	private hidden = 'explicit private, available from the private this namespace within the functor'
+	public exposed = 'explicit public, available from the public namespace from anywhere'
+	public function method () {}
 }
 ```
 
-This presents a conflict where we don't know whether method () {} is a functor call or a method definition. The proposition is thus to add the `public` keyword syntax to the grammer, the use of which allows us to specifiy shared values within a functor body. For example.
+The inclusion of `public`, `public` and `protected` keywords to the grammer allow us to specify values that will occupy the this namespace when invoked with `new` privilege.
+
+For example.
 
 ```
 function A () {
@@ -174,7 +188,52 @@ function A () {
 
 	}
 }
-typeof public(A)['method'] === 'function' // true
+function B () {
+	privateAndHiddenByDefault = 1
+
+	public function constructor () {
+		this.value = console.write('construct')
+	}
+
+	public function create () {
+		return private.render(this)
+	}
+
+	protected function destroy (object) {
+		return object
+	}
+
+	private function render () {
+		return public.constructor(protected.destroy(...arguments))
+	}
+}
+
+function C {
+	public field = 1
+}
+
+typeof new A() == 'object' // true
+typeof (new A())['method'] == 'function' // true
+typeof (new B())['render'] == 'function' // false
+typeof (new B())['destroy'] == 'function' // false
+
+console.write(new B())
+
+{
+	[Symbol.name]: 'B',
+	value: void,
+	create: function () { private(this).render() },
+	constructor: function () { console.write('construct') }
+}
+
+print (new C())
+
+{
+	[Symbol.name]: 'C'
+	field: 1
+}
+
+(new B()).create(this: {bind: true}).bind == true // true
 ```
 
 These heuristics allow use to implement classes in user-land space as follows.
@@ -185,9 +244,23 @@ class A {
 
 	}
 }
+class B {
+	public function constructor () {
+		this.value = console.write('construct')
+	}
+	public function create () {
+		return private.render()
+	}
+	protected function destroy () {
+		return true
+	}
+	private function render () {
+		return public.constructor(protected.destroy())
+	}
+}
 
 function class (body) {
-	return () => ({...public(body)})
+	return (...args) => new body(...args)
 }
 ```
 
