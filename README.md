@@ -139,7 +139,7 @@ function example (block) {
 }
 ```
 
-Would print 1, where the name we give `a` to the value `1` when we pass it to the function is available from within it. This is identical to what `iterator.forEach` would do.
+Would log 1, where the name we give `a` to the value `1` when we pass it to the function is available from within it. This is identical to what `iterator.forEach` would do.
 
 ## Types
 
@@ -185,14 +185,14 @@ A = func (type param) void {
 
 ```
 function A () {
-	secret = 'implicit private and hidden from the private this namespace'
+	secret = 'implicit hidden from the private and public this namespace'
 	private hidden = 'explicit private, available from the private this namespace within the function'
 	public exposed = 'explicit public, available from the public namespace from anywhere'
 	public function method () {}
 }
 ```
 
-The inclusion of `public`, `public` and `protected` keywords to the grammar allow us to specify values that will occupy the this namespace when invoked with `new` privilege.
+The inclusion of `public`, `public` and `protected` keywords to the grammar allow us to specify shared values that will occupy the this namespace when invoked with `new` privilege and shared when composed with the `extend` keyword.
 
 For example.
 
@@ -213,12 +213,12 @@ function B () {
 		return private.render(this)
 	}
 
-	protected function destroy (object) {
+	private function destroy (object) {
 		return object
 	}
 
 	private function render () {
-		return public.constructor(protected.destroy(...arguments))
+		return public.constructor(private.destroy(...arguments))
 	}
 }
 
@@ -240,7 +240,7 @@ console.write(new B())
 	constructor: function () { console.write('construct') }
 }
 
-print (new C())
+console.log(new C())
 
 {
 	[Symbol.name]: 'C'
@@ -265,16 +265,104 @@ class B {
 	public function create () {
 		return private.render()
 	}
-	protected function destroy () {
+	private function destroy () {
 		return true
 	}
 	private function render () {
-		return public.constructor(protected.destroy())
+		return public.constructor(private.destroy())
 	}
 }
 
 function class (body) {
 	return (...args) => new body(...args)
+}
+```
+
+## Inheritance
+
+The idea is to avoid classical inheritance models and rather model inheritance behind a composition model motivated by the assumptions that an intepreter can make when optimizing property access in a performance setting.
+
+```
+function A () {
+	secret = 'hidden'
+	public function method () {
+
+	}
+	private function create () {
+
+	}
+	protected function render () {
+
+	}
+}
+
+function B extends A {
+	console.log(typeof secret) // void
+	console.log(typeof method) // function
+	console.log(typeof create) // void
+	console.log(typeof render) // function
+}
+```
+
+The `extend` keyword creates a new function `B` borrowing all the `public` and `protected` references in `A`. This is also where the `protected` keyword differs from the `protected` keyword, however if we want this have far reaching possibilities it might be important to allow the `extend` keyword to be independant of the `function` keyword.
+
+For example.
+
+```
+typeof extends A // function
+
+function Play (Person) {
+	return new Person()
+}
+
+function Characters () {
+	public function getPlayerPosition () {
+
+	}
+}
+
+console.log(
+	Play(extends Characters {
+		public function setPlayerPosition () {
+
+		}
+	})
+)
+
+{
+	[Symbol.name]: '',
+	getPlayerPosition: function () {}
+	setPlayerPosition: function () {}
+}
+```
+
+In doing so this makes the following among many other things possible.
+
+```
+function class (body) {
+	return (...args) => new body(...args)
+}
+
+class A {
+	public function method () {
+
+	}
+}
+
+class B extends A {
+	public function create () {
+		this.method('')
+	}
+}
+
+(new B())['create']()
+
+console.log(new B())
+
+{
+	[Symbol.name]: 'B',
+	method: function () {}
+	create: function () {}
 }
 ```
 
