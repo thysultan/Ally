@@ -2,7 +2,7 @@
 
 Pronounced L-I, Ally is a operator centric programming language with semi-optional types, where in addition to objects & functions, operators are also first class programming values.
 
-This means that we can create new operators and extend existing operators. The language closesly resembles JavaScript and Swift, the core syntax is as follows.
+This means that we can create new operators and extend existing operators. The language closely resembles JavaScript and Swift, the core syntax is as follows.
 
 ```
 operator (value) {} label {} // operator(value, () => {}, () => {})
@@ -16,7 +16,7 @@ The implementation of the language assumes a few concerns.
 1. tail call support.
 2. near zero overhead functions(especially around arrow functions).
 
-With these heursitics we can build any operator on top of this. To demonstrate this we will try to show how we could build a few common built-in operators in user-land.
+With these heuristics we can build any operator on top of this. To demonstrate this we will try to show how we could build a few common built-in operators in user-land.
 
 # Implementing `if` like operators
 
@@ -32,7 +32,7 @@ function if (value, success, failure) {
 
 # Implementing `while` like operators
 
-Expressions are the only non-optional types. These can used to impleent `while` like operators. As a note `while` like operators are the main reason tail calls are a nice to have as a fundational concern in order to make possible user-land implementations of `while` like operators.
+Expressions are the only non-optional types. These can used to implement `while` like operators. As a note `while` like operators are the main reason tail calls are a nice to have as a foundational concern in order to make possible user-land implementations of `while` like operators.
 
 ```
 while (condition) {} // while (condition, () => {})
@@ -139,7 +139,7 @@ function example (block) {
 }
 ```
 
-Would print 1, where the name we give `a` to the value `1` when we pass it to the functor is available from within it. This is identical to what `iterator.forEach` would do.
+Would print 1, where the name we give `a` to the value `1` when we pass it to the function is available from within it. This is identical to what `iterator.forEach` would do.
 
 ## Types
 
@@ -161,24 +161,38 @@ function (type param) type {
 
 }
 
-let variable: type = value
-let object: type = {
+type variable = value
+type object = {
 	key: value
 }
 ```
 
-# Classes and Instannces
+As a note the existence of named parameters is one of the reasons types are in the form `type name = value` and `function (type name) type {}` instead of `name: type = value` and `function (name: type): type {}`.
+
+The other reason is the existence of labeled blocks which are a foundational design of the language. To demonstrate this, when we consider the grammar for function return types we could implement this in user-space if `function` was not a built-in.
+
+```
+function func (...args, block) {
+	return () => typeof block(...args) != block[Symbol.name] ? throw 'error' : return
+}
+
+A = func (type param) void {
+	return false
+}
+```
+
+# Classes and Instances
 
 ```
 function A () {
 	secret = 'implicit private and hidden from the private this namespace'
-	private hidden = 'explicit private, available from the private this namespace within the functor'
+	private hidden = 'explicit private, available from the private this namespace within the function'
 	public exposed = 'explicit public, available from the public namespace from anywhere'
 	public function method () {}
 }
 ```
 
-The inclusion of `public`, `public` and `protected` keywords to the grammer allow us to specify values that will occupy the this namespace when invoked with `new` privilege.
+The inclusion of `public`, `public` and `protected` keywords to the grammar allow us to specify values that will occupy the this namespace when invoked with `new` privilege.
 
 For example.
 
@@ -266,6 +280,6 @@ function class (body) {
 
 ## Expressions
 
-Expressions are special invocable values that allow us to re-eval privilaged code from an unprivlaged context, i.e a function re evaluating an expression that was passed to it. This can be used to implement `while` like operators.
+Expressions are special invocable values that allow us to re-eval privileged code from an unprivileged context, i.e a function re evaluating an expression that was passed to it. This can be used to implement `while` like operators.
 
 This document is a work in progress design draft.
