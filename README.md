@@ -123,7 +123,7 @@ This assumes the existance of a special built-in `in` operator that creates a it
 for (a in b) {console.write(a)} // for(Iterator(b), (a) => {})
 
 function for (iterator, block) {
-	iterator.forEach(a: block)
+	iterator.forEach(block)
 }
 ```
 
