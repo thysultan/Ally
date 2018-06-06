@@ -2,7 +2,7 @@
 
 Pronounced L-I, Ally is a operator centric programming language with semi-optional types, where in addition to objects & functions, operators are also first class programming values.
 
-This means that we can create new operators and extend other built-in operators. The language closely resembles JavaScript and Swift, with a touch of Go's inheritance model, the core syntax is as follows.
+This means that we can create new operators and extend other non-built-in operators. The language closely resembles JavaScript and Swift, with a touch of Go's inheritance model, the core syntax is as follows.
 
 ```
 operator (value) {} label {} // operator(value, () => {}, () => {})
@@ -370,7 +370,7 @@ console.log(new B())
 }
 ```
 
-But also means we can extend any non built-in operator.
+But also means we can extend any non-built-in operator.
 
 ## Expressions
 
