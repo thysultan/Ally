@@ -2,7 +2,7 @@
 
 Pronounced L-I, Ally is a operator centric programming language with semi-optional types, where in addition to objects & functions, operators are also first class programming values.
 
-This means that we can create new operators and extend existing operators. The language closely resembles JavaScript and Swift, the core syntax is as follows.
+This means that we can create new operators and extend other built-in operators. The language closely resembles JavaScript and Swift, with a touch of Go's inheritance model, the core syntax is as follows.
 
 ```
 operator (value) {} label {} // operator(value, () => {}, () => {})
@@ -309,7 +309,10 @@ The `extend` keyword creates a new function `B` borrowing all the `public` and `
 For example.
 
 ```
-typeof extends A // function
+extends A {} // inline extended function of A (inline as it foo(function () {}))
+B extends A {} // inline extended function of A assignin a with the name B (inline as it foo(function B () {}))
+function B extends A {} // the above, except it is not an inline function
+
 
 function Play (Person) {
 	return new Person()
@@ -340,7 +343,8 @@ In doing so this makes the following among many other things possible.
 
 ```
 function class (body) {
-	return (...args) => new body(...args)
+	// do some custom stuff?
+	return body
 }
 
 class A {
@@ -365,6 +369,8 @@ console.log(new B())
 	create: function () {}
 }
 ```
+
+But also means we can extend any non built-in operator.
 
 ## Expressions
 
