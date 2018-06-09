@@ -1,379 +1,730 @@
 # Ally
 
-Pronounced L-I, Ally is a operator centric programming language with semi-optional types, where in addition to objects & functions, operators are also first class programming values.
+Pronounced L-I, Ally is a dynamic programming language with semi-optional types. The language resembles JavaScript and Swift.
 
-This means that we can create new operators and extend other non-built-in operators. The language closely resembles JavaScript and Swift, with a touch of Go's inheritance model, the core syntax is as follows.
-
-```
-operator (value) {} label {} // operator(value, () => {}, () => {})
-typeof if == 'function' // true
-```
-
-This document serves as an initial draft for the languages design. The comments on the side of some code snippets serve to model a point of view for how operators are composed.
-
-The implementation of the language assumes a few concerns.
-
-1. tail call support.
-2. near zero overhead functions(especially around arrow functions).
-
-With these heuristics we can build any operator on top of this. To demonstrate this we will try to show how we could build a few common built-in operators in user-land.
-
-# Implementing `if` like operators
+## Reserved
 
 ```
-if (value) {} // if (value, () => {})
-if (value) {} else {} // if (value, () => {}, () => {})
-if (value) {} else if (value) {} // if (value, () => {}, () => if (value, () => {}))
+void        if       function
+typeof      for      extends
+static      else     class
+public      while    new
+protected   do       export
+private     switch   import
+static	    match    try
+false       await    catch
+true        return   finally
+case        default  break
+this        throw    continue
+boolean     object   number
+string      in       let
+of          as       instanceof
+module      console  any
+```
 
-function if (value, success, failure) {
-	return value ? success() : failure()
+## Reserved(Future)
+
+```
+const       is
+debugger    enum
+var         protocol
+implements  interface
+yield       package
+delete      typealias
+with        expression
+symbol      null
+undefined   NaN
+Infinity
+```
+
+## Comments
+
+Line comments start with `//` and end at the end of the line.
+
+```
+// This is a comment.
+```
+
+Block comments can nest and span multiple lines, starting with /* and ending with */.
+
+```
+/* multi-line
+   comment. */
+
+/* This is /* a nested */ comment. */
+```
+
+Identifiers
+
+Similar to other programming languages. Identifiers start with a letter or underscore and may contain letters, digits, and underscores. Case is sensitive.
+
+```
+nocase
+camelCase
+PascalCase
+_under_score
+abc123
+ALL_CAPS
+```
+
+## Let
+
+Also known as "variable declaration/assignment", `let` gives names to values. They can be seen and referenced by other pieces of the program. Let bindings created in a operator/function/lambda body `{}` are scoped to that particular body.
+
+---
+
+## Boolean
+
+Booleans has the type of `boolean` either `true` or `false`. Boolean operations include:
+
+1. && logical and
+2. || logical or
+3. ! logical not.
+3. <=, >=, <, >
+4. == equal
+6. != unequal
+
+## Number
+
+32-bits. Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
+
+```
+let a = 1 + 2.9 >> 2 / 1e6 + - 1 - 70 * 4
+```
+
+## String
+
+Strings are delimited with either double quotes ", single ' quotes or template \` qoutes. String concatenation uses `.`:
+
+```
+let a = 'Hello' . "World" . `! ` + 2010 + 8
+```
+
+## Control
+
+Control flow operators do not use parenthesis in contrast to function invocations. These share a common pattern of `control arguments body`.
+
+### Switch
+
+```
+switch condition {
+	case a, b expression
+}
+
+switch condition
+	case a, b expression
+```
+
+### Match
+
+```
+match condtion {
+	case a, b expression
+}
+
+match condtion
+	case a, b expression
+```
+
+### If..Else
+```
+if condition {
+	expression
+} else if condtion {
+	expression
+} else {
+	expression
+}
+
+if condition
+	expression
+else if
+	expression
+else
+	expression
+```
+
+### Try..Catch
+
+```
+try {
+	expression
+} catch e {
+	expression
+} finally {
+	expression
+}
+
+try {
+	expression
+} catch e {
+	expression
+} finally {
+	expression
+}
+
+try
+	expression
+catch e
+	expression
+finally
+	expression
+```
+
+### While
+
+```
+while condition {
+	expression
+}
+
+while condition
+	expression
+```
+
+### For
+
+```
+for step++ < 5 {
+	expression
+}
+
+for step++ < 5
+	expression
+
+
+for step = 0, step < 5, step++ {
+	expression
+}
+
+for step = 0, step < 5, step++
+	expression
+```
+
+### For..In
+
+```
+for a in b {
+	expression
+}
+
+for a in b
+	expression
+
+for a in b expression
+```
+
+### For..Of
+
+```
+for a of b {
+	expression
+}
+
+for a of b
+	expression
+
+for a of b expression
+
+
+for a of 0...10 {
+	expression
+}
+
+for a of 0...10
+	expression
+
+for a of 0...10 expression
+```
+
+## Function
+
+Functions are first class values that have the type `function`. These share the form of `func name arguments body`.
+
+```
+func name a, b {
+}
+
+func name {
+}
+
+func name ...args {
+}
+
+func name ...args, a {
+}
+
+func name a, ...args {
+}
+
+func name {a, b} {
+}
+
+func name {a, b = 1} {
+}
+
+func name a = 1 {
+}
+
+func name a = 1, b = 2 {
 }
 ```
 
-# Implementing `while` like operators
+## Lambdas
 
-Expressions are the only non-optional types. These can used to implement `while` like operators. As a note `while` like operators are the main reason tail calls are a nice to have as a foundational concern in order to make possible user-land implementations of `while` like operators.
+Lambdas are identical to functions and share the same type of `function`.
 
 ```
-while (condition) {} // while (condition, () => {})
+let name = a, b => {
+}
 
-function while (expression condition, success) {
-	!condition() ? success(), condition : return
+let name = => {
+}
+
+let name = ...args => {
+}
+
+let name = ...args, a => {
+}
+
+let name = a, ...args => {
+}
+
+let name = {a, b} => {
+}
+
+let name = {a, b = 1} => {
+}
+
+let name = a = 1 => {
+}
+
+let name = a = 1, b = 2 => {
 }
 ```
 
-Where the outer scope of this might look like in a language like JavaScript.
+## Invocations
 
 ```
-while (i++) {}
-while (() => i++, () => {})
-```
+print("Hello")
 
-## Implementing `switch` like operators
+print("Hello", "World")
 
-```
-switch (value) {1: {}} // switch(value, Object.assign(() => {}, {1: () => {}) arrow function + keys(case->block)
+print(print(print("Hello" "World"))
 
-function switch (value, cases) {
-	return cases?[value]() // ?[key] or ?.key is null-safe property access
-}
-```
+print(
+	print("Hello")
+		print("World"))
 
-## Implementing `try` like operators
+print( => console.write(''))
 
-```
-try {} catch (e) {} finally {} // try(() => {}, (e) => {}, () => {})
+print( =>
+	console.write(''))
 
-function try (main, fail, final) {
-	try
-		main()
-	catch (e)
-		fail[Symbol.name] != 'catch' ? throw e : catch(e)
-	finally
-		fail[Symbol.name] == 'finally' ? fail() : final()
-}
-```
+print( => {
+})
 
-## Implementing `do...while` like operators
+print("Hello", => {
+})
 
-```
-do {} while (condition) // do(() => {}, (success, next) => { while (condition, success, next) })
+print("Hello", function name {
+})
 
-function do (success, operator) {
-	operator(success, success())
-}
-```
-
-## Implementing `for` like operators
-
-```
-for (i = 0, i < 20, i++) {
-
+print("Hello") {
 }
 
-function for (expression initialize, expression condition, expression increment, body) {
-	while (condition())
-		body (increment())
-}
-```
-
-But we could refactor this example to use semicolons `;` instead of `,` commas to seperate arguments.
-For this we build the guarantee that arguments terminated with a semicolon `;` are implicity typed an expression within the grammer.
-
-```
-for (i = 0; i < 20; i++) {
-
-}
-```
-
-Allowing us to optionally also drop the explicit expression types we associated with our initialize and increment parameters.
-
-```
-function for (initialize, condition, expression increment, body) {
-	while (condition())
-		body (increment())
-}
-```
-
-## Implementing `for..in` like operators
-
-This assumes the existance of a special built-in `in` operator that creates a iterator and the existance of named parameters.
-
-```
-for (a in b) {console.write(a)} // for(Iterator(b), (a) => {})
-
-function for (iterator, block) {
-	iterator.forEach(block)
-}
-```
-
-Named parameters as in when executing a block, i can pass named parameters that would be present from within the block for example.
-
-```
-example {
-	console.write(a)
+print ("Hello") {
 }
 
-function example (block) {
-	block(a: 1)
+print {
 }
 ```
-
-Would log 1, where the name we give `a` to the value `1` when we pass it to the function is available from within it. This is identical to what `iterator.forEach` would do.
 
 ## Types
 
-The foundational types include
+Types are optional, you can attach them to function arguments, let bindings and class bodies. The following primitive types exist.
 
 ```
 void
 function
-string
 number
-boolean
+string
 symbol
+boolean
 object
-any
+symbol
 ```
 
-```
-function (type param) type {
-
-}
-
-type variable = value
-type object = {
-	key: value
-}
-```
-
-As a note the existence of named parameters is one of the reasons types are in the form `type name = value` and `function (type name) type {}` instead of `name: type = value` and `function (name: type): type {}`.
-
-The other reason is the existence of labeled blocks which are a foundational design of the language. To demonstrate this, when we consider the grammar for function return types we could implement this in user-space if `function` was not a built-in.
+The use of types follow the pattern `type binding`.
 
 ```
-function func (...args, block) {
-	return () => typeof block(...args) != block[Symbol.name] ? throw 'error' : return
-}
+let number age = 1
 
-A = func (type param) void {
-	return false
+function name number age, name, object<Person> person void {
+	return
 }
 ```
 
-# Classes and Instances
+## Object
+
+Plain Objects are created using the {} (curly braces).
 
 ```
-function A () {
-	secret = 'implicit hidden from the private and public this namespace'
-	private hidden = 'explicit private, available from the private this namespace within the function'
-	public exposed = 'explicit public, available from the public namespace from anywhere'
-	public function method () {}
-}
-```
-
-The inclusion of `public`, `public` and `protected` keywords to the grammar allow us to specify shared values that will occupy the this namespace when invoked with `new` privilege and shared when composed with the `extend` keyword.
-
-For example.
-
-```
-function A () {
-	public function method () {
-
+let person = {
+	age: 27
+	year: 1989,
+	print: value =>
+		console.write(value)
+	assign: function name key, value {
+		return this[key] = value
 	}
-}
-function B () {
-	privateAndHiddenByDefault = 1
-
-	public function constructor () {
-		this.value = console.write('construct')
-	}
-
-	public function create () {
-		return private.render(this)
-	}
-
-	private function destroy (object) {
-		return object
-	}
-
-	private function render () {
-		return public.constructor(private.destroy(...arguments))
-	}
-}
-
-function C {
-	public field = 1
-}
-
-typeof new A() == 'object' // true
-typeof (new A())['method'] == 'function' // true
-typeof (new B())['render'] == 'function' // false
-typeof (new B())['destroy'] == 'function' // false
-
-console.write(new B())
-
-{
-	[Symbol.name]: 'B',
-	value: void,
-	create: function () { private(this).render() },
-	constructor: function () { console.write('construct') }
-}
-
-console.log(new C())
-
-{
-	[Symbol.name]: 'C'
-	field: 1
-}
-
-(new B()).create(this: {bind: true}).bind == true // true
-```
-
-These heuristics allow use to implement classes in user-land space as follows.
-
-```
-class A {
-	public function method () {
-
-	}
-}
-class B {
-	public function constructor () {
-		this.value = console.write('construct')
-	}
-	public function create () {
-		return private.render()
-	}
-	private function destroy () {
-		return true
-	}
-	private function render () {
-		return public.constructor(private.destroy())
-	}
-}
-
-function class (body) {
-	return (...args) => new body(...args)
 }
 ```
 
-## Inheritance
+## Class
 
-The idea is to avoid classical inheritance models and rather model inheritance behind a composition model motivated by the assumptions that an intepreter can make when optimizing property access in a performance setting.
+Classes are created using the class keyword tha follow the pattern `class Name {}`. Keywords `public`, `private` and `protected` are used to create and indicate the visibility of class methods.
 
 ```
-function A () {
-	secret = 'hidden'
-	public function method () {
-
-	}
-	private function create () {
-
-	}
-	protected function render () {
-
-	}
-}
-
-function B extends A {
-	console.log(typeof secret) // void
-	console.log(typeof method) // function
-	console.log(typeof create) // void
-	console.log(typeof render) // function
+class Person {
+	public func create name, age {}
+	private func destroy id {}
+	protected func assign key, value {}
 }
 ```
 
-The `extend` keyword creates a new function `B` borrowing all the `public` and `protected` references in `A`. This is also where the `protected` keyword differs from the `protected` keyword, however if we want this have far reaching possibilities it might be important to allow the `extend` keyword to be independant of the `function` keyword.
-
-For example.
+Fields are created statitically or through referencing named parameters.
 
 ```
-extends A {} // inline extended function of A (inline as it foo(function () {}))
-B extends A {} // inline extended function of A assignin a with the name B (inline as it foo(function B () {}))
-function B extends A {} // the above, except it is not an inline function
+class Person age, year {
+	x = 0
+	y = 0
 
+	public func constructor {
+		console.write("Hello" . "World" . "!")
+	}
 
-function Play (Person) {
-	return new Person()
-}
-
-function Characters () {
-	public function getPlayerPosition () {
-
+	private func assign key, value {
+		this[key] = value
 	}
 }
+```
 
-console.log(
-	Play(extends Characters {
-		public function setPlayerPosition () {
+Class instances are created when invoked, implicity invoking the constructor of the instance.
 
+```
+let person = new Person(10, 1989)
+```
+
+All named arguemtns in the class are assigned to a corrosponding filed.
+
+```
+class Person age, year {
+}
+
+let person = new Person(10, 1989)
+
+console.write(person.age, person.year)
+```
+
+Staticly defined fields can use expressions to assign values based on arguments.
+
+```
+class Element type, props, children, key, ref, xmlns {
+	number identity = typeof type == 'string' ? 1 : -1
+
+	public func handleEvent Event event {
+		this.dispatchEvent(event, => void)
+	}
+
+	private func dispatchEvent Event event, callback {
+		try {
+			callback(event)
+		} catch e {
+			throw e
 		}
-	})
-)
-
-{
-	[Symbol.name]: '',
-	getPlayerPosition: function () {}
-	setPlayerPosition: function () {}
-}
-```
-
-In doing so this makes the following among many other things possible.
-
-```
-function class (body) {
-	// do some custom stuff?
-	return body
-}
-
-class A {
-	public function method () {
-
 	}
 }
 
-class B extends A {
-	public function create () {
-		this.method('')
+func createElement type, props instanceof object || {}, ...children : Element {
+	return new Element(type, props, children, props.key, props.ref, props.xmlns)
+}
+
+let element = createElement('h1', {style: {color: 'red'}}, 'Hello')
+
+console.write(element.identity)
+
+element.handleEvent({})
+```
+
+Private methods are not accessible except from within the class.
+
+```
+class Person {
+	public func set {
+		this.assign("x", 10)
+	}
+
+	protected func getter key {
+		return this[key]
+	}
+
+	private func setter key, value {
+		this[key] = value
 	}
 }
 
-(new B())['create']()
+let person = new Person()
 
-console.log(new B())
-
-{
-	[Symbol.name]: 'B',
-	method: function () {}
-	create: function () {}
-}
+console.write(typeof person.set) // function
+console.write(typeof person.setter) // void
+console.write(typeof person.getter) // void
 ```
 
-But also means we can extend any non-built-in operator.
+Protected methods are not accessible except from within the class or inheritance chain. Classes can extend other class.
 
-## Expressions
+```
+class Person {
+	public func set {
+		this.assign("x", 10)
+	}
 
-Expressions are special invocable values that allow us to re-eval privileged code from an unprivileged context, i.e a function re evaluating an expression that was passed to it. This can be used to implement `while` like operators.
+	protected func getter key {
+		return this[key]
+	}
 
-This document is a work in progress design draft.
+	private func setter key, value {
+		this[key] = value
+	}
+}
+
+class Student extends Person {
+	public get func key {
+		this.getter(key)
+	}
+}
+
+let student = new Student()
+
+console.write(typeof student.set) // function
+console.write(typeof student.get) // void
+console.write(typeof student.setter) // void
+```
+
+## Module
+
+Modules are like files! They can contain let bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `operator binding source`.
+
+```
+module School {
+	import {type as studentType} from Student
+
+  export let profession = "Teacher"
+
+  export type = (person) =>
+  	switch (person) {
+  		case "Teacher": return "A teacher"
+  		case "Director": return "A director"
+  	}
+}
+
+module Student {
+  export let class = "7"
+
+	export default function announcement value {
+		console.write('')
+	}
+
+  export let type = (student) =>
+  	switch (student) {
+  		case "7": return "middle school"
+  		case "8": return "high school"
+  	}
+
+  export profession from School
+}
+
+import {type} from School
+```
+
+## Standard Library
+
+### Boolean
+
+
+### Number
+
+```
+Number(any value)
+Number.parse(string value)
+```
+
+### Symbol
+
+```
+Symbol(string value)
+Symbol.for()
+Symbol.thenable
+Symbol.iterator
+```
+
+### String
+
+```
+String(any value)
+String.concat(...arguments)
+String.includes(string value, number from)
+String.pad(string value, number padding)
+String.trim(string value, number padding)
+String.repeat(string value, count)
+String.match(string value, object<RegExp> regexp)
+String.replace(string value, string|object<RegExp>, string|function)
+String.search(string|object<RegExp> value, number from)
+String.slice(string value, number from, number to)
+String.split(string value, object<RegExp> separator, number limit)
+String.substring(number from, number to)
+String.toLowerCase(string value)
+String.toUpperCase(string value)
+String.charAt(string value, number index)
+String.charCodeAt(string value, number index)
+String.codePointAt(string value, number index)
+String.fromCharCode(number code)
+String.fromCodePoint(number point)
+```
+
+### Object
+
+```
+Object
+	object<Object string|symbol, any>
+
+Object.assign(...arguments)
+Object.keys(object value)
+Object.values(object value)
+Object.entries(object value)
+Object.has(object value, string|symbol key)
+```
+
+### Function
+
+```
+Function
+Function.nameof(function value)
+Function.typeof(function value)
+```
+
+### Error
+
+```
+Error(string value)
+	object<Error>.type
+	object<Error>.message
+```
+
+### Date
+
+```
+Date(string value)
+Date.now()
+Date.parse(string value)
+```
+
+### Math
+
+```
+Math
+Math.random()
+Math.abs(number value)
+Math.ceil(number value)
+Math.exp(number value)
+Math.floor(number value)
+Math.round(number value)
+Math.sign(number value)
+Math.trunc(number value)
+Math.pow(number x, number y)
+Math.max(...arguments)
+Math.min(...arguments)
+Math.hypot(...arguments)
+Math.sqrt(number value)
+Math.cbrt(number value)
+
+Math.log(number value)
+Math.log1p(number value)
+Math.log10(number value)
+Math.log2(number value)
+Math.cos(number value)
+Math.acos(number value)
+Math.acosh(number value)
+Math.cosh(number value)
+Math.sin(number value)
+Math.sinh(number value)
+Math.asin(number value)
+Math.asinh(number value)
+Math.tan(number value)
+Math.tanh(number value)
+Math.atan(number value)
+Math.atanh(number value)
+Math.atan2(number y, number x)
+```
+
+### RegExp
+
+RegExp literals are delimited with forward slash (punctuation) `/` and share the form `/body/flags`.
+
+```
+RegExp(string value, string flags)
+
+let regexp = /\w+/
+let regexp = RegExp('\w+')
+```
+
+### Array
+
+Array literals are delimited with brackets `[` and share the form `[1, 2, 3]`.
+
+```
+Array(...arguments)
+Array.from(...arguments)
+Array.fill(object<Array> value)
+Array.pop(object<Array> value)
+Array.push(object<Array> value, ...arguments)
+Array.shift()
+Array.unshift(object<Array> value, ...arguments)
+Array.reverse(object<Array>)
+array.splice(object<Array>, number from, number remove, ...arguments)
+array.concat(object<Array>, ...arguments)
+Array.slice(object<Array> value, number from, number to)
+Array.includes(object<Array>, any value, number from)
+Array.search(object<Array> value, any element, number from)
+Array.join(object<Array> value, string separator)
+Array.sort(object<Array> value function compare)
+Array.move(object<Array> value, number target, number from, number to)
+Array.keys(object<Array>)
+Array.values(object<Array>)
+Array.entries(object<Array>)
+Array.reduce(object<Array> function callback)
+Array.filter(object<Array> function callback)
+Array.find(object<Array> function callback)
+Array.map(object<Array>, function callback)
+Array.every(object<Array>, function callback)
+Array.some(object<Array>, function callback)
+Array.length(object<Array> value)
+Array.each(object<Array>, function callback)
+```
+
+### JSON
+
+```
+JSON
+JSON.parse(string value)
+JSON.stringify(object value)
+```
+
+### Promise
+
+```
+Promise(function value)
+Promise.resolve
+Promise.reject
+```
+
