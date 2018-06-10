@@ -19,7 +19,8 @@ this        throw    continue
 boolean     object   number
 string      in       let
 of          as       instanceof
-module      console  any
+module      console  func
+pick        any
 ```
 
 ## Reserved(Future)
@@ -31,10 +32,12 @@ var         protocol
 implements  interface
 yield       package
 delete      typealias
-with        expression
+with        extern
 symbol      null
 undefined   NaN
-Infinity
+Infinity    super
+implements  interface
+package     abstract
 ```
 
 ## Comments
@@ -83,6 +86,8 @@ Booleans has the type of `boolean` either `true` or `false`. Boolean operations 
 3. <=, >=, <, >
 4. == equal
 6. != unequal
+4. === deep equal
+5. === deep unequal
 
 ## Number
 
@@ -94,10 +99,10 @@ let a = 1 + 2.9 >> 2 / 1e6 + - 1 - 70 * 4
 
 ## String
 
-Strings are delimited with either double quotes ", single ' quotes or template \` qoutes. String concatenation uses `.`:
+Strings are delimited with either double quotes ", single ' quotes or template \` qoutes. String concatenation uses `..`:
 
 ```
-let a = 'Hello' . "World" . `! ` + 2010 + 8
+let a = 'Hello' .. "World" .. `! ` .. 2010 + 8
 ```
 
 ## Control
@@ -108,133 +113,73 @@ Control flow operators do not use parenthesis in contrast to function invocation
 
 ```
 switch condition {
-	case a, b expression
+	case a, b {
+	}
+	case default {
+	}
 }
-
-switch condition
-	case a, b expression
 ```
 
 ### Match
 
 ```
-match condtion {
-	case a, b expression
+match condition {
+	case a, b {
+	}
+	case default {
+	}
 }
-
-match condtion
-	case a, b expression
 ```
 
 ### If..Else
 ```
 if condition {
-	expression
 } else if condtion {
-	expression
 } else {
-	expression
 }
-
-if condition
-	expression
-else if
-	expression
-else
-	expression
 ```
 
 ### Try..Catch
 
 ```
 try {
-	expression
 } catch e {
-	expression
 } finally {
-	expression
 }
-
-try {
-	expression
-} catch e {
-	expression
-} finally {
-	expression
-}
-
-try
-	expression
-catch e
-	expression
-finally
-	expression
 ```
 
 ### While
 
 ```
 while condition {
-	expression
 }
-
-while condition
-	expression
 ```
 
 ### For
 
 ```
 for step++ < 5 {
-	expression
 }
-
-for step++ < 5
-	expression
-
 
 for step = 0, step < 5, step++ {
-	expression
 }
-
-for step = 0, step < 5, step++
-	expression
 ```
 
 ### For..In
 
 ```
 for a in b {
-	expression
 }
-
-for a in b
-	expression
-
-for a in b expression
 ```
 
 ### For..Of
 
 ```
 for a of b {
-	expression
 }
-
-for a of b
-	expression
-
-for a of b expression
-
 
 for a of 0...10 {
-	expression
 }
-
-for a of 0...10
-	expression
-
-for a of 0...10 expression
 ```
 
 ## Function
@@ -242,10 +187,10 @@ for a of 0...10 expression
 Functions are first class values that have the type `function`. These share the form of `func name arguments body`.
 
 ```
-func name a, b {
+func name {
 }
 
-func name {
+func name a, b {
 }
 
 func name ...args {
@@ -257,16 +202,18 @@ func name ...args, a {
 func name a, ...args {
 }
 
-func name {a, b} {
-}
-
-func name {a, b = 1} {
-}
-
 func name a = 1 {
 }
 
 func name a = 1, b = 2 {
+}
+
+func name a pick {ref, age = 1}, b {
+}
+
+func name
+	object a pick {string type, age = 1},
+	number b void {
 }
 ```
 
@@ -275,6 +222,12 @@ func name a = 1, b = 2 {
 Lambdas are identical to functions and share the same type of `function`.
 
 ```
+let name = => {
+}
+
+let name = a => {
+}
+
 let name = a, b => {
 }
 
@@ -301,43 +254,50 @@ let name = a = 1 => {
 
 let name = a = 1, b = 2 => {
 }
+
+let name = a pick {ref, age = 1}, b => {
+}
+
+let name =
+	object a pick {string type, age = 1},
+	number b void => {
+}
+
+let name = => Expression
+
+let name = =>
+	Expression
 ```
 
 ## Invocations
 
 ```
-print("Hello")
+print('Hello')
 
-print("Hello", "World")
+print('Hello', 'World')
 
-print(print(print("Hello" "World"))
+print(print(print('Hello', 'World'))
 
 print(
-	print("Hello")
-		print("World"))
+	print('Hello')
+		print('World'))
 
-print( => console.write(''))
+print('Hello', func name {
+})
 
-print( =>
-	console.write(''))
+print('Hello', func (a) {
+})
 
 print( => {
 })
 
-print("Hello", => {
+print('Hello', => {
 })
 
-print("Hello", function name {
-})
+print( => System.write(''))
 
-print("Hello") {
-}
-
-print ("Hello") {
-}
-
-print {
-}
+print( =>
+	System.write(''))
 ```
 
 ## Types
@@ -346,13 +306,15 @@ Types are optional, you can attach them to function arguments, let bindings and 
 
 ```
 void
-function
 number
-string
-symbol
 boolean
-object
 symbol
+string
+
+function
+object
+
+any
 ```
 
 The use of types follow the pattern `type binding`.
@@ -360,22 +322,26 @@ The use of types follow the pattern `type binding`.
 ```
 let number age = 1
 
-function name number age, name, object<Person> person void {
+func name number age, name, object<Person> person void {
+	return
+}
+
+let name = number age, name, object<Person> person => void {
 	return
 }
 ```
 
 ## Object
 
-Plain Objects are created using the {} (curly braces).
+Plain objects are created using the {} (curly braces).
 
 ```
 let person = {
 	age: 27
 	year: 1989,
 	print: value =>
-		console.write(value)
-	assign: function name key, value {
+		System.write(value)
+	assign: func name key, value {
 		return this[key] = value
 	}
 }
@@ -383,13 +349,16 @@ let person = {
 
 ## Class
 
-Classes are created using the class keyword tha follow the pattern `class Name {}`. Keywords `public`, `private` and `protected` are used to create and indicate the visibility of class methods.
+Classes are created using the class keyword that follow the pattern `class Name {}`. Keywords `public`, `private` and `protected` are used to indicate the visibility of class methods/fields.
 
 ```
 class Person {
-	public func create name, age {}
-	private func destroy id {}
-	protected func assign key, value {}
+	public func create name, age {
+	}
+	private func destroy id {
+	}
+	protected func assign key, value {
+	}
 }
 ```
 
@@ -397,11 +366,11 @@ Fields are created statitically or through referencing named parameters.
 
 ```
 class Person age, year {
-	x = 0
-	y = 0
+	public x = 0
+	public y = 0
 
 	public func constructor {
-		console.write("Hello" . "World" . "!")
+		System.write('Hello' .. 'World' .. '!')
 	}
 
 	private func assign key, value {
@@ -424,20 +393,20 @@ class Person age, year {
 
 let person = new Person(10, 1989)
 
-console.write(person.age, person.year)
+System.write(person.age, person.year)
 ```
 
 Staticly defined fields can use expressions to assign values based on arguments.
 
 ```
 class Element type, props, children, key, ref, xmlns {
-	number identity = typeof type == 'string' ? 1 : -1
+	public number identity = typeof type == 'string' ? 1 : -1
 
-	public func handleEvent Event event {
+	public func handleEvent object<Event> event {
 		this.dispatchEvent(event, => void)
 	}
 
-	private func dispatchEvent Event event, callback {
+	private func dispatchEvent object<Event> event, callback {
 		try {
 			callback(event)
 		} catch e {
@@ -452,7 +421,7 @@ func createElement type, props instanceof object || {}, ...children : Element {
 
 let element = createElement('h1', {style: {color: 'red'}}, 'Hello')
 
-console.write(element.identity)
+System.write(element.identity)
 
 element.handleEvent({})
 ```
@@ -462,7 +431,7 @@ Private methods are not accessible except from within the class.
 ```
 class Person {
 	public func set {
-		this.assign("x", 10)
+		this.assign('x', 10)
 	}
 
 	protected func getter key {
@@ -476,9 +445,9 @@ class Person {
 
 let person = new Person()
 
-console.write(typeof person.set) // function
-console.write(typeof person.setter) // void
-console.write(typeof person.getter) // void
+System.write(typeof person.set)    // function
+System.write(typeof person.setter) // void
+System.write(typeof person.getter) // void
 ```
 
 Protected methods are not accessible except from within the class or inheritance chain. Classes can extend other class.
@@ -486,7 +455,7 @@ Protected methods are not accessible except from within the class or inheritance
 ```
 class Person {
 	public func set {
-		this.assign("x", 10)
+		this.assign('x', 10)
 	}
 
 	protected func getter key {
@@ -506,9 +475,9 @@ class Student extends Person {
 
 let student = new Student()
 
-console.write(typeof student.set) // function
-console.write(typeof student.get) // void
-console.write(typeof student.setter) // void
+System.write(typeof student.set)    // function
+System.write(typeof student.get)    // void
+System.write(typeof student.setter) // void
 ```
 
 ## Module
@@ -519,26 +488,26 @@ Modules are like files! They can contain let bindings, nested modules, etc. What
 module School {
 	import {type as studentType} from Student
 
-  export let profession = "Teacher"
+  export let profession = 'Teacher'
 
   export type = (person) =>
   	switch (person) {
-  		case "Teacher": return "A teacher"
-  		case "Director": return "A director"
+  		case 'Teacher': return 'A teacher'
+  		case 'Director': return 'A director'
   	}
 }
 
 module Student {
-  export let class = "7"
+  export let class = '7'
 
-	export default function announcement value {
-		console.write('')
+	export default func announcement value {
+		System.write('')
 	}
 
   export let type = (student) =>
   	switch (student) {
-  		case "7": return "middle school"
-  		case "8": return "high school"
+  		case '7': return 'middle school'
+  		case '8': return 'high school'
   	}
 
   export profession from School
@@ -549,8 +518,18 @@ import {type} from School
 
 ## Standard Library
 
+## System
+
+```
+System.now()
+System.write(...arguments)
+```
+
 ### Boolean
 
+```
+Boolean(any value)
+```
 
 ### Number
 
@@ -563,9 +542,10 @@ Number.parse(string value)
 
 ```
 Symbol(string value)
-Symbol.for()
+Symbol.for(string value)
 Symbol.thenable
 Symbol.iterator
+Symbol.constructor
 ```
 
 ### String
@@ -641,12 +621,12 @@ Math.floor(number value)
 Math.round(number value)
 Math.sign(number value)
 Math.trunc(number value)
-Math.pow(number x, number y)
 Math.max(...arguments)
 Math.min(...arguments)
 Math.hypot(...arguments)
 Math.sqrt(number value)
 Math.cbrt(number value)
+Math.imul(numer x, number y)
 
 Math.log(number value)
 Math.log1p(number value)
@@ -664,7 +644,7 @@ Math.tan(number value)
 Math.tanh(number value)
 Math.atan(number value)
 Math.atanh(number value)
-Math.atan2(number y, number x)
+Math.atan2(number x, number y)
 ```
 
 ### RegExp
@@ -672,10 +652,16 @@ Math.atan2(number y, number x)
 RegExp literals are delimited with forward slash (punctuation) `/` and share the form `/body/flags`.
 
 ```
-RegExp(string value, string flags)
+/\w+/
+RegExp('\w+')
+RegExp('\w+', 'g')
+RegExp.exec(object<RegExp> value, string str)
+RegExp.test(object<RegExp> value, string str)
+RegExp.flag(object<RegExp> value, ...arguments)
+```
 
-let regexp = /\w+/
-let regexp = RegExp('\w+')
+```
+RegExp(string value, string flags)
 ```
 
 ### Array
@@ -691,17 +677,17 @@ Array.push(object<Array> value, ...arguments)
 Array.shift()
 Array.unshift(object<Array> value, ...arguments)
 Array.reverse(object<Array>)
-array.splice(object<Array>, number from, number remove, ...arguments)
-array.concat(object<Array>, ...arguments)
+Array.splice(object<Array>, number from, number remove, ...arguments)
+Array.concat(object<Array>, ...arguments)
 Array.slice(object<Array> value, number from, number to)
 Array.includes(object<Array>, any value, number from)
 Array.search(object<Array> value, any element, number from)
 Array.join(object<Array> value, string separator)
 Array.sort(object<Array> value function compare)
 Array.move(object<Array> value, number target, number from, number to)
-Array.keys(object<Array>)
-Array.values(object<Array>)
-Array.entries(object<Array>)
+Array.keys(object<Array> value)
+Array.values(object<Array> value)
+Array.entries(object<Array> value)
 Array.reduce(object<Array> function callback)
 Array.filter(object<Array> function callback)
 Array.find(object<Array> function callback)
@@ -724,6 +710,10 @@ JSON.stringify(object value)
 
 ```
 Promise(function value)
+	object<Promise>.then(function callback, function error)
+	object<Promise>.catch(function callback)
+	object<Promise>.finally(function callback)
+
 Promise.resolve
 Promise.reject
 ```
