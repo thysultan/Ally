@@ -1,6 +1,6 @@
 # Ally
 
-Pronounced L-I, Ally is a dynamic programming language with semi-optional types. The language resembles JavaScript and Swift.
+Pronounced L-I, Ally is a dynamic programming language with semi-optional types. The language draws inspiration from JavaScript, Swift and PHP.
 
 ## Reserved
 
@@ -358,7 +358,15 @@ class Person {
 }
 ```
 
-Fields are created statitically or through referencing named parameters.
+Class optional parameters resemble function parameters.
+
+```
+class Person a pick {key}, b = 1, object c {
+	public number age = key
+}
+```
+
+Fields are created statitically or through referenced named parameters.
 
 ```
 class Person age, year {
@@ -381,7 +389,7 @@ Class instances are created when invoked. Parameters are passed to class like fu
 let person = new Person(10, 1989)
 ```
 
-All named arguemtns in the class are assigned to a corrosponding filed.
+All named arguments in the class are assigned to a corrosponding field.
 
 ```
 class Person age, year {
@@ -392,7 +400,7 @@ let person = new Person(10, 1989)
 System.write(person.age, person.year)
 ```
 
-Staticly defined fields can use expressions to assign values based on arguments.
+Defined fields can use expressions to assign values based on named parameters.
 
 ```
 class Element type, props, children, key, ref, xmlns {
@@ -422,18 +430,10 @@ System.write(element.identity)
 element.handleEvent({})
 ```
 
-Private methods are not accessible except from within the class.
+Private members are not accessible except from within the source class.
 
 ```
 class Person {
-	public func set {
-		this.assign('x', 10)
-	}
-
-	protected func getter key {
-		return this[key]
-	}
-
 	private func setter key, value {
 		this[key] = value
 	}
@@ -441,25 +441,26 @@ class Person {
 
 let person = new Person()
 
-System.write(typeof person.set)    // function
 System.write(typeof person.setter) // undefined
-System.write(typeof person.getter) // undefined
 ```
 
-Protected methods are not accessible except from within the class or inheritance chain. Classes can extend other class.
+Static members are accessible from `class` objects instead of `class` instances.
 
 ```
-class Person abstract {
-	public func set {
-		this.assign('x', 10)
+class Person {
+	set func setter key, value {
 	}
+}
 
+System.write(typeof Person.setter) // function
+```
+
+Classes can extend other class. Protected methods are not accessible except from within the class. The Child `class` recieves `public`, `protected` and `static` fields, methods of the Parent `class`.
+
+```
+class Person {
 	protected func getter key {
 		return this[key]
-	}
-
-	private func setter key, value {
-		this[key] = value
 	}
 }
 
@@ -471,15 +472,19 @@ class Student extends Person {
 
 let student = new Student()
 
-System.write(typeof student.set)    // function
-System.write(typeof student.get)    // undefined
-System.write(typeof student.setter) // undefined
+System.write(typeof student.getter) // function
 ```
 
-Invoking abstract classes throws.
+While extending `abstract` classes is allowed, invoking `abstract` classes throws.
 
 ```
-let person = new Person() // Error
+class Person abstract {
+	public func getter key {
+		return this[key]
+	}
+}
+
+let person = new Person()   // Error
 ```
 
 ## Module

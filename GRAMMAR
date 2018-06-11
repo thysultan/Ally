@@ -69,6 +69,8 @@ AssignmentOperator	        ::=	( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" 
 Expression	                ::=	AssignmentExpression ( "," AssignmentExpression )*
 Statement	                  ::=
 	| Block
+	| FunctionDeclaration
+	| ClassDeclaration
 	|	LetStatement
 	|	VariableStatement
 	|	EmptyStatement
@@ -80,13 +82,13 @@ Statement	                  ::=
 	|	BreakStatement
 	|	ImportStatement
 	|	ReturnStatement
-	|	WithStatement
 	|	SwitchStatement
+	| MatchStatement
 	|	ThrowStatement
 	|	TryStatement
 
-BlockStatement	            ::=	"{" ( StatementList )? "}"
 StatementList	              ::=	( Statement )+
+BlockStatement	            ::=	"{" ( StatementList )? "}"
 VariableStatement	          ::=	"let" VariableDeclaration
 Initialiser	                ::=	"=" AssignmentExpression
 EmptyStatement	            ::=	LineTerminator
@@ -122,6 +124,7 @@ TypeStatement               ::=
 ParameterIdentifier         ::= ( TypeStatement )? Identifier ( PickStatement | Initialiser )?
 ParameterList	              ::=	ParameterIdentifier ( "," ParameterIdentifier )*
 
+FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( FunctionBody | ( ( LineTerminator )? Expression ) )
 FunctionDeclaration	        ::=	"func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
 FunctionBody	              ::=	"{" ( SourceElements )? "}"
 
@@ -133,7 +136,7 @@ ClassElement	              ::=
 
 Program	                    ::=	( SourceElements )? EOF
 SourceElements	            ::=	( SourceElement )+
-SourceElement	              ::= FunctionDeclaration |	Statement
+SourceElement	              ::= Statement
 
 ImportIdentifier            ::= Identifier ( 'as' Identifier )?
 ImportList                  ::= ImportIdentifier ( "," ImportIdentifier )*
