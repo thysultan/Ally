@@ -122,14 +122,14 @@ TypeStatement               ::=
 ParameterIdentifier         ::= ( TypeStatement )? Identifier ( PickStatement | Initialiser )?
 ParameterList	              ::=	ParameterIdentifier ( "," ParameterIdentifier )*
 
-FunctionDeclaration	        ::=	"func" Identifier ( ParameterList )? FunctionBody
+FunctionDeclaration	        ::=	"func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
 FunctionBody	              ::=	"{" ( SourceElements )? "}"
 
-ClassDeclaration	          ::=	"class" Identifier ( ParameterList )? ClassBody
+ClassDeclaration	          ::=	"class" Identifier ( ParameterList )? ( ( "extends" Identifier ) | "abstract" )? ClassBody
 ClassBody	                  ::=	"{" ( ClassElements )? "}"
 ClassElements	              ::=	( SourceElement )+
 ClassElement	              ::=
-	| ( "public" | "private" | "protected" ) ( FunctionDeclaration | VariableDeclaration ) | Statement
+	| ( "public" | "private" | "protected" | "static" ) ( FunctionDeclaration | VariableDeclaration ) | Statement
 
 Program	                    ::=	( SourceElements )? EOF
 SourceElements	            ::=	( SourceElement )+

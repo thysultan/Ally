@@ -21,6 +21,7 @@ string      in       let
 of          as       instanceof
 module      console  func
 pick        any      undefined
+abstract
 ```
 
 ## Reserved(Future)
@@ -29,13 +30,13 @@ pick        any      undefined
 const       is
 debugger    enum
 var         protocol
-implements  abstract
+implements  super
 yield       package
 delete      typealias
 with        extern
 symbol      null
 interface   NaN
-Infinity    super
+Infinity
 ```
 
 ## Comments
@@ -344,7 +345,7 @@ let person = {
 
 ## Class
 
-Classes are created using the class keyword that follow the pattern `class Name {}`. Keywords `public`, `private` and `protected` are used to indicate the visibility of class methods/fields.
+Classes are created using the class keyword that follow the pattern `class Name {}`. Keywords `public`, `private`, `protected` and `static` are used to indicate the visibility of class methods/fields.
 
 ```
 class Person {
@@ -364,7 +365,7 @@ class Person age, year {
 	public x = 0
 	public y = 0
 
-	public func constructor {
+	public func write {
 		System.write('Hello' .. 'World' .. '!')
 	}
 
@@ -374,7 +375,7 @@ class Person age, year {
 }
 ```
 
-Class instances are created when invoked, implicity invoking the constructor of the instance.
+Class instances are created when invoked. Parameters are passed to class like functions.
 
 ```
 let person = new Person(10, 1989)
@@ -448,7 +449,7 @@ System.write(typeof person.getter) // undefined
 Protected methods are not accessible except from within the class or inheritance chain. Classes can extend other class.
 
 ```
-class Person {
+class Person abstract {
 	public func set {
 		this.assign('x', 10)
 	}
@@ -473,6 +474,12 @@ let student = new Student()
 System.write(typeof student.set)    // function
 System.write(typeof student.get)    // undefined
 System.write(typeof student.setter) // undefined
+```
+
+Invoking abstract classes throws.
+
+```
+let person = new Person() // Error
 ```
 
 ## Module
