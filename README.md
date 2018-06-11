@@ -283,9 +283,6 @@ print(
 print('Hello', func name {
 })
 
-print('Hello', func (a) {
-})
-
 print( => {
 })
 
@@ -647,19 +644,11 @@ Math.atan2(number x, number y)
 
 ### RegExp
 
-RegExp literals are delimited with forward slash (punctuation) `/` and share the form `/body/flags`.
-
 ```
-/\w+/
-RegExp('\w+')
-RegExp('\w+', 'g')
+RegExp(string value, string flags)
 RegExp.exec(object<RegExp> value, string str)
 RegExp.test(object<RegExp> value, string str)
 RegExp.flag(object<RegExp> value, ...arguments)
-```
-
-```
-RegExp(string value, string flags)
 ```
 
 ### Array

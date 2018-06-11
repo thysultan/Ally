@@ -1,0 +1,144 @@
+EOF                         ::= <EOF>
+LineTerminator              ::= <EOL>
+Identifier	                ::=	<IDENTIFIER_NAME>
+StringLiteral               ::= <STRING_LITERAL>
+NumberLiteral               ::= <NUMBER_LITERAL>
+
+Literal	                    ::=	( StringLiteral | NumberLiteral | "true" | "false" | "undefined" )
+ArrayLiteral	              ::=	"[" ( ( Elision )? "]" | ElementList Elision "]" | ( ElementList )? "]" )
+ElementList	                ::=	( Elision )? AssignmentExpression ( Elision AssignmentExpression )*
+Elision	                    ::=	( "," )+
+ObjectLiteral	              ::=	"{" ( PropertyNameAndValueList )? "}"
+PropertyNameAndValueList	  ::=	PropertyNameAndValue ( "," PropertyNameAndValue | "," )*
+PropertyNameAndValue	      ::=	PropertyName ":" AssignmentExpression
+PropertyName	              ::=	Identifier | StringLiteral |	NumberLiteral
+
+PrimaryExpression	          ::= "this" |	ObjectLiteral |	( "(" Expression ")" ) |	Identifier |	ArrayLiteral |	Literal
+MemberExpression	          ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* ) |	AllocationExpression
+MemberExpressionForIn	      ::=	( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* )
+AllocationExpression	      ::=	( "new" MemberExpression ( ( Arguments ( MemberExpressionPart )* )* ) )
+MemberExpressionPart	      ::= ( "[" Expression "]" ) | ( "." Identifier )
+
+CallExpression	            ::=	MemberExpression Arguments ( CallExpressionPart )*
+CallExpressionForIn	        ::=	MemberExpressionForIn Arguments ( CallExpressionPart )*
+CallExpressionPart	        ::= Arguments |	( "[" Expression "]" ) |	( "." Identifier )
+
+Arguments	                  ::=	"(" ( ArgumentList )? ")"
+ArgumentList	              ::=	AssignmentExpression ( "," AssignmentExpression )*
+
+LeftHandSideExpression	    ::= CallExpression |	MemberExpression
+LeftHandSideExpressionForIn	::= CallExpressionForIn |	MemberExpressionForIn
+
+UnaryExpression	            ::=	( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
+UnaryOperator	              ::=	( "delete" | "typeof" | "++" | "--" | "+" | "-" | "~" | "!" )
+
+PostfixExpression	          ::=	LeftHandSideExpression ( PostfixOperator )?
+PostfixOperator	            ::=	( "++" | "--" )
+
+MultiplicativeExpression	  ::=	UnaryExpression ( MultiplicativeOperator UnaryExpression )*
+MultiplicativeOperator	    ::=	( "*" | <SLASH> | "%" )
+
+AdditiveExpression	        ::=	MultiplicativeExpression ( AdditiveOperator MultiplicativeExpression )*
+AdditiveOperator	          ::=	( "+" | "-" )
+
+ShiftExpression	            ::=	AdditiveExpression ( ShiftOperator AdditiveExpression )*
+ShiftOperator	              ::=	( "<<" | ">>" | ">>>" )
+
+RelationalExpression	      ::=	ShiftExpression ( RelationalOperator ShiftExpression )*
+RelationalOperator	        ::=	( "<" | ">" | "<=" | ">=" | "instanceof" | "in" )
+
+EqualityExpression	        ::=	RelationalExpression ( EqualityOperator RelationalExpression )*
+EqualityOperator	          ::=	( "==" | "!=" | "===" | "!==" )
+
+BitwiseANDExpression	      ::=	EqualityExpression ( BitwiseANDOperator EqualityExpression )*
+BitwiseANDOperator	        ::=	"&"
+BitwiseXORExpression	      ::=	BitwiseANDExpression ( BitwiseXOROperator BitwiseANDExpression )*
+BitwiseXOROperator	        ::=	"^"
+BitwiseORExpression	        ::=	BitwiseXORExpression ( BitwiseOROperator BitwiseXORExpression )*
+BitwiseOROperator	          ::=	"|"
+
+LogicalANDExpression	      ::=	BitwiseORExpression ( LogicalANDOperator BitwiseORExpression )*
+LogicalANDOperator	        ::=	"&&"
+LogicalORExpression	        ::=	LogicalANDExpression ( LogicalOROperator LogicalANDExpression )*
+LogicalOROperator	          ::=	"||"
+
+ConditionalExpression	      ::=	LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
+AssignmentExpression     	  ::=	( LeftHandSideExpression AssignmentOperator AssignmentExpression | ConditionalExpression )
+AssignmentOperator	        ::=	( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | ">>>=" | "&=" | "^=" | "|=" )
+
+Expression	                ::=	AssignmentExpression ( "," AssignmentExpression )*
+Statement	                  ::=
+	| Block
+	|	LetStatement
+	|	VariableStatement
+	|	EmptyStatement
+	|	LabelledStatement
+	|	ExpressionStatement
+	|	IfStatement
+	|	IterationStatement
+	|	ContinueStatement
+	|	BreakStatement
+	|	ImportStatement
+	|	ReturnStatement
+	|	WithStatement
+	|	SwitchStatement
+	|	ThrowStatement
+	|	TryStatement
+
+BlockStatement	            ::=	"{" ( StatementList )? "}"
+StatementList	              ::=	( Statement )+
+VariableStatement	          ::=	"let" VariableDeclaration
+Initialiser	                ::=	"=" AssignmentExpression
+EmptyStatement	            ::=	LineTerminator
+ExpressionStatement	        ::=	Expression ( ";" )?
+IfStatement	                ::=	"if" Expression BlockStatement ( "else" BlockStatement )?
+
+IterationStatement	        ::=
+	|	( "while" Expression BlockStatement )
+	|	( "for" VariableDeclaration "," ( Expression )? "," ( Expression )? ")" BlockStatement )
+	|	( "for" VariableDeclaration "in" Expression ")" BlockStatement )
+	|	( "for" LeftHandSideExpressionForIn "in" Expression ")" BlockStatement )
+
+ContinueStatement	          ::=	"continue"
+BreakStatement	            ::=	"break"
+ReturnStatement	            ::=	"return" ( Expression )?
+
+MatchStatement	            ::=	"match" Expression CaseBlock
+SwitchStatement	            ::=	"switch" Expression CaseBlock
+CaseBlock	                  ::=	"{" ( CaseClauses )? ( "}" | DefaultClause ( CaseClauses )? "}" )
+CaseClauses	                ::=	( CaseClause )+
+CaseClause	                ::=	( ( "case" Expression ":" ) ) ( StatementList )?
+
+ThrowStatement	            ::=	"throw" Expression
+TryStatement	              ::=	"try" BlockStatement ( ( Finally | Catch ( Finally )? ) )
+Catch	                      ::=	"catch" Identifier? BlockStatement
+Finally	                    ::=	"finally" BlockStatement
+
+DestructuringLiteral	      ::=	"{" ( ParameterList )? "}"
+PickStatement               ::= "pick" DestructuringLiteral
+TypeStatement               ::=
+	| ( "void" | "number" | "" | "boolean" | "symbol" | "string" | "function" | "any" | ( "object" ( "<" Identifier ">" )? ) )
+
+ParameterIdentifier         ::= ( TypeStatement )? Identifier ( PickStatement | Initialiser )?
+ParameterList	              ::=	ParameterIdentifier ( "," ParameterIdentifier )*
+
+FunctionDeclaration	        ::=	"func" Identifier ( ParameterList )? FunctionBody
+FunctionBody	              ::=	"{" ( SourceElements )? "}"
+
+ClassDeclaration	          ::=	"class" Identifier ( ParameterList )? ClassBody
+ClassBody	                  ::=	"{" ( ClassElements )? "}"
+ClassElements	              ::=	( SourceElement )+
+ClassElement	              ::=
+	| ( "public" | "private" | "protected" ) ( FunctionDeclaration | VariableDeclaration ) | Statement
+
+Program	                    ::=	( SourceElements )? EOF
+SourceElements	            ::=	( SourceElement )+
+SourceElement	              ::= FunctionDeclaration |	Statement
+
+ImportIdentifier            ::= Identifier ( 'as' Identifier )?
+ImportList                  ::= ImportIdentifier ( "," ImportIdentifier )*
+ImportStatement	            ::=	"import" ( ImportList | ( "{" ImportList "}" ) ) "from" ( Identifier | StringLiteral )
+Name	                      ::=	Identifier ( "." Identifier )*
+LetStatement	              ::=	"let" LetDeclarationList
+LetDeclarationList	        ::=	LetDeclaration ( "," LetDeclaration )*
+LetDeclaration	            ::=	Identifier ":" Identifier ( Initialiser )?
