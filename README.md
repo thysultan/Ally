@@ -20,7 +20,7 @@ boolean     object   number
 string      in       let
 of          as       instanceof
 module      console  func
-pick        any
+pick        any      undefined
 ```
 
 ## Reserved(Future)
@@ -29,15 +29,13 @@ pick        any
 const       is
 debugger    enum
 var         protocol
-implements  interface
+implements  abstract
 yield       package
 delete      typealias
 with        extern
 symbol      null
-undefined   NaN
+interface   NaN
 Infinity    super
-implements  interface
-package     abstract
 ```
 
 ## Comments
@@ -403,7 +401,7 @@ class Element type, props, children, key, ref, xmlns {
 	public number identity = typeof type == 'string' ? 1 : -1
 
 	public func handleEvent object<Event> event {
-		this.dispatchEvent(event, => void)
+		this.dispatchEvent(event, void => undefined)
 	}
 
 	private func dispatchEvent object<Event> event, callback {
@@ -446,8 +444,8 @@ class Person {
 let person = new Person()
 
 System.write(typeof person.set)    // function
-System.write(typeof person.setter) // void
-System.write(typeof person.getter) // void
+System.write(typeof person.setter) // undefined
+System.write(typeof person.getter) // undefined
 ```
 
 Protected methods are not accessible except from within the class or inheritance chain. Classes can extend other class.
@@ -476,8 +474,8 @@ class Student extends Person {
 let student = new Student()
 
 System.write(typeof student.set)    // function
-System.write(typeof student.get)    // void
-System.write(typeof student.setter) // void
+System.write(typeof student.get)    // undefined
+System.write(typeof student.setter) // undefined
 ```
 
 ## Module
