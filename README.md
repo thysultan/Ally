@@ -455,7 +455,7 @@ class Person {
 System.write(typeof Person.setter) // function
 ```
 
-Classes can extend other class. Protected methods are not accessible except from within the class. The Child `class` recieves `public`, `protected` and `static` fields, methods of the Parent `class`.
+Classes can extend other class. Protected methods are not accessible except from within the class. The Child `class` receives `public`, `protected` and `static` fields, methods of the Parent `class`.
 
 ```
 class Person {
