@@ -9,19 +9,19 @@ void        if       function
 typeof      for      extends
 static      else     class
 public      while    new
-protected   do       export
+protected   any      export
 private     switch   import
 static	    match    try
-false       await    catch
+false       module   catch
 true        return   finally
 case        default  break
 this        throw    continue
 boolean     object   number
 string      in       let
 of          as       instanceof
-module      console  func
-pick        any      undefined
-abstract
+abstract    pick     undefined
+extern      NaN      Infinity
+symbol      func
 ```
 
 ## Reserved(Future)
@@ -31,12 +31,12 @@ const       is
 debugger    enum
 var         protocol
 implements  super
-yield       package
+interface   package
 delete      typealias
-with        extern
-symbol      null
-interface   NaN
-Infinity
+with        NaN
+null        interface
+do          yield
+await
 ```
 
 ## Comments

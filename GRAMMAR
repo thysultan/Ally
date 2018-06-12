@@ -1,147 +1,150 @@
 EOF                         ::= <EOF>
 LineTerminator              ::= <EOL>
-Identifier	                ::=	<IDENTIFIER_NAME>
+Identifier                  ::= <IDENTIFIER_NAME>
 StringLiteral               ::= <STRING_LITERAL>
-NumberLiteral               ::= <NUMBER_LITERAL>
+NumberLiteral               ::= ( <NUMBER_LITERAL> | NaN | Infinity )
 
-Literal	                    ::=	( StringLiteral | NumberLiteral | "true" | "false" | "undefined" )
-ArrayLiteral	              ::=	"[" ( ( Elision )? "]" | ElementList Elision "]" | ( ElementList )? "]" )
-ElementList	                ::=	( Elision )? AssignmentExpression ( Elision AssignmentExpression )*
-Elision	                    ::=	( "," )+
-ObjectLiteral	              ::=	"{" ( PropertyNameAndValueList )? "}"
-PropertyNameAndValueList	  ::=	PropertyNameAndValue ( "," PropertyNameAndValue | "," )*
-PropertyNameAndValue	      ::=	PropertyName ":" AssignmentExpression
-PropertyName	              ::=	Identifier | StringLiteral |	NumberLiteral
+Literal                     ::= ( StringLiteral | NumberLiteral | "true" | "false" | "undefined" )
+ArrayLiteral                ::= "[" ( ( Elision )? "]" | ElementList Elision "]" | ( ElementList )? "]" )
+ElementList                 ::= ( Elision )? AssignmentExpression ( Elision AssignmentExpression )*
+Elision                     ::= ( "," )+
+ObjectLiteral               ::= "{" ( PropertyNameAndValueList )? "}"
+PropertyNameAndValueList    ::= PropertyNameAndValue ( "," PropertyNameAndValue | "," )*
+PropertyNameAndValue        ::= PropertyName ":" AssignmentExpression
+PropertyName                ::= Identifier | StringLiteral |  NumberLiteral
 
-PrimaryExpression	          ::= "this" |	ObjectLiteral |	( "(" Expression ")" ) |	Identifier |	ArrayLiteral |	Literal
-MemberExpression	          ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* ) |	AllocationExpression
-MemberExpressionForIn	      ::=	( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* )
-AllocationExpression	      ::=	( "new" MemberExpression ( ( Arguments ( MemberExpressionPart )* )* ) )
-MemberExpressionPart	      ::= ( "[" Expression "]" ) | ( "." Identifier )
+PrimaryExpression           ::= "this" |  ObjectLiteral | ( "(" Expression ")" ) |  Identifier |  ArrayLiteral |  Literal
+MemberExpression            ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* ) |  AllocationExpression
+MemberExpressionForIn       ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* )
+AllocationExpression        ::= ( "new" MemberExpression ( ( Arguments ( MemberExpressionPart )* )* ) )
+MemberExpressionPart        ::= ( "[" Expression "]" ) | ( "." Identifier )
 
-CallExpression	            ::=	MemberExpression Arguments ( CallExpressionPart )*
-CallExpressionForIn	        ::=	MemberExpressionForIn Arguments ( CallExpressionPart )*
-CallExpressionPart	        ::= Arguments |	( "[" Expression "]" ) |	( "." Identifier )
+CallExpression              ::= MemberExpression Arguments ( CallExpressionPart )*
+CallExpressionForIn         ::= MemberExpressionForIn Arguments ( CallExpressionPart )*
+CallExpressionPart          ::= Arguments | ( "[" Expression "]" ) |  ( "." Identifier )
 
-Arguments	                  ::=	"(" ( ArgumentList )? ")"
-ArgumentList	              ::=	AssignmentExpression ( "," AssignmentExpression )*
+Arguments                   ::= "(" ( ArgumentList )? ")"
+ArgumentList                ::= AssignmentExpression ( "," AssignmentExpression )*
 
-LeftHandSideExpression	    ::= CallExpression |	MemberExpression
-LeftHandSideExpressionForIn	::= CallExpressionForIn |	MemberExpressionForIn
+LeftHandSideExpression      ::= CallExpression |  MemberExpression
+LeftHandSideExpressionForIn ::= CallExpressionForIn | MemberExpressionForIn
 
-UnaryExpression	            ::=	( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
-UnaryOperator	              ::=	( "delete" | "typeof" | "++" | "--" | "+" | "-" | "~" | "!" )
+UnaryExpression             ::= ( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
+UnaryOperator               ::= ( "delete" | "typeof" | "++" | "--" | "+" | "-" | "~" | "!" )
 
-PostfixExpression	          ::=	LeftHandSideExpression ( PostfixOperator )?
-PostfixOperator	            ::=	( "++" | "--" )
+PostfixExpression           ::= LeftHandSideExpression ( PostfixOperator )?
+PostfixOperator             ::= ( "++" | "--" )
 
-MultiplicativeExpression	  ::=	UnaryExpression ( MultiplicativeOperator UnaryExpression )*
-MultiplicativeOperator	    ::=	( "*" | <SLASH> | "%" )
+MultiplicativeExpression    ::= UnaryExpression ( MultiplicativeOperator UnaryExpression )*
+MultiplicativeOperator      ::= ( "*" | <SLASH> | "%" )
 
-AdditiveExpression	        ::=	MultiplicativeExpression ( AdditiveOperator MultiplicativeExpression )*
-AdditiveOperator	          ::=	( "+" | "-" )
+AdditiveExpression          ::= MultiplicativeExpression ( AdditiveOperator MultiplicativeExpression )*
+AdditiveOperator            ::= ( "+" | "-" )
 
-ShiftExpression	            ::=	AdditiveExpression ( ShiftOperator AdditiveExpression )*
-ShiftOperator	              ::=	( "<<" | ">>" | ">>>" )
+ShiftExpression             ::= AdditiveExpression ( ShiftOperator AdditiveExpression )*
+ShiftOperator               ::= ( "<<" | ">>" | ">>>" )
 
-RelationalExpression	      ::=	ShiftExpression ( RelationalOperator ShiftExpression )*
-RelationalOperator	        ::=	( "<" | ">" | "<=" | ">=" | "instanceof" | "in" )
+RelationalExpression        ::= ShiftExpression ( RelationalOperator ShiftExpression )*
+RelationalOperator          ::= ( "<" | ">" | "<=" | ">=" | "instanceof" | "in" )
 
-EqualityExpression	        ::=	RelationalExpression ( EqualityOperator RelationalExpression )*
-EqualityOperator	          ::=	( "==" | "!=" | "===" | "!==" )
+EqualityExpression          ::= RelationalExpression ( EqualityOperator RelationalExpression )*
+EqualityOperator            ::= ( "==" | "!=" | "===" | "!==" )
 
-BitwiseANDExpression	      ::=	EqualityExpression ( BitwiseANDOperator EqualityExpression )*
-BitwiseANDOperator	        ::=	"&"
-BitwiseXORExpression	      ::=	BitwiseANDExpression ( BitwiseXOROperator BitwiseANDExpression )*
-BitwiseXOROperator	        ::=	"^"
-BitwiseORExpression	        ::=	BitwiseXORExpression ( BitwiseOROperator BitwiseXORExpression )*
-BitwiseOROperator	          ::=	"|"
+BitwiseANDExpression        ::= EqualityExpression ( BitwiseANDOperator EqualityExpression )*
+BitwiseANDOperator          ::= "&"
+BitwiseXORExpression        ::= BitwiseANDExpression ( BitwiseXOROperator BitwiseANDExpression )*
+BitwiseXOROperator          ::= "^"
+BitwiseORExpression         ::= BitwiseXORExpression ( BitwiseOROperator BitwiseXORExpression )*
+BitwiseOROperator           ::= "|"
 
-LogicalANDExpression	      ::=	BitwiseORExpression ( LogicalANDOperator BitwiseORExpression )*
-LogicalANDOperator	        ::=	"&&"
-LogicalORExpression	        ::=	LogicalANDExpression ( LogicalOROperator LogicalANDExpression )*
-LogicalOROperator	          ::=	"||"
+LogicalANDExpression        ::= BitwiseORExpression ( LogicalANDOperator BitwiseORExpression )*
+LogicalANDOperator          ::= "&&"
+LogicalORExpression         ::= LogicalANDExpression ( LogicalOROperator LogicalANDExpression )*
+LogicalOROperator           ::= "||"
 
-ConditionalExpression	      ::=	LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
-AssignmentExpression     	  ::=	( LeftHandSideExpression AssignmentOperator AssignmentExpression | ConditionalExpression )
-AssignmentOperator	        ::=	( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | ">>>=" | "&=" | "^=" | "|=" )
+ConditionalExpression       ::= LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
+AssignmentExpression        ::= ( LeftHandSideExpression AssignmentOperator AssignmentExpression | ConditionalExpression )
+AssignmentOperator          ::= ( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | ">>>=" | "&=" | "^=" | "|=" )
 
-Expression	                ::=	AssignmentExpression ( "," AssignmentExpression )*
-Statement	                  ::=
-	| Block
-	| FunctionDeclaration
-	| ClassDeclaration
-	|	LetStatement
-	|	VariableStatement
-	|	EmptyStatement
-	|	LabelledStatement
-	|	ExpressionStatement
-	|	IfStatement
-	|	IterationStatement
-	|	ContinueStatement
-	|	BreakStatement
-	|	ImportStatement
-	|	ReturnStatement
-	|	SwitchStatement
-	| MatchStatement
-	|	ThrowStatement
-	|	TryStatement
+Expression                  ::= AssignmentExpression ( "," AssignmentExpression )*
+Statement                   ::=
+  | Block
+  | FunctionDeclaration
+  | ClassDeclaration
+  | LetStatement
+  | VariableStatement
+  | EmptyStatement
+  | LabelledStatement
+  | ExpressionStatement
+  | IfStatement
+  | IterationStatement
+  | ContinueStatement
+  | BreakStatement
+  | ImportStatement
+  | ReturnStatement
+  | SwitchStatement
+  | MatchStatement
+  | ThrowStatement
+  | TryStatement
 
-StatementList	              ::=	( Statement )+
-BlockStatement	            ::=	"{" ( StatementList )? "}"
-VariableStatement	          ::=	"let" VariableDeclaration
-Initialiser	                ::=	"=" AssignmentExpression
-EmptyStatement	            ::=	LineTerminator
-ExpressionStatement	        ::=	Expression ( ";" )?
-IfStatement	                ::=	"if" Expression BlockStatement ( "else" BlockStatement )?
+StatementList               ::= ( Statement )+
+BlockStatement              ::= "{" ( StatementList )? "}"
+VariableStatement           ::= "let" VariableDeclaration
+Initialiser                 ::= "=" AssignmentExpression
+EmptyStatement              ::= LineTerminator
+ExpressionStatement         ::= Expression ( EmptyStatement )?
+IfStatement                 ::= "if" Expression BlockStatement ( "else" BlockStatement )?
 
-IterationStatement	        ::=
-	|	( "while" Expression BlockStatement )
-	|	( "for" VariableDeclaration "," ( Expression )? "," ( Expression )? ")" BlockStatement )
-	|	( "for" VariableDeclaration "in" Expression ")" BlockStatement )
-	|	( "for" LeftHandSideExpressionForIn "in" Expression ")" BlockStatement )
+IterationStatement          ::=
+  | ( "while" Expression BlockStatement )
+  | ( "for" VariableDeclaration "," ( Expression )? "," ( Expression )? ")" BlockStatement )
+  | ( "for" VariableDeclaration "in" Expression ")" BlockStatement )
+  | ( "for" LeftHandSideExpressionForIn "in" Expression ")" BlockStatement )
 
-ContinueStatement	          ::=	"continue"
-BreakStatement	            ::=	"break"
-ReturnStatement	            ::=	"return" ( Expression )?
+ContinueStatement           ::= "continue"
+BreakStatement              ::= "break"
+ReturnStatement             ::= "return" ( Expression )?
+InstanceofStatement         ::= Expression "instanceof" Expression
+TypeofStatement             ::= "typeof" Expression
+ExternStatement             ::= extern Expression
 
-MatchStatement	            ::=	"match" Expression CaseBlock
-SwitchStatement	            ::=	"switch" Expression CaseBlock
-CaseBlock	                  ::=	"{" ( CaseClauses )? ( "}" | DefaultClause ( CaseClauses )? "}" )
-CaseClauses	                ::=	( CaseClause )+
-CaseClause	                ::=	( ( "case" Expression ":" ) ) ( StatementList )?
+MatchStatement              ::= "match" Expression CaseBlock
+SwitchStatement             ::= "switch" Expression CaseBlock
+CaseBlock                   ::= "{" ( CaseClauses )? ( "}" | DefaultClause ( CaseClauses )? "}" )
+CaseClauses                 ::= ( CaseClause )+
+CaseClause                  ::= ( ( "case" Expression ":" ) ) ( StatementList )?
 
-ThrowStatement	            ::=	"throw" Expression
-TryStatement	              ::=	"try" BlockStatement ( ( Finally | Catch ( Finally )? ) )
-Catch	                      ::=	"catch" Identifier? BlockStatement
-Finally	                    ::=	"finally" BlockStatement
+ThrowStatement              ::= "throw" Expression
+TryStatement                ::= "try" BlockStatement ( ( Finally | Catch ( Finally )? ) )
+Catch                       ::= "catch" Identifier? BlockStatement
+Finally                     ::= "finally" BlockStatement
 
-DestructuringLiteral	      ::=	"{" ( ParameterList )? "}"
+DestructuringLiteral        ::= "{" ( ParameterList )? "}"
 PickStatement               ::= "pick" DestructuringLiteral
 TypeStatement               ::=
-	| ( "void" | "number" | "" | "boolean" | "symbol" | "string" | "function" | "any" | ( "object" ( "<" Identifier ">" )? ) )
+  | ( "void" | "number" | "" | "boolean" | "symbol" | "string" | "function" | "any" | ( "object" ( "<" Identifier ">" )? ) )
 
 ParameterIdentifier         ::= ( TypeStatement )? Identifier ( PickStatement | Initialiser )?
-ParameterList	              ::=	ParameterIdentifier ( "," ParameterIdentifier )*
+ParameterList               ::= ParameterIdentifier ( "," ParameterIdentifier )*
 
 FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( FunctionBody | ( ( LineTerminator )? Expression ) )
-FunctionDeclaration	        ::=	"func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
-FunctionBody	              ::=	"{" ( SourceElements )? "}"
+FunctionDeclaration         ::= "func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
+FunctionBody                ::= "{" ( SourceElements )? "}"
 
-ClassDeclaration	          ::=	"class" Identifier ( ParameterList )? ( ( "extends" Identifier ) | "abstract" )? ClassBody
-ClassBody	                  ::=	"{" ( ClassElements )? "}"
-ClassElements	              ::=	( SourceElement )+
-ClassElement	              ::=
-	| ( "public" | "private" | "protected" | "static" ) ( FunctionDeclaration | VariableDeclaration ) | Statement
+ClassDeclaration            ::= "class" Identifier ( ParameterList )? ( ( "extends" Identifier ) | "abstract" )? ClassBody
+ClassBody                   ::= "{" ( ClassElements )? "}"
+ClassElements               ::= ( SourceElement )+
+ClassElement                ::=
+  | ( "public" | "private" | "protected" | "static" ) ( FunctionDeclaration | VariableDeclaration ) | Statement
 
-Program	                    ::=	( SourceElements )? EOF
-SourceElements	            ::=	( SourceElement )+
-SourceElement	              ::= Statement
+Program                     ::= ( SourceElements )? EOF
+SourceElements              ::= ( SourceElement )+
+SourceElement               ::= Statement
 
 ImportIdentifier            ::= Identifier ( 'as' Identifier )?
 ImportList                  ::= ImportIdentifier ( "," ImportIdentifier )*
-ImportStatement	            ::=	"import" ( ImportList | ( "{" ImportList "}" ) ) "from" ( Identifier | StringLiteral )
-Name	                      ::=	Identifier ( "." Identifier )*
-LetStatement	              ::=	"let" LetDeclarationList
-LetDeclarationList	        ::=	LetDeclaration ( "," LetDeclaration )*
-LetDeclaration	            ::=	Identifier ":" Identifier ( Initialiser )?
+ImportStatement             ::= "import" ( ImportList | ( "{" ImportList "}" ) ) "from" ( Identifier | StringLiteral )
+Name                        ::= Identifier ( "." Identifier )*
+LetStatement                ::= "let" LetDeclarationList
+LetDeclarationList          ::= LetDeclaration ( "," LetDeclaration )*
+LetDeclaration              ::= Identifier ":" Identifier ( Initialiser )?
