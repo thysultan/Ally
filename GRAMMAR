@@ -1,8 +1,12 @@
+DIGIT                       ::= ( 0-9 )
+LETTER                      ::= ( A-Z | a-z )
 EOF                         ::= <EOF>
 LineTerminator              ::= <EOL>
-Identifier                  ::= <IDENTIFIER_NAME>
 StringLiteral               ::= <STRING_LITERAL>
-NumberLiteral               ::= ( <NUMBER_LITERAL> | NaN | Infinity )
+HexLiteral                  ::= "0x" ( DIGIT | LETTER )+
+DecimalLiteral              ::= ( DIGIT )* (  "." | "e" | " " )? ( DIGIT )*
+NumberLiteral               ::= ( DecimalLiteral | HexaLiteral | "NaN" | "Infinity" )
+Identifier                  ::= ( "_" | LETTER ) ( "_" | LETTER | DIGIT )*?
 
 Literal                     ::= ( StringLiteral | NumberLiteral | "true" | "false" | "undefined" )
 ArrayLiteral                ::= "[" ( ( Elision )? "]" | ElementList Elision "]" | ( ElementList )? "]" )
@@ -131,11 +135,10 @@ FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( Fun
 FunctionDeclaration         ::= "func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
 FunctionBody                ::= "{" ( SourceElements )? "}"
 
-ClassDeclaration            ::= "class" Identifier ( ParameterList )? ( ( "extends" Identifier ) | "abstract" )? ClassBody
+ClassDeclaration            ::= "class" Identifier ( ( ( ParameterList )? ( "extends" Identifier )? ) | "abstract" ) ClassBody
 ClassBody                   ::= "{" ( ClassElements )? "}"
-ClassElements               ::= ( SourceElement )+
-ClassElement                ::=
-  | ( "public" | "private" | "protected" | "static" ) ( FunctionDeclaration | VariableDeclaration ) | Statement
+ClassElements               ::= ( ClassElement )+
+ClassElement                ::= ( "public" | "private" | "protected" | "static" ) ( FunctionDeclaration | VariableDeclaration )
 
 Program                     ::= ( SourceElements )? EOF
 SourceElements              ::= ( SourceElement )+

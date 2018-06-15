@@ -90,10 +90,10 @@ Booleans has the type of `boolean` either `true` or `false`. Boolean operations 
 
 ## Number
 
-32-bits. Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
+64-bit (double-precision) floating point numbers. Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
 
 ```
-let a = 1 + 2.9 >> 2 / 1e6 + - 1 - 70 * 4
+let a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 10 000 000
 ```
 
 ## String
@@ -381,6 +381,10 @@ class Person age, year {
 		this[key] = value
 	}
 }
+
+let person = new Person('23', '1989')
+
+Sysmte.write(`Age: $(person.age), Born In: $(person.tear)`)
 ```
 
 Class instances are created when invoked. Parameters are passed to class like functions.
