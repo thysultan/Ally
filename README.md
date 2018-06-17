@@ -8,7 +8,7 @@ Pronounced L-I, Ally is a dynamic programming language with semi-optional types.
 void        if       function
 typeof      for      extends
 static      else     class
-public      while    new
+public      while    array
 protected   any      export
 private     switch   import
 static	    match    try
@@ -22,7 +22,6 @@ of          as       instanceof
 abstract    pick     undefined
 extern      NaN      Infinity
 symbol      func     sizeof
-array
 ```
 
 ## Reserved(Future)
@@ -37,6 +36,7 @@ delete      typealias
 with        await
 null        interface
 do          yield
+new
 ```
 
 ## Comments
@@ -380,7 +380,7 @@ class Person age, year, document pick {name} {
 	}
 }
 
-let person = new Person('23', '1989')
+let person = Person('23', '1989')
 
 Sysmte.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
 ```
@@ -388,7 +388,7 @@ Sysmte.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
 Class instances are created when invoked. Parameters are passed to class like functions.
 
 ```
-let person = new Person(10, 1989)
+let person = Person(10, 1989)
 ```
 
 All named arguments in the class are assigned to a corrosponding field.
@@ -397,7 +397,7 @@ All named arguments in the class are assigned to a corrosponding field.
 class Person age, year {
 }
 
-let person = new Person(10, 1989)
+let person = Person(10, 1989)
 
 System.write(person.age, person.year)
 ```
@@ -422,7 +422,7 @@ class Element type, props, children, key, ref, xmlns {
 }
 
 func createElement type, props instanceof object || {}, ...children : Element {
-	return new Element(type, props, children, props.key, props.ref, props.xmlns)
+	return Element(type, props, children, props.key, props.ref, props.xmlns)
 }
 
 let element = createElement('h1', {style: {color: 'red'}}, 'Hello')
@@ -441,7 +441,7 @@ class Person {
 	}
 }
 
-let person = new Person()
+let person = Person()
 
 System.write(typeof person.setter) // undefined
 ```
@@ -472,12 +472,12 @@ class Student extends Person {
 	}
 }
 
-let student = new Student()
+let student = Student()
 
 System.write(typeof student.getter) // function
 ```
 
-While extending `abstract` classes is allowed, invoking `abstract` classes raises an exception; due to this `abstract` classes cannot accept parameters.
+While extending `abstract` classes is allowed, invoking `abstract` classes raises an exception; in accordance with this `abstract` classes cannot accept parameters.
 
 ```
 class Person abstract {
@@ -486,7 +486,7 @@ class Person abstract {
 	}
 }
 
-let person = new Person() // throws
+let person = Person() // throws
 ```
 
 ## Module
@@ -582,9 +582,6 @@ Number.parse(string value)
 ```
 Symbol(string value)
 Symbol.for(string value)
-Symbol.thenable
-Symbol.iterator
-Symbol.constructor
 ```
 
 ### String
@@ -597,7 +594,7 @@ String.pad(string value, number padding)
 String.trim(string value, number padding)
 String.repeat(string value, count)
 String.match(string value, object<RegExp> regexp)
-String.replace(string value, string|object<RegExp>, string|function)
+String.replace(string|object<RegExp> value, string|function replacement)
 String.search(string|object<RegExp> value, number from)
 String.slice(string value, number from, number to)
 String.split(string value, object<RegExp> separator, number limit)
@@ -614,7 +611,7 @@ String.fromCodePoint(number point)
 ### Object
 
 ```
-Object
+Object(any value)
 	object<string|symbol, any>
 
 Object.assign(...arguments)
@@ -624,12 +621,6 @@ Object.entries(object value)
 Object.has(object value, string|symbol key)
 Object.delete(object value, string|symbol key)
 Object.clear()
-```
-
-### Function
-
-```
-Function
 ```
 
 ### Error
@@ -651,7 +642,6 @@ Date.parse(string value)
 ### Math
 
 ```
-Math
 Math.random()
 Math.abs(number value)
 Math.ceil(number value)
@@ -666,7 +656,6 @@ Math.hypot(...arguments)
 Math.sqrt(number value)
 Math.cbrt(number value)
 Math.imul(numer x, number y)
-
 Math.log(number value)
 Math.log1p(number value)
 Math.log10(number value)
@@ -701,7 +690,7 @@ Array literals are delimited with brackets `[` and share the form `[1, 2, 3]`.
 
 ```
 Array(...arguments)
-Array.from(...arguments)
+Array.from(string|array value, function mapper)
 Array.fill(array value)
 Array.pop(array value)
 Array.push(array value, ...arguments)
@@ -732,7 +721,6 @@ Array.each(array value, function callback)
 ### JSON
 
 ```
-JSON
 JSON.parse(string value)
 JSON.stringify(object value)
 ```
@@ -745,7 +733,7 @@ Promise(function value)
 	object<Promise>.catch(function callback)
 	object<Promise>.finally(function callback)
 
-Promise.resolve
-Promise.reject
+Promise.resolve(any value)
+Promise.reject(any value)
 ```
 

@@ -6,33 +6,27 @@ StringLiteral               ::= <STRING_LITERAL>
 HexLiteral                  ::= "0x" ( DIGIT | LETTER )+
 DecimalLiteral              ::= ( DIGIT )* (  "." | "e" | " " )? ( DIGIT )*
 NumberLiteral               ::= ( DecimalLiteral | HexaLiteral | "NaN" | "Infinity" )
-Identifier                  ::= ( "_" | LETTER ) ( "_" | LETTER | DIGIT )*?
+Identifier                  ::= ( "_" | LETTER ) ( ( "_" | LETTER | DIGIT )* )?
 
-Literal                     ::= ( StringLiteral | NumberLiteral | "true" | "false" | "undefined" )
+Literal                     ::= ( StringLiteral | NumberLiteral | ArrayLiteral | "true" | "false" | "undefined" )
 ArrayLiteral                ::= "[" ( ( Elision )? "]" | ElementList Elision "]" | ( ElementList )? "]" )
 ElementList                 ::= ( Elision )? AssignmentExpression ( Elision AssignmentExpression )*
 Elision                     ::= ( "," )+
 ObjectLiteral               ::= "{" ( PropertyNameAndValueList )? "}"
-PropertyNameAndValueList    ::= PropertyNameAndValue ( "," PropertyNameAndValue | "," )*
-PropertyNameAndValue        ::= PropertyName ":" AssignmentExpression
-PropertyName                ::= Identifier | StringLiteral |  NumberLiteral
-PropertyAccess              ::= Identifier ( ( "." Identifier ) | ( "[" ( PropertyName | Expression ) "]" ) )*
+PropertyNameAndValueList    ::= PropertyNameAndValue ( ( "," PropertyNameAndValue ) | "," )*
+PropertyNameAndValue        ::= ( ( ( Identifier | StringLiteral |  NumberLiteral ) ":" AssignmentExpression ) | SpreadIdentifier )
 
-PrimaryExpression           ::= "this" |  ObjectLiteral | ( "(" Expression ")" ) |  Identifier |  ArrayLiteral |  Literal
-MemberExpression            ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* ) |  AllocationExpression
-MemberExpressionForIn       ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* )
-AllocationExpression        ::= ( "new" MemberExpression ( ( Arguments ( MemberExpressionPart )* )* ) )
+PrimaryExpression           ::= "this" |  ObjectLiteral | ( "(" Expression ")" ) | Identifier | Literal
+MemberExpression            ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* )
 MemberExpressionPart        ::= ( "[" Expression "]" ) | ( "." Identifier )
 
 CallExpression              ::= MemberExpression Arguments ( CallExpressionPart )*
-CallExpressionForIn         ::= MemberExpressionForIn Arguments ( CallExpressionPart )*
 CallExpressionPart          ::= Arguments | ( "[" Expression "]" ) |  ( "." Identifier )
 
 Arguments                   ::= "(" ( ArgumentList )? ")"
 ArgumentList                ::= AssignmentExpression ( "," AssignmentExpression )*
 
 LeftHandSideExpression      ::= CallExpression |  MemberExpression
-LeftHandSideExpressionForIn ::= CallExpressionForIn | MemberExpressionForIn
 
 UnaryExpression             ::= ( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
 UnaryOperator               ::= ( "typeof" | "sizeof" | "++" | "--" | "+" | "-" | "~" | "!" )
@@ -104,7 +98,6 @@ IterationStatement          ::=
   | ( "while" Expression BlockStatement )
   | ( "for" VariableDeclaration ";" ( Expression )? ";" ( Expression )? ")" BlockStatement )
   | ( "for" VariableDeclaration "in" Expression ")" BlockStatement )
-  | ( "for" LeftHandSideExpressionForIn "in" Expression ")" BlockStatement )
 
 ContinueStatement           ::= "continue"
 BreakStatement              ::= "break"
@@ -130,7 +123,8 @@ TypeStatement               ::=
   | ( "void" | "number" | "boolean" | "symbol" | "string" | "function" | "any" )
   | ( ( "object" | "array" ) ( "<" ( Identifier | TypeStatement ) ">" )? )
 
-ParameterIdentifier         ::= ( TypeStatement )? ( ( "..." )? Identifier ) ( PickStatement | Initialiser )?
+SpreadIdentifier            ::= ( "..." )? Identifier
+ParameterIdentifier         ::= ( TypeStatement )? SpreadIdentifier ( PickStatement | Initialiser )?
 ParameterList               ::= ParameterIdentifier ( "," ParameterIdentifier )*
 
 FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( FunctionBody | ( ( LineTerminator )? Expression ) )
