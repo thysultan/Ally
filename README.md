@@ -21,7 +21,8 @@ string      in       let
 of          as       instanceof
 abstract    pick     undefined
 extern      NaN      Infinity
-symbol      func
+symbol      func     sizeof
+array
 ```
 
 ## Reserved(Future)
@@ -33,10 +34,9 @@ var         protocol
 implements  super
 interface   package
 delete      typealias
-with        NaN
+with        await
 null        interface
 do          yield
-await
 ```
 
 ## Comments
@@ -160,7 +160,7 @@ while condition {
 for step++ < 5 {
 }
 
-for step = 0, step < 5, step++ {
+for step = 0; step < sizeof children; step++ {
 }
 ```
 
@@ -175,9 +175,6 @@ for a in b {
 
 ```
 for a of b {
-}
-
-for a of 0...10 {
 }
 ```
 
@@ -309,6 +306,7 @@ string
 
 function
 object
+array
 
 any
 ```
@@ -318,11 +316,11 @@ The use of types follow the pattern `type binding`.
 ```
 let number age = 1
 
-func name number age, name, object<Person> person void {
+func name number age, array<string> subjects, object<Person> person void {
 	return
 }
 
-let name = number age, name, object<Person> person => void {
+let name = number age, array<string> subjects, object<Person> person => void {
 	return
 }
 ```
@@ -369,7 +367,7 @@ class Person a pick {key}, b = 1, object c {
 Fields are created statitically or through referenced named parameters.
 
 ```
-class Person age, year {
+class Person age, year, document pick {name} {
 	public x = 0
 	public y = 0
 
@@ -384,7 +382,7 @@ class Person age, year {
 
 let person = new Person('23', '1989')
 
-Sysmte.write(`Age: $(person.age), Born In: $(person.tear)`)
+Sysmte.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
 ```
 
 Class instances are created when invoked. Parameters are passed to class like functions.
@@ -479,7 +477,7 @@ let student = new Student()
 System.write(typeof student.getter) // function
 ```
 
-While extending `abstract` classes is allowed, invoking `abstract` classes throws.
+While extending `abstract` classes is allowed, invoking `abstract` classes raises an exception; due to this `abstract` classes cannot accept parameters.
 
 ```
 class Person abstract {
@@ -488,7 +486,7 @@ class Person abstract {
 	}
 }
 
-let person = new Person()   // Error
+let person = new Person() // throws
 ```
 
 ## Module
@@ -525,6 +523,36 @@ module Student {
 }
 
 import {type} from School
+```
+
+## Sizeof
+
+The `sizeof` operator returns the size of a given array/object/string and `NaN` for invalid values.
+
+```
+System.write(sizeof [1, 2, 3])    // 3
+System.write(sizeof {a: 1, b: 2}) // 3
+System.write(sizeof "Hello")      // 5
+System.write(sizeof 2)            // NaN
+System.write(sizeof Symbol())     // NaN
+System.write(sizeof undefined)    // NaN
+System.write(sizeof func {})      // NaN
+System.write(sizeof true)         // NaN
+```
+
+## Typeof
+
+The `typeof` operator returns the type of a given value in string form.
+
+```
+System.write(typeof [1, 2, 3])    // "array"
+System.write(typeof {a: 1, b: 2}) // "object"
+System.write(typeof "Hello")      // "string"
+System.write(typeof 2)            // "number"
+System.write(typeof Symbol())     // "symbol"
+System.write(typeof undefined)    // "void"
+System.write(typeof func {})      // "function"
+System.write(typeof true)         // "boolean"
 ```
 
 ## Standard Library
@@ -594,6 +622,7 @@ Object.keys(object value)
 Object.values(object value)
 Object.entries(object value)
 Object.has(object value, string|symbol key)
+Object.delete(object value, string|symbol key)
 ```
 
 ### Function

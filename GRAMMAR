@@ -16,6 +16,7 @@ ObjectLiteral               ::= "{" ( PropertyNameAndValueList )? "}"
 PropertyNameAndValueList    ::= PropertyNameAndValue ( "," PropertyNameAndValue | "," )*
 PropertyNameAndValue        ::= PropertyName ":" AssignmentExpression
 PropertyName                ::= Identifier | StringLiteral |  NumberLiteral
+PropertyAccess              ::= Identifier ( ( "." Identifier ) | ( "[" ( PropertyName | Expression ) "]" ) )*
 
 PrimaryExpression           ::= "this" |  ObjectLiteral | ( "(" Expression ")" ) |  Identifier |  ArrayLiteral |  Literal
 MemberExpression            ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* ) |  AllocationExpression
@@ -34,7 +35,7 @@ LeftHandSideExpression      ::= CallExpression |  MemberExpression
 LeftHandSideExpressionForIn ::= CallExpressionForIn | MemberExpressionForIn
 
 UnaryExpression             ::= ( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
-UnaryOperator               ::= ( "delete" | "typeof" | "++" | "--" | "+" | "-" | "~" | "!" )
+UnaryOperator               ::= ( "typeof" | "sizeof" | "++" | "--" | "+" | "-" | "~" | "!" )
 
 PostfixExpression           ::= LeftHandSideExpression ( PostfixOperator )?
 PostfixOperator             ::= ( "++" | "--" )
@@ -95,13 +96,13 @@ StatementList               ::= ( Statement )+
 BlockStatement              ::= "{" ( StatementList )? "}"
 VariableStatement           ::= "let" VariableDeclaration
 Initialiser                 ::= "=" AssignmentExpression
-EmptyStatement              ::= LineTerminator
+EmptyStatement              ::= LineTerminator | ";"
 ExpressionStatement         ::= Expression ( EmptyStatement )?
 IfStatement                 ::= "if" Expression BlockStatement ( "else" BlockStatement )?
 
 IterationStatement          ::=
   | ( "while" Expression BlockStatement )
-  | ( "for" VariableDeclaration "," ( Expression )? "," ( Expression )? ")" BlockStatement )
+  | ( "for" VariableDeclaration ";" ( Expression )? ";" ( Expression )? ")" BlockStatement )
   | ( "for" VariableDeclaration "in" Expression ")" BlockStatement )
   | ( "for" LeftHandSideExpressionForIn "in" Expression ")" BlockStatement )
 
@@ -110,7 +111,8 @@ BreakStatement              ::= "break"
 ReturnStatement             ::= "return" ( Expression )?
 InstanceofStatement         ::= Expression "instanceof" Expression
 TypeofStatement             ::= "typeof" Expression
-ExternStatement             ::= extern Expression
+ExternStatement             ::= "extern" Expression
+SizeofStatement             ::= "sizeof" Expression
 
 MatchStatement              ::= "match" Expression CaseBlock
 SwitchStatement             ::= "switch" Expression CaseBlock
@@ -123,12 +125,12 @@ TryStatement                ::= "try" BlockStatement ( ( Finally | Catch ( Final
 Catch                       ::= "catch" Identifier? BlockStatement
 Finally                     ::= "finally" BlockStatement
 
-DestructuringLiteral        ::= "{" ( ParameterList )? "}"
-PickStatement               ::= "pick" DestructuringLiteral
+PickStatement               ::= "pick" "{" ( ParameterList )? "}"
 TypeStatement               ::=
-  | ( "void" | "number" | "" | "boolean" | "symbol" | "string" | "function" | "any" | ( "object" ( "<" Identifier ">" )? ) )
+  | ( "void" | "number" | "boolean" | "symbol" | "string" | "function" | "any" )
+  | ( ( "object" | "array" ) ( "<" ( Identifier | TypeStatement ) ">" )? )
 
-ParameterIdentifier         ::= ( TypeStatement )? Identifier ( PickStatement | Initialiser )?
+ParameterIdentifier         ::= ( TypeStatement )? ( ( "..." )? Identifier ) ( PickStatement | Initialiser )?
 ParameterList               ::= ParameterIdentifier ( "," ParameterIdentifier )*
 
 FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( FunctionBody | ( ( LineTerminator )? Expression ) )
@@ -140,6 +142,9 @@ ClassBody                   ::= "{" ( ClassElements )? "}"
 ClassElements               ::= ( ClassElement )+
 ClassElement                ::= ( "public" | "private" | "protected" | "static" ) ( FunctionDeclaration | VariableDeclaration )
 
+ModuleDeclaration            ::= "module" ( Identifier )? ModuleBody
+ModuleBody                   ::= "{" ( SourceElements )? "}"
+
 Program                     ::= ( SourceElements )? EOF
 SourceElements              ::= ( SourceElement )+
 SourceElement               ::= Statement
@@ -147,7 +152,6 @@ SourceElement               ::= Statement
 ImportIdentifier            ::= Identifier ( 'as' Identifier )?
 ImportList                  ::= ImportIdentifier ( "," ImportIdentifier )*
 ImportStatement             ::= "import" ( ImportList | ( "{" ImportList "}" ) ) "from" ( Identifier | StringLiteral )
-Name                        ::= Identifier ( "." Identifier )*
+
 LetStatement                ::= "let" LetDeclarationList
 LetDeclarationList          ::= LetDeclaration ( "," LetDeclaration )*
-LetDeclaration              ::= Identifier ":" Identifier ( Initialiser )?
