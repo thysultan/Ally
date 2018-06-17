@@ -497,17 +497,25 @@ Modules are like files! They can contain let bindings, nested modules, etc. What
 module School {
 	import {type as studentType} from Student
 
+	let population = 100
+
   export let profession = 'Teacher'
 
   export type = (person) =>
   	switch (person) {
-  		case 'Teacher': return 'A teacher'
-  		case 'Director': return 'A director'
+  		case 'Teacher' {
+  			return 'A teacher'
+  		}
+  		case 'Director' {
+  			return 'A director'
+  		}
   	}
+
+ 	export {population}
 }
 
 module Student {
-  export let class = '7'
+  export let grade = '7'
 
 	export default func announcement value {
 		System.write('')
@@ -515,8 +523,12 @@ module Student {
 
   export let type = (student) =>
   	switch (student) {
-  		case '7': return 'middle school'
-  		case '8': return 'high school'
+  		case '7' {
+  			return 'middle school'
+  		}
+  		case '8' {
+  			return 'high school'
+  		}
   	}
 
   export profession from School
