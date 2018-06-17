@@ -21,12 +21,12 @@ MemberExpression            ::= ( ( FunctionExpression | PrimaryExpression ) ( M
 MemberExpressionPart        ::= ( "[" Expression "]" ) | ( "." Identifier )
 
 CallExpression              ::= MemberExpression Arguments ( CallExpressionPart )*
-CallExpressionPart          ::= Arguments | ( "[" Expression "]" ) |  ( "." Identifier )
+CallExpressionPart          ::= Arguments | ( "[" Expression "]" ) | ( "." Identifier )
 
 Arguments                   ::= "(" ( ArgumentList )? ")"
 ArgumentList                ::= AssignmentExpression ( "," AssignmentExpression )*
 
-LeftHandSideExpression      ::= CallExpression |  MemberExpression
+LeftHandSideExpression      ::= CallExpression | MemberExpression
 
 UnaryExpression             ::= ( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
 UnaryOperator               ::= ( "typeof" | "sizeof" | "++" | "--" | "+" | "-" | "~" | "!" )
@@ -143,9 +143,11 @@ Program                     ::= ( SourceElements )? EOF
 SourceElements              ::= ( SourceElement )+
 SourceElement               ::= Statement
 
+ExportImportStatement       ::= "export" ( "default" )? Expression ( FromStatement )?
+FromStatement               ::= "from" ( Identifier | StringLiteral )
 ImportIdentifier            ::= Identifier ( 'as' Identifier )?
 ImportList                  ::= ImportIdentifier ( "," ImportIdentifier )*
-ImportStatement             ::= "import" ( ImportList | ( "{" ImportList "}" ) ) "from" ( Identifier | StringLiteral )
+ImportStatement             ::= "import" ( ImportList | ( "{" ImportList "}" ) ) FromStatement
 
 LetStatement                ::= "let" LetDeclarationList
 LetDeclarationList          ::= LetDeclaration ( "," LetDeclaration )*
