@@ -615,7 +615,7 @@ String.fromCodePoint(number point)
 
 ```
 Object
-	object<Object string|symbol, any>
+	object<string|symbol, any>
 
 Object.assign(...arguments)
 Object.keys(object value)
@@ -623,14 +623,13 @@ Object.values(object value)
 Object.entries(object value)
 Object.has(object value, string|symbol key)
 Object.delete(object value, string|symbol key)
+Object.clear()
 ```
 
 ### Function
 
 ```
 Function
-Function.nameof(function value)
-Function.typeof(function value)
 ```
 
 ### Error
@@ -703,31 +702,31 @@ Array literals are delimited with brackets `[` and share the form `[1, 2, 3]`.
 ```
 Array(...arguments)
 Array.from(...arguments)
-Array.fill(object<Array> value)
-Array.pop(object<Array> value)
-Array.push(object<Array> value, ...arguments)
+Array.fill(array value)
+Array.pop(array value)
+Array.push(array value, ...arguments)
 Array.shift()
-Array.unshift(object<Array> value, ...arguments)
-Array.reverse(object<Array>)
-Array.splice(object<Array>, number from, number remove, ...arguments)
-Array.concat(object<Array>, ...arguments)
-Array.slice(object<Array> value, number from, number to)
-Array.includes(object<Array>, any value, number from)
-Array.search(object<Array> value, any element, number from)
-Array.join(object<Array> value, string separator)
-Array.sort(object<Array> value function compare)
-Array.move(object<Array> value, number target, number from, number to)
-Array.keys(object<Array> value)
-Array.values(object<Array> value)
-Array.entries(object<Array> value)
-Array.reduce(object<Array> function callback)
-Array.filter(object<Array> function callback)
-Array.find(object<Array> function callback)
-Array.map(object<Array>, function callback)
-Array.every(object<Array>, function callback)
-Array.some(object<Array>, function callback)
-Array.length(object<Array> value)
-Array.each(object<Array>, function callback)
+Array.unshift(array value, ...arguments)
+Array.reverse(array value)
+Array.splice(array value, number from, number remove, ...arguments)
+Array.concat(array value, ...arguments)
+Array.slice(array value, number from, number to)
+Array.includes(array value, any value, number from)
+Array.search(array value, any element, number from)
+Array.join(array value, string separator)
+Array.sort(array value, function compare)
+Array.move(array value, number target, number from, number to)
+Array.keys(array value)
+Array.values(array value)
+Array.entries(array value, value)
+Array.reduce(array value, function callback)
+Array.filter(array value, function callback)
+Array.find(array value, function callback)
+Array.map(array value, function callback)
+Array.every(array value, function callback)
+Array.some(array value, function callback)
+Array.length(array value)
+Array.each(array value, function callback)
 ```
 
 ### JSON
