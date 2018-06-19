@@ -131,7 +131,7 @@ FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( Fun
 FunctionDeclaration         ::= "func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
 FunctionBody                ::= "{" ( SourceElements )? "}"
 
-ClassDeclaration            ::= "class" Identifier ( ( ( ParameterList )? ( "extends" Identifier )? ) | "abstract" ) ClassBody
+ClassDeclaration            ::= "class" Identifier ( ( ParameterList )? ( "extends" Identifier )? ) ClassBody
 ClassBody                   ::= "{" ( ClassElements )? "}"
 ClassElements               ::= ( ClassElement )+
 ClassElement                ::= ( "public" | "private" | "protected" | "static" ) ( FunctionDeclaration | VariableDeclaration )

@@ -19,9 +19,9 @@ this        throw    continue
 boolean     object   number
 string      in       let
 of          as       instanceof
-abstract    pick     undefined
+sizeof      pick     undefined
 extern      NaN      Infinity
-symbol      func     sizeof
+symbol      func
 ```
 
 ## Reserved(Future)
@@ -36,7 +36,7 @@ delete      typealias
 with        await
 null        interface
 do          yield
-new
+new         abstract
 ```
 
 ## Comments
@@ -475,18 +475,6 @@ class Student extends Person {
 let student = Student()
 
 System.write(typeof student.getter) // function
-```
-
-While extending `abstract` classes is allowed, invoking `abstract` classes raises an exception; in accordance with this `abstract` classes cannot accept parameters.
-
-```
-class Person abstract {
-	public func getter key {
-		return this[key]
-	}
-}
-
-let person = Person() // throws
 ```
 
 ## Module
