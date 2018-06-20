@@ -5,38 +5,20 @@ Pronounced L-I, Ally is a dynamic programming language with semi-optional types.
 ## Reserved
 
 ```
-void        if       function
-typeof      for      extends
-static      else     class
-public      while    array
-protected   any      export
-private     switch   import
-static	    match    try
-false       module   catch
-true        return   finally
-case        default  break
-this        throw    continue
-boolean     object   number
-string      in       let
-of          as       instanceof
-sizeof      pick     undefined
-extern      NaN      Infinity
-symbol      func
+void, number, boolean, symbol, string, function, array, object, union, any,
+try, catch, finally, if, else, for, in, while, switch, match, case, default,
+continue, break, return, throw, typoof, sizeof, instanceof, pick,
+true, false, null, undefined, NaN, Infinity,
+public, private, protected, static, this,
+let, func, class, extends, module,
+import, export, as
 ```
 
 ## Reserved(Future)
 
 ```
-const       is
-debugger    enum
-var         protocol
-implements  super
-interface   package
-delete      typealias
-with        await
-null        interface
-do          yield
-new         abstract
+const, var, enum, protocol, implements, abstract, typealias, interface, package,
+extern, throws, super, delete, yield, async, await, debugger, new, do, with, is, of
 ```
 
 ## Comments
@@ -98,10 +80,10 @@ let a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 10 000 000
 
 ## String
 
-Strings are delimited with either double quotes ", single ' quotes or template \` qoutes. String concatenation uses `..`:
+Strings are delimited with either double quotes ", single ' quotes or template \` qoutes. String concatenation uses `+`:
 
 ```
-let a = 'Hello' .. "World" .. `! ` .. 2010 + 8
+let a = 'Hello' + "World" + `! ` + 2010 + 8
 ```
 
 ## Control
@@ -167,14 +149,10 @@ for step = 0; step < sizeof children; step++ {
 ### For..In
 
 ```
-for a in b {
+for step in children {
 }
-```
 
-### For..Of
-
-```
-for a of b {
+for step in 0..10 {
 }
 ```
 
@@ -327,14 +305,13 @@ let name = number age, array<string> subjects, object<Person> person => void {
 
 ## Object
 
-Plain objects are created using the {} (curly braces).
+Plain objects are created using the `{}` (curly braces). Primitive objects are immutable with relation to create and delete operations.
 
 ```
 let person = {
-	age: 27
+	age: 27,
 	year: 1989,
-	print: value =>
-		System.write(value)
+	print: value => System.write(value),
 	assign: func name key, value {
 		return this[key] = value
 	}
@@ -372,7 +349,7 @@ class Person age, year, document pick {name} {
 	public y = 0
 
 	public func write {
-		System.write('Hello' .. 'World' .. '!')
+		System.write('Hello' + 'World' + '!')
 	}
 
 	private func assign key, value {
@@ -382,10 +359,10 @@ class Person age, year, document pick {name} {
 
 let person = Person('23', '1989')
 
-Sysmte.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
+System.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
 ```
 
-Class instances are created when invoked. Parameters are passed to class like functions.
+Class instances are created when invoked. Parameters are passed to classes like functions.
 
 ```
 let person = Person(10, 1989)
@@ -394,42 +371,24 @@ let person = Person(10, 1989)
 All named arguments in the class are assigned to a corrosponding field.
 
 ```
-class Person age, year {
+class Element type, props pick {ref, key, xmlns}, children {
+  public func handleEvent object<Event> event {
+    this.dispatchEvent(event, => System.write("dispatchEvent"))
+  }
+  private func dispatchEvent object<Event> event, function callback {
+    try {
+      callback(event)
+    } catch e {
+      throw e
+    }
+  }
 }
 
-let person = Person(10, 1989)
-
-System.write(person.age, person.year)
-```
-
-Defined fields can use expressions to assign values based on named parameters.
-
-```
-class Element type, props, children, key, ref, xmlns {
-	public number identity = typeof type == 'string' ? 1 : -1
-
-	public func handleEvent object<Event> event {
-		this.dispatchEvent(event, void => undefined)
-	}
-
-	private func dispatchEvent object<Event> event, callback {
-		try {
-			callback(event)
-		} catch e {
-			throw e
-		}
-	}
+func createElement union<string, function> type, object props, ...children {
+  return Element(type, props, children)
 }
 
-func createElement type, props instanceof object || {}, ...children : Element {
-	return Element(type, props, children, props.key, props.ref, props.xmlns)
-}
-
-let element = createElement('h1', {style: {color: 'red'}}, 'Hello')
-
-System.write(element.identity)
-
-element.handleEvent({})
+System.write(createElement('h1', null, 'Hello').type === 'h1')
 ```
 
 Private members are not accessible except from within the source class.
@@ -450,7 +409,7 @@ Static members are accessible from `class` objects instead of `class` instances.
 
 ```
 class Person {
-	set func setter key, value {
+	static func setter key, value {
 	}
 }
 
@@ -479,7 +438,7 @@ System.write(typeof student.getter) // function
 
 ## Module
 
-Modules are like files! They can contain let bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `operator binding source`.
+Modules are like files! They can contain let bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `module Identifier {}`.
 
 ```
 module School {
@@ -530,14 +489,15 @@ import {type} from School
 The `sizeof` operator returns the size of a given array/object/string and `NaN` for invalid values.
 
 ```
-System.write(sizeof [1, 2, 3])    // 3
-System.write(sizeof {a: 1, b: 2}) // 3
-System.write(sizeof "Hello")      // 5
-System.write(sizeof 2)            // NaN
-System.write(sizeof Symbol())     // NaN
-System.write(sizeof undefined)    // NaN
-System.write(sizeof func {})      // NaN
-System.write(sizeof true)         // NaN
+System.write(sizeof [1, 2, 3])       // 3
+System.write(sizeof {a: 1, b: 2})    // 3
+System.write(sizeof "Hello")         // 5
+System.write(sizeof 2)               // NaN
+System.write(sizeof Symbol())        // NaN
+System.write(sizeof undefined)       // NaN
+System.write(sizeof func {})         // NaN
+System.write(sizeof true)            // NaN
+System.write(sizeof Map([[1, '1']])) // 1
 ```
 
 ## Typeof
@@ -545,14 +505,15 @@ System.write(sizeof true)         // NaN
 The `typeof` operator returns the type of a given value in string form.
 
 ```
-System.write(typeof [1, 2, 3])    // "array"
-System.write(typeof {a: 1, b: 2}) // "object"
-System.write(typeof "Hello")      // "string"
-System.write(typeof 2)            // "number"
-System.write(typeof Symbol())     // "symbol"
-System.write(typeof undefined)    // "void"
-System.write(typeof func {})      // "function"
-System.write(typeof true)         // "boolean"
+System.write(typeof [1, 2, 3])       // "array"
+System.write(typeof {a: 1, b: 2})    // "object"
+System.write(typeof "Hello")         // "string"
+System.write(typeof 2)               // "number"
+System.write(typeof Symbol())        // "symbol"
+System.write(typeof undefined)       // "void"
+System.write(typeof func {})         // "function"
+System.write(typeof true)            // "boolean"
+System.write(typeof Map([[1, '1']])) // "object"
 ```
 
 ## Standard Library
@@ -560,50 +521,50 @@ System.write(typeof true)         // "boolean"
 ## System
 
 ```
-System.now()
+System.assert(boolean value)
 System.write(...arguments)
 ```
 
 ### Boolean
 
 ```
-Boolean(any value)
+Boolean(any target)
 ```
 
 ### Number
 
 ```
-Number(any value)
-Number.parse(string value)
+Number(any target)
+Number.parse(string target)
 ```
 
 ### Symbol
 
 ```
-Symbol(string value)
-Symbol.for(string value)
+Symbol(string target)
+Symbol.for(string target)
 ```
 
 ### String
 
 ```
-String(any value)
+String(any target)
 String.concat(...arguments)
-String.includes(string value, number from)
-String.pad(string value, number padding)
-String.trim(string value, number padding)
-String.repeat(string value, count)
-String.match(string value, object<RegExp> regexp)
-String.replace(string|object<RegExp> value, string|function replacement)
-String.search(string|object<RegExp> value, number from)
-String.slice(string value, number from, number to)
-String.split(string value, object<RegExp> separator, number limit)
-String.substring(number from, number to)
-String.toLowerCase(string value)
-String.toUpperCase(string value)
-String.charAt(string value, number index)
-String.charCodeAt(string value, number index)
-String.codePointAt(string value, number index)
+String.includes(string target, number from)
+String.pad(string target, number padding)
+String.trim(string target, number padding)
+String.repeat(string target, count)
+String.match(string target, object<RegExp> regexp)
+String.replace(string target, union<object<RegExp>, string> value, union<string, function> replacement)
+String.search(string target, union<object<RegExp>, string> value, number from)
+String.slice(string target, number from, number to)
+String.split(string target, union<object<RegExp>, string> separator, number limit)
+String.substring(string target, number from, number to)
+String.toLowerCase(string target)
+String.toUpperCase(string target)
+String.charAt(string target, number index)
+String.charCodeAt(string target, number index)
+String.codePointAt(string target, number index)
 String.fromCharCode(number code)
 String.fromCodePoint(number point)
 ```
@@ -611,67 +572,86 @@ String.fromCodePoint(number point)
 ### Object
 
 ```
-Object(any value)
-	object<string|symbol, any>
-
-Object.assign(...arguments)
-Object.keys(object value)
-Object.values(object value)
-Object.entries(object value)
-Object.has(object value, string|symbol key)
-Object.delete(object value, string|symbol key)
-Object.clear()
+Object(any target)
+Object.keys(object target)
+Object.values(object target)
+Object.entries(object target)
+Object.has(object target, union<string, symbol> key)
 ```
 
-### Error
+### Map
 
 ```
-Error(string value)
-	object<Error>.type
-	object<Error>.message
+Map(any target)
+Map.keys(object<Map> target)
+Map.values(object<Map> target)
+Map.entries(object<Map> target)
+Map.has(object<Map> target, union<string, symbol> key)
+Map.get(object<Map> target, union<string, symbol> key)
+Map.set(object<Map> target, union<string, symbol> key, any value)
+Map.delete(object<Map> target, union<string, symbol> key)
+Map.clear(object<Map> target)
+```
+
+### WeakMap
+
+```
+WeakMap(any target)
+WeakMap.has(object<Map> target, union<string, symbol> key)
+WeakMap.get(object<Map> target, union<string, symbol> key)
+WeakMap.set(object<Map> target, union<string, symbol> key, any value)
+WeakMap.delete(object<Map> target, union<string, symbol> key)
+```
+
+### Exception
+
+```
+Exception(string target)
+	object<Exception>.type
+	object<Exception>.message
 ```
 
 ### Date
 
 ```
-Date(string value)
+Date(union<string, number> target)
 Date.now()
-Date.parse(string value)
+Date.parse(string target)
 ```
 
 ### Math
 
 ```
 Math.random()
-Math.abs(number value)
-Math.ceil(number value)
-Math.exp(number value)
-Math.floor(number value)
-Math.round(number value)
-Math.sign(number value)
-Math.trunc(number value)
+Math.abs(number target)
+Math.ceil(number target)
+Math.exp(number target)
+Math.floor(number target)
+Math.round(number target)
+Math.sign(number target)
+Math.trunc(number target)
 Math.max(...arguments)
 Math.min(...arguments)
 Math.hypot(...arguments)
-Math.sqrt(number value)
-Math.cbrt(number value)
+Math.sqrt(number target)
+Math.cbrt(number target)
 Math.imul(numer x, number y)
-Math.log(number value)
-Math.log1p(number value)
-Math.log10(number value)
-Math.log2(number value)
-Math.cos(number value)
-Math.acos(number value)
-Math.acosh(number value)
-Math.cosh(number value)
-Math.sin(number value)
-Math.sinh(number value)
-Math.asin(number value)
-Math.asinh(number value)
-Math.tan(number value)
-Math.tanh(number value)
-Math.atan(number value)
-Math.atanh(number value)
+Math.log(number target)
+Math.log1p(number target)
+Math.log10(number target)
+Math.log2(number target)
+Math.cos(number target)
+Math.acos(number target)
+Math.acosh(number target)
+Math.cosh(number target)
+Math.sin(number target)
+Math.sinh(number target)
+Math.asin(number target)
+Math.asinh(number target)
+Math.tan(number target)
+Math.tanh(number target)
+Math.atan(number target)
+Math.atanh(number target)
 Math.atan2(number x, number y)
 ```
 
@@ -679,9 +659,9 @@ Math.atan2(number x, number y)
 
 ```
 RegExp(string value, string flags)
-RegExp.exec(object<RegExp> value, string str)
-RegExp.test(object<RegExp> value, string str)
-RegExp.flag(object<RegExp> value, ...arguments)
+RegExp.exec(object<RegExp> target, string str)
+RegExp.test(object<RegExp> target, string str)
+RegExp.flag(object<RegExp> target, ...arguments)
 ```
 
 ### Array
@@ -690,50 +670,50 @@ Array literals are delimited with brackets `[` and share the form `[1, 2, 3]`.
 
 ```
 Array(...arguments)
-Array.from(string|array value, function mapper)
-Array.fill(array value)
-Array.pop(array value)
-Array.push(array value, ...arguments)
-Array.shift()
-Array.unshift(array value, ...arguments)
-Array.reverse(array value)
-Array.splice(array value, number from, number remove, ...arguments)
-Array.concat(array value, ...arguments)
-Array.slice(array value, number from, number to)
-Array.includes(array value, any value, number from)
-Array.search(array value, any element, number from)
-Array.join(array value, string separator)
-Array.sort(array value, function compare)
-Array.move(array value, number target, number from, number to)
-Array.keys(array value)
-Array.values(array value)
-Array.entries(array value, value)
-Array.reduce(array value, function callback)
-Array.filter(array value, function callback)
-Array.find(array value, function callback)
-Array.map(array value, function callback)
-Array.every(array value, function callback)
-Array.some(array value, function callback)
-Array.length(array value)
-Array.each(array value, function callback)
+Array.from(union<array,string> target, function mapper)
+Array.fill(array target, any value)
+Array.pop(array target)
+Array.push(array target, ...arguments)
+Array.shift(array target)
+Array.unshift(array target, ...arguments)
+Array.reverse(array target)
+Array.splice(array target, number from, number remove, ...arguments)
+Array.concat(array target, ...arguments)
+Array.slice(array target, number from, number to)
+Array.includes(array target, any value, number from)
+Array.search(array target, any element, number from)
+Array.join(array target, string separator)
+Array.sort(array target, function compare)
+Array.move(array target, number target, number from, number to)
+Array.keys(array target)
+Array.values(array target)
+Array.entries(array target)
+Array.reduce(array target, function callback)
+Array.filter(array target, function callback)
+Array.find(array target, function callback)
+Array.map(array target, function callback)
+Array.every(array target, function callback)
+Array.some(array target, function callback)
+Array.length(array target)
+Array.each(array target, function callback)
 ```
 
 ### JSON
 
 ```
-JSON.parse(string value)
-JSON.stringify(object value)
+JSON.parse(string target)
+JSON.stringify(object target)
 ```
 
 ### Promise
 
 ```
-Promise(function value)
+Promise(function target)
 	object<Promise>.then(function callback, function error)
 	object<Promise>.catch(function callback)
 	object<Promise>.finally(function callback)
 
-Promise.resolve(any value)
-Promise.reject(any value)
+Promise.resolve(any target)
+Promise.reject(any target)
 ```
 
