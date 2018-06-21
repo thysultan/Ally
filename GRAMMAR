@@ -8,7 +8,7 @@ DecimalLiteral              ::= ( DIGIT )* (  "." | "e" | " " )? ( DIGIT )*
 NumberLiteral               ::= ( DecimalLiteral | HexaLiteral | "NaN" | "Infinity" )
 Identifier                  ::= ( "_" | LETTER ) ( ( "_" | LETTER | DIGIT )* )?
 
-Literal                     ::= ( StringLiteral | NumberLiteral | ArrayLiteral | "true" | "false" | "undefined" )
+Literal                     ::= ( StringLiteral | NumberLiteral | ArrayLiteral | "true" | "false" | "null" )
 ArrayLiteral                ::= "[" ( ( Elision )? "]" | ElementList Elision "]" | ( ElementList )? "]" )
 ElementList                 ::= ( Elision )? AssignmentExpression ( Elision AssignmentExpression )*
 Elision                     ::= ( "," )+
@@ -104,7 +104,6 @@ BreakStatement              ::= "break"
 ReturnStatement             ::= "return" ( Expression )?
 InstanceofStatement         ::= Expression "instanceof" Expression
 TypeofStatement             ::= "typeof" Expression
-ExternStatement             ::= "extern" Expression
 SizeofStatement             ::= "sizeof" Expression
 
 MatchStatement              ::= "match" Expression CaseBlock

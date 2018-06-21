@@ -7,8 +7,8 @@ Pronounced L-I, Ally is a dynamic programming language with semi-optional types.
 ```
 void, number, boolean, symbol, string, function, array, object, union, any,
 try, catch, finally, if, else, for, in, while, switch, match, case, default,
-continue, break, return, throw, typoof, sizeof, instanceof, pick,
-true, false, null, undefined, NaN, Infinity,
+continue, break, return, throw, pick, typeof, sizeof, instanceof,
+true, false, null, NaN, Infinity,
 public, private, protected, static, this,
 let, func, class, extends, module,
 import, export, as
@@ -17,8 +17,7 @@ import, export, as
 ## Reserved(Future)
 
 ```
-const, var, enum, protocol, implements, abstract, typealias, interface, package,
-extern, throws, super, delete, yield, async, await, debugger, new, do, with, is, of
+enum, abstract, typealias, interface, extern, super, yield, async, await, is
 ```
 
 ## Comments
@@ -63,7 +62,7 @@ Booleans has the type of `boolean` either `true` or `false`. Boolean operations 
 
 1. && logical and
 2. || logical or
-3. ! logical not.
+3. ! logical not
 3. <=, >=, <, >
 4. == equal
 6. != unequal
@@ -75,20 +74,49 @@ Booleans has the type of `boolean` either `true` or `false`. Boolean operations 
 64-bit (double-precision) floating point numbers. Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
 
 ```
-let a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 10 000 000
+let a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 100
+```
+
+Both `.4` and `1.` are not valid, and must be pre/post-fixed with a zero.
+
+```
+1.0
+0.4
+```
+
+Spaces and appended letters are ignored.
+
+```
+10 000 000km
 ```
 
 ## String
 
-Strings are delimited with either double quotes ", single ' quotes or template \` qoutes. String concatenation uses `+`:
+Strings are delimited with either double quotes ", or single ' quotes. String can span multiple lines.
 
 ```
-let a = 'Hello' + "World" + `! ` + 2010 + 8
+let a = '
+	Hello
+	World
+'
+```
+
+String concatenation uses `+`.
+
+```
+let a = 'Hello' + ' ' + 'World'
+```
+
+String interpolation is delimeted by `$()`
+
+```
+
+let a = 'Hello $(1 + 2)'
 ```
 
 ## Control
 
-Control flow operators do not use parenthesis in contrast to function invocations. These share a common pattern of `control arguments body`.
+Control flow operators do not use parenthesis in contrast to function invocations. These share a common pattern of `keyword arguments {}`.
 
 ### Switch
 
@@ -305,7 +333,7 @@ let name = number age, array<string> subjects, object<Person> person => void {
 
 ## Object
 
-Plain objects are created using the `{}` (curly braces). Primitive objects are immutable with relation to create and delete operations.
+Plain objects are created using the `{}` (curly braces). Objects are immutable with relation to create and delete operations.
 
 ```
 let person = {
@@ -402,7 +430,7 @@ class Person {
 
 let person = Person()
 
-System.write(typeof person.setter) // undefined
+System.write(typeof person.setter) // null
 ```
 
 Static members are accessible from `class` objects instead of `class` instances.
@@ -494,7 +522,7 @@ System.write(sizeof {a: 1, b: 2})    // 3
 System.write(sizeof "Hello")         // 5
 System.write(sizeof 2)               // NaN
 System.write(sizeof Symbol())        // NaN
-System.write(sizeof undefined)       // NaN
+System.write(sizeof null)            // NaN
 System.write(sizeof func {})         // NaN
 System.write(sizeof true)            // NaN
 System.write(sizeof Map([[1, '1']])) // 1
@@ -510,82 +538,64 @@ System.write(typeof {a: 1, b: 2})    // "object"
 System.write(typeof "Hello")         // "string"
 System.write(typeof 2)               // "number"
 System.write(typeof Symbol())        // "symbol"
-System.write(typeof undefined)       // "void"
+System.write(typeof null)            // "void"
 System.write(typeof func {})         // "function"
 System.write(typeof true)            // "boolean"
 System.write(typeof Map([[1, '1']])) // "object"
 ```
 
+## Instanceof
+
+The `instanceof` operator returns `true` if the value is an instance of specified class.
+
+```
+1 instanceof Number === true
+```
+
 ## Standard Library
-
-## System
-
-```
-System.assert(boolean value)
-System.write(...arguments)
-```
-
-### Boolean
-
-```
-Boolean(any target)
-```
-
-### Number
-
-```
-Number(any target)
-Number.parse(string target)
-```
-
-### Symbol
-
-```
-Symbol(string target)
-Symbol.for(string target)
-```
 
 ### String
 
 ```
-String(any target)
-String.concat(...arguments)
-String.includes(string target, number from)
-String.pad(string target, number padding)
-String.trim(string target, number padding)
-String.repeat(string target, count)
-String.match(string target, object<RegExp> regexp)
-String.replace(string target, union<object<RegExp>, string> value, union<string, function> replacement)
-String.search(string target, union<object<RegExp>, string> value, number from)
-String.slice(string target, number from, number to)
-String.split(string target, union<object<RegExp>, string> separator, number limit)
-String.substring(string target, number from, number to)
-String.toLowerCase(string target)
-String.toUpperCase(string target)
-String.charAt(string target, number index)
-String.charCodeAt(string target, number index)
-String.codePointAt(string target, number index)
-String.fromCharCode(number code)
-String.fromCodePoint(number point)
+String(any target) string
+String.trim(string target, number padding) string
+String.replace(string target, union<object<RegExp>, string> value, union<string, function> replacement) string
+String.slice(string target, number from, number to) string
+String.toLowerCase(string target) string
+String.toUpperCase(string target) string
+String.charAt(string target, number index) string
+String.fromCharCode(number code) string
+String.charCodeAt(string target, number index) number
+String.indexOf(string target, number from) number
+String.split(string target, union<object<RegExp>, string> separator, number limit) array<string>
 ```
 
-### Object
+### Array
+
+Arrays are immutable, Array literals are delimited with brackets `[` and share the form `[1, 2, 3]` or `1..3`.
 
 ```
-Object(any target)
-Object.keys(object target)
-Object.values(object target)
-Object.entries(object target)
-Object.has(object target, union<string, symbol> key)
+Array(number target) array
+Array.from(union<array, string> target, function mapper) array
+Array.slice(array target, number from, number to) array
+Array.map(array target, function callback) array
+Array.filter(array target, function callback) array
+Array.concat(...arguments) array
+Array.each(array target, function callback) void
+Array.join(array<any> target, string separator) string
+```
+
+### RegExp
+
+```
+RegExp(string value, string flags) object<RegExp>
+RegExp.test(object<RegExp> target, string value) boolean
 ```
 
 ### Map
 
 ```
-Map(any target)
-Map.keys(object<Map> target)
-Map.values(object<Map> target)
-Map.entries(object<Map> target)
+Map(array<array> target) object<Map>
 Map.has(object<Map> target, union<string, symbol> key)
 Map.get(object<Map> target, union<string, symbol> key)
 Map.set(object<Map> target, union<string, symbol> key, any value)
@@ -596,124 +606,89 @@ Map.clear(object<Map> target)
 ### WeakMap
 
 ```
-WeakMap(any target)
-WeakMap.has(object<Map> target, union<string, symbol> key)
-WeakMap.get(object<Map> target, union<string, symbol> key)
-WeakMap.set(object<Map> target, union<string, symbol> key, any value)
-WeakMap.delete(object<Map> target, union<string, symbol> key)
+WeakMap(array<array> target) object<Map>
+WeakMap.has(object<WeakMap> target, union<string, symbol> key)
+WeakMap.get(object<WeakMap> target, union<string, symbol> key)
+WeakMap.set(object<WeakMap> target, union<string, symbol> key, any value)
+WeakMap.delete(object<WeakMap> target, union<string, symbol> key)
+```
+
+### Object
+
+```
+Object(any target) object
+```
+
+### Boolean
+
+```
+Boolean(any target) boolean
+```
+
+### Number
+
+```
+Number(any target) number
+Number.parse(string target) number
+```
+
+### Symbol
+
+```
+Symbol(string target) symbol
+Symbol.for(string target) symbol
 ```
 
 ### Exception
 
 ```
-Exception(string target)
+Exception(string target) object<Exception>
 	object<Exception>.type
 	object<Exception>.message
-```
-
-### Date
-
-```
-Date(union<string, number> target)
-Date.now()
-Date.parse(string target)
-```
-
-### Math
-
-```
-Math.random()
-Math.abs(number target)
-Math.ceil(number target)
-Math.exp(number target)
-Math.floor(number target)
-Math.round(number target)
-Math.sign(number target)
-Math.trunc(number target)
-Math.max(...arguments)
-Math.min(...arguments)
-Math.hypot(...arguments)
-Math.sqrt(number target)
-Math.cbrt(number target)
-Math.imul(numer x, number y)
-Math.log(number target)
-Math.log1p(number target)
-Math.log10(number target)
-Math.log2(number target)
-Math.cos(number target)
-Math.acos(number target)
-Math.acosh(number target)
-Math.cosh(number target)
-Math.sin(number target)
-Math.sinh(number target)
-Math.asin(number target)
-Math.asinh(number target)
-Math.tan(number target)
-Math.tanh(number target)
-Math.atan(number target)
-Math.atanh(number target)
-Math.atan2(number x, number y)
-```
-
-### RegExp
-
-```
-RegExp(string value, string flags)
-RegExp.exec(object<RegExp> target, string str)
-RegExp.test(object<RegExp> target, string str)
-RegExp.flag(object<RegExp> target, ...arguments)
-```
-
-### Array
-
-Array literals are delimited with brackets `[` and share the form `[1, 2, 3]`.
-
-```
-Array(...arguments)
-Array.from(union<array,string> target, function mapper)
-Array.fill(array target, any value)
-Array.pop(array target)
-Array.push(array target, ...arguments)
-Array.shift(array target)
-Array.unshift(array target, ...arguments)
-Array.reverse(array target)
-Array.splice(array target, number from, number remove, ...arguments)
-Array.concat(array target, ...arguments)
-Array.slice(array target, number from, number to)
-Array.includes(array target, any value, number from)
-Array.search(array target, any element, number from)
-Array.join(array target, string separator)
-Array.sort(array target, function compare)
-Array.move(array target, number target, number from, number to)
-Array.keys(array target)
-Array.values(array target)
-Array.entries(array target)
-Array.reduce(array target, function callback)
-Array.filter(array target, function callback)
-Array.find(array target, function callback)
-Array.map(array target, function callback)
-Array.every(array target, function callback)
-Array.some(array target, function callback)
-Array.length(array target)
-Array.each(array target, function callback)
-```
-
-### JSON
-
-```
-JSON.parse(string target)
-JSON.stringify(object target)
 ```
 
 ### Promise
 
 ```
 Promise(function target)
-	object<Promise>.then(function callback, function error)
-	object<Promise>.catch(function callback)
-	object<Promise>.finally(function callback)
+	object<Promise>.then(function callback, function error, funcion final) object<Promise>
+```
 
-Promise.resolve(any target)
-Promise.reject(any target)
+### Math
+
+```
+Math.random() number
+Math.abs(number target) number
+Math.ceil(number target) number
+Math.exp(number target) number
+Math.floor(number target) number
+Math.round(number target) number
+Math.sign(number target) number
+Math.trunc(number target) number
+Math.sqrt(number target) number
+Math.cbrt(number target) number
+Math.imul(numer x, number y) number
+Math.log(number target) number
+Math.cos(number target) number
+Math.cosh(number target) number
+Math.sin(number target) number
+Math.tan(number target) number
+Math.max(...arguments) number
+Math.min(...arguments) number
+Math.hypot(...arguments) number
+```
+
+### JSON
+
+```
+JSON.parse(string target) object
+JSON.stringify(object target) string
+```
+
+## System
+
+```
+System.assert(boolean value)
+System.write(...arguments)
 ```
 
