@@ -572,7 +572,7 @@ String.split(string target, union<object<RegExp>, string> separator, number limi
 
 ### Array
 
-Arrays are immutable, Array literals are delimited with brackets `[` and share the form `[1, 2, 3]` or `1..3`.
+Arrays are immutable(size), Array literals are delimited with brackets `[` and share the form `[1, 2, 3]` or `1..3`.
 
 ```
 Array(number target) array
