@@ -1,0 +1,37 @@
+any -> double
+
+number -> double
+
+boolean -> NaN
+
+void -> NaN
+
+function -> {
+	uint size
+	uint hash
+	uint refs
+}
+
+string -> {
+	uint size
+	uint hash
+	uchar ...charaters
+}
+
+symbol -> {
+	uint size
+	uint hash
+	uchar ...charaters
+}
+
+object -> {
+	uint size
+	uint hash
+	double ...elements
+}
+
+array -> {
+	uint size
+	uint hash
+	double ...elements
+}
