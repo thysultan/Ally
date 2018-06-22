@@ -35,3 +35,9 @@ array -> {
 	uint hash
 	double ...elements
 }
+
+enviroment -> {
+	uint size
+	uint enviroment
+	double ...elements
+}
