@@ -1,3 +1,6 @@
+/**
+ * String Structure
+ */
 struct String {
 	unsigned int size
 	unsigned int hash
@@ -37,12 +40,18 @@ unsigned int StringCompare (struct String *aString, struct String *bString) {
 	return 1;
 }
 
+/**
+ * String Create
+ */
 String *StringCreate(unsigned char *charaters) {
-    unsigned int size = strlen(charaters) + 1
+    // get size of string + null character
+    unsigned int size = strlen(charaters) + 1;
 
+    // allocate memory for String struct + characters
     String *string = malloc(sizeof(*string) + size);
-    string->size = size
+    string->size = size;
 
+    // copy characters to struct
     memcpy(string->characters, charaters, size);
 
     return string;

@@ -1,8 +1,14 @@
+/**
+ * String Structure
+ */
 struct Object {
 	unsigned int size
 	ObjectProperty *properties
 }
 
+/**
+ * Object Property Structure
+ */
 struct ObjectProperty {
 	unsigned char *key
 	double *value
@@ -33,8 +39,9 @@ unsigned int ObjectPropertyIndex (struct String *string, struct Object *object) 
 		return 0;
 	}
 
-	// hashtable
+	// hash
 	unsigned int hash = ObjectPropertyHash(string);
+	// modulo
 	unsigned int index = hash & (size - 1);
 }
 
@@ -45,7 +52,8 @@ unsigned int ObjectPropertyHash (struct String *string) {
 	unsigned int size = string->size;
 	unsigned int hash = string->hash;
 
-	if (hash * size == 0) {
+	// cached hash or empty object
+	if (hash * size != 0) {
 		return hash;
 	}
 
@@ -55,5 +63,6 @@ unsigned int ObjectPropertyHash (struct String *string) {
 		hash = (*characters++) + (hash << 6) + (hash << 16) - hash;
 	}
 
+	// cache hash
 	return string->hash = hash;
 }
