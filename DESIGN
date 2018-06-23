@@ -4,12 +4,6 @@ Value {
 	double void
 }
 
-String {
-	unsigned int size
-	unsigned int hash
-	char *load
-}
-
 Symbol {
 	unsigned int size
 	unsigned int hash
@@ -34,14 +28,18 @@ Function {
 	Enviroment *load
 }
 
-Object {
+String {
 	unsigned int size
 	unsigned int hash
-	Property *load
+	char *characters
 }
 
-Property {
+Object {
 	unsigned int size
-	unsigned int hash
-	char *load
+	Property *properties
+}
+
+ObjectProperty {
+	unsigned char *key
+	double *value
 }

@@ -1,32 +1,45 @@
+struct Object {
+	unsigned int size
+	ObjectProperty *properties
+}
+
+struct ObjectProperty {
+	unsigned char *key
+	double *value
+}
+
 /**
- * Property Index
+ * Object Property Index
  */
-unsigned int ObjectPropertyIndex (struct String *string, struct Object *object, struct Property *properties) {
+unsigned int ObjectPropertyIndex (struct String *string, struct Object *object) {
+	struct ObjectProperty *properties = object->properties;
 	unsigned int size = object->size;
-	unsigned int hash = ObjectPropertyHash(string);
 
 	// faster linear search on smaller objects
-	if (size < 128) {
+	if (size < 64) {
 		for (unsigned int i = 0; i < size; ++i) {
-			if (hash == properties[i]->hash) {
+			if (StringCompare(string, properties[i]->key) != 0) {
 				// move recently accessed tail values to head when size is greater than 32
 				if (i * 2 > size + 32) {
-					Property *temporary = properties[0];
+					ObjectProperty *temporary = properties[0];
 					properties[0] = properties[i];
-					obejct[i] = temporary;
+					object[i] = temporary;
 				}
 
 				return i;
 			}
 		}
-	} else {
-		// hashtable
-		unsigned int index = hash & (size - 1);
+
+		return 0;
 	}
+
+	// hashtable
+	unsigned int hash = ObjectPropertyHash(string);
+	unsigned int index = hash & (size - 1);
 }
 
 /**
- * Property Hash(SDBM)
+ * Object Property Hash(SDBM)
  */
 unsigned int ObjectPropertyHash (struct String *string) {
 	unsigned int size = string->size;
@@ -36,7 +49,7 @@ unsigned int ObjectPropertyHash (struct String *string) {
 		return hash;
 	}
 
-	char *characters = string->load;
+	unsigned char *characters = string->characters;
 
 	for (unsigned int i = 0; i < size; ++i) {
 		hash = (*characters++) + (hash << 6) + (hash << 16) - hash;
