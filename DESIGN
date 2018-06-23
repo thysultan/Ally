@@ -1,43 +1,47 @@
-any -> double
-
-number -> double
-
-boolean -> NaN
-
-void -> NaN
-
-function -> {
-	uint size
-	uint hash
-	uint refs
+Value {
+	double number
+	double boolean
+	double void
 }
 
-string -> {
-	uint size
-	uint hash
-	uchar ...charaters
+String {
+	unsigned int size
+	unsigned int hash
+	char *load
 }
 
-symbol -> {
-	uint size
-	uint hash
-	uchar ...charaters
+Symbol {
+	unsigned int size
+	unsigned int hash
+	char *load
 }
 
-object -> {
-	uint size
-	uint hash
-	double ...elements
+Array {
+	unsigned int size
+	unsigned int hash
+	double *load
 }
 
-array -> {
-	uint size
-	uint hash
-	double ...elements
+Enviroment {
+	unsigned int size
+	unsigned int hash
+	double *load
 }
 
-enviroment -> {
-	uint size
-	uint enviroment
-	double ...elements
+Function {
+	unsigned int size
+	unsigned int hash
+	Enviroment *load
+}
+
+Object {
+	unsigned int size
+	unsigned int hash
+	Property *load
+}
+
+Property {
+	unsigned int size
+	unsigned int hash
+	char *load
 }
