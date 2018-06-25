@@ -11,8 +11,8 @@ struct String {
  * String Create
  */
 struct String *StringCreate(unsigned int size) {
-	struct String *string = malloc(sizeof(*string));
-	unsigned char *characters = malloc((sizeof(*characters) * size) + 1);
+	struct String *string = malloc(sizeof *string);
+	unsigned char *characters = malloc((size * sizeof *characters) + 1);
 
 	string->size = size;
 	string->hash = 0;

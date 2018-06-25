@@ -15,8 +15,8 @@ struct Entry {
 };
 
 struct Object *ObjectCreate(unsigned int size) {
-	struct Object *object = malloc(sizeof(*object));
-	struct Entry *entries = malloc(sizeof(*entries) * size);
+	struct Object *object = malloc(sizeof *object);
+	struct Entry *entries = malloc(size * sizeof *entries);
 
 	object->size = size;
 	object->entries = entries;

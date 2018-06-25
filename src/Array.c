@@ -7,8 +7,8 @@ struct Array {
 };
 
 struct Array *ArrayCreate(unsigned long size) {
-	struct Array *array = malloc(sizeof(*array));
-	double *elements = malloc(sizeof(*elements) * size);
+	struct Array *array = malloc(sizeof *array);
+	double *elements = malloc(size * sizeof *elements);
 
 	array->size = size;
 	array->elements = elements;
