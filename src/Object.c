@@ -2,36 +2,42 @@
  * String Structure
  */
 struct Object {
-	unsigned int size
-	ObjectProperty *properties
+	unsigned int size;
+	struct Entry *entries;
+};
+
+/**
+ * Entry Structure
+ */
+struct Entry {
+	double *value;
+	struct String *key;
+};
+
+struct Object *ObjectCreate(unsigned int size) {
+	struct Object *object = malloc(sizeof(*object));
+	struct Entry *entries = malloc(sizeof(*entries) * size);
+
+	object->size = size;
+	object->entries = entries;
+
+	return object;
 }
 
 /**
- * Object Property Structure
+ * Object Entry Index
  */
-struct ObjectProperty {
-	unsigned char *key
-	double *value
-}
-
-/**
- * Object Property Index
- */
-unsigned int ObjectPropertyIndex (struct String *string, struct Object *object) {
-	struct ObjectProperty *properties = object->properties;
+unsigned int ObjectEntryIndex (struct String *string, struct Object *object) {
 	unsigned int size = object->size;
+	struct Entry *entries = object->entries;
 
 	// faster linear search on smaller objects
 	if (size < 64) {
 		for (unsigned int i = 0; i < size; ++i) {
-			if (StringCompare(string, properties[i]->key) != 0) {
-				// move recently accessed tail values to head when size is greater than 32
-				if (i * 2 > size + 32) {
-					ObjectProperty *temporary = properties[0];
-					properties[0] = properties[i];
-					object[i] = temporary;
-				}
+			struct Entry element = entries[i];
+			struct String key = entries->key;
 
+			if (StringCompare(string, key) != 0) {
 				return i;
 			}
 		}
@@ -40,29 +46,7 @@ unsigned int ObjectPropertyIndex (struct String *string, struct Object *object) 
 	}
 
 	// hash
-	unsigned int hash = ObjectPropertyHash(string);
+	unsigned int hash = StringHash(string);
 	// modulo
 	unsigned int index = hash & (size - 1);
-}
-
-/**
- * Object Property Hash(SDBM)
- */
-unsigned int ObjectPropertyHash (struct String *string) {
-	unsigned int size = string->size;
-	unsigned int hash = string->hash;
-
-	// cached hash or empty object
-	if (hash * size != 0) {
-		return hash;
-	}
-
-	unsigned char *characters = string->characters;
-
-	for (unsigned int i = 0; i < size; ++i) {
-		hash = (*characters++) + (hash << 6) + (hash << 16) - hash;
-	}
-
-	// cache hash
-	return string->hash = hash;
 }

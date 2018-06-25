@@ -2,9 +2,45 @@
  * String Structure
  */
 struct String {
-	unsigned int size
-	unsigned int hash
-	unsigned char *characters
+	unsigned int size;
+	unsigned int hash;
+	unsigned char *characters;
+};
+
+/**
+ * String Create
+ */
+struct String *StringCreate(unsigned int size) {
+	struct String *string = malloc(sizeof(*string));
+	unsigned char *characters = malloc((sizeof(*characters) * size) + 1);
+
+	string->size = size;
+	string->hash = 0;
+	string->characters = characters;
+
+	return string;
+}
+
+/**
+ * String Hash(SDBM)
+ */
+unsigned int StringHash (struct String *string) {
+	unsigned int hash = string->hash;
+
+	// previously cached hash
+	if (hash != 0) {
+		return hash;
+	}
+
+	unsigned int size = string->size;
+	unsigned char *characters = string->characters;
+
+	for (unsigned int i = 0; i < size; ++i) {
+		hash = (*characters++) + (hash << 6) + (hash << 16) - hash;
+	}
+
+	// cache + return hash
+	return string->hash = hash;
 }
 
 /**
@@ -32,27 +68,16 @@ unsigned int StringCompare (struct String *aString, struct String *bString) {
 		return 0;
 	}
 
-	// compare generic string of equal length
-	if (strcmp(aString, bString) != 0) {
-		return 0;
+	unsigned int size = aStringSize + 1;
+	unsigned char *a = aString->characters;
+	unsigned char *b = bString->characters;
+
+	// compare string of equal length
+	while (--size > 0) {
+		if (*a != *b) {
+			return 0;
+		}
 	}
 
 	return 1;
-}
-
-/**
- * String Create
- */
-String *StringCreate(unsigned char *charaters) {
-    // get size of string + null character
-    unsigned int size = strlen(charaters) + 1;
-
-    // allocate memory for String struct + characters
-    String *string = malloc(sizeof(*string) + size);
-    string->size = size;
-
-    // copy characters to struct
-    memcpy(string->characters, charaters, size);
-
-    return string;
 }
