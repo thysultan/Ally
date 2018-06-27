@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	};
 
 	// initialize program
-	struct Program *program = ProgramConstruct(0, example, 38);
+	struct Program *program = ProgramConstruct(example, 38, 0);
 
 	float startTime = (float)clock();
 
@@ -51,6 +51,8 @@ int main(int argc, char *argv[]) {
 	float timeElapsed = (endTime - startTime)/CLOCKS_PER_SEC;
 
 	printf("time: %f\n", (float)timeElapsed);
+
+	ProgramDestroy(program);
 
 	return 0;
 }

@@ -10,6 +10,6 @@ start = time.clock()
 
 # fib(28)
 
-print(fib(6))
+print(fib(28))
 print("elapsed: " + str(time.clock() - start))
 
