@@ -1,4 +1,5 @@
 #include "Program.c"
+#include <time.h>
 
 int main(int argc, char *argv[]) {
 	int example[] = {
@@ -20,7 +21,7 @@ int main(int argc, char *argv[]) {
 		OP_RETURN,         // 19 - and return it
 
 		// else return fib(n-1) + fib(n-2);
-		OP_LOAD_LOCAL, 3,          // 20 - load last function argument N
+		OP_LOAD_LOCAL, 3,  // 20 - load last function argument N
 		OP_CONST, 1,       // 22 - put 1
 		OP_SUBTRACT,       // 24 - calculate: N-1, result is on the stack
 		OP_CALL, 0, 1,     // 25 - call fib function with 1 arg. from the stack
@@ -32,7 +33,7 @@ int main(int argc, char *argv[]) {
 		OP_RETURN,         // 37 - return from procedure
 
 		// entrypoint - main function
-		OP_CONST, 6,       // 38 - put 6
+		OP_CONST, 28,      // 38 - put 6
 		OP_CALL, 0, 1,     // 40 - call function: fib(arg) where arg = 6;
 		OP_PRINT,          // 43 - print result
 		OP_HALT            // 44 - stop program
@@ -41,8 +42,15 @@ int main(int argc, char *argv[]) {
 	// initialize program
 	struct Program *program = ProgramConstruct(0, example, 38);
 
+	float startTime = (float)clock();
+
 	// evaluate program
 	ProgramEvaluate(program);
+
+	float endTime = (float)clock();
+	float timeElapsed = (endTime - startTime)/CLOCKS_PER_SEC;
+
+	printf("time: %f\n", (float)timeElapsed);
 
 	return 0;
 }
