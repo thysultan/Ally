@@ -561,12 +561,12 @@ String(any target) string
 String.trim(string target, number padding) string
 String.replace(string target, union<object<RegExp>, string> value, union<string, function> replacement) string
 String.slice(string target, number from, number to) string
-String.toLowerCase(string target) string
-String.toUpperCase(string target) string
-String.charAt(string target, number index) string
-String.fromCharCode(number code) string
-String.charCodeAt(string target, number index) number
-String.indexOf(string target, number from) number
+String.lower(string target) string
+String.upper(string target) string
+String.char(string target, number index) string
+String.from(number code) string
+String.code(string target, number index) number
+String.index(string target, number from) number
 String.split(string target, union<object<RegExp>, string> separator, number limit) array<string>
 ```
 

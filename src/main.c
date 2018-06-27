@@ -4,7 +4,7 @@ int main(int argc, char *argv[]) {
 	int example[] = {
 		// int fib(n) {
 		// if (n == 0) return 0;
-		OP_LOAD, -3,       // 0 - load last function argument N
+		OP_LOAD_LOCAL, 3,  // 0 - load last function argument N
 		OP_CONST, 0,       // 2 - put 0
 		OP_EQUAL,          // 4 - check equality: N == 0
 		OP_JUMP_FALSE, 10, // 5 - if they are NOT equal, goto 10
@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 		OP_RETURN,         // 9 - and return it
 
 		// if (n < 3) return 1;
-		OP_LOAD, -3,       // 10 - load last function argument N
+		OP_LOAD_LOCAL, 3,  // 10 - load last function argument N
 		OP_CONST, 3,       // 12 - put 3
 		OP_LESS_THAN,      // 14 - check if 3 is less than N
 		OP_JUMP_FALSE, 20, // 15 - if 3 is NOT less than N, goto 20
@@ -20,11 +20,11 @@ int main(int argc, char *argv[]) {
 		OP_RETURN,         // 19 - and return it
 
 		// else return fib(n-1) + fib(n-2);
-		LOAD, -3,          // 20 - load last function argument N
+		OP_LOAD_LOCAL, 3,          // 20 - load last function argument N
 		OP_CONST, 1,       // 22 - put 1
 		OP_SUBTRACT,       // 24 - calculate: N-1, result is on the stack
 		OP_CALL, 0, 1,     // 25 - call fib function with 1 arg. from the stack
-		OP_LOAD, -3,       // 28 - load N again
+		OP_LOAD_LOCAL, 3,  // 28 - load N again
 		OP_CONST, 2,       // 30 - put 2
 		OP_SUBTRACT,       // 32 - calculate: N-2, result is on the stack
 		OP_CALL, 0, 1,     // 33 - call fib function with 1 arg. from the stack
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 	struct Program *program = ProgramConstruct(0, example, 38);
 
 	// evaluate program
-	ProgramEvaluate(vm);
+	ProgramEvaluate(program);
 
 	return 0;
 }
