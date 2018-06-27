@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 
 enum {
@@ -14,7 +15,7 @@ enum {
 	OP_CONST,        // push constant
 	OP_CALL,         // call procedure
 	OP_POP,          // discard away top of the stack
-	OP_RETURN        // return from procedure
+	OP_RETURN,       // return from procedure
 	OP_LOAD_LOCAL,   // load from local
 	OP_STORE_LOCAL,  // store in local
 	OP_LOAD_GLOBAL,  // load from global
@@ -23,12 +24,12 @@ enum {
 
 #define MACRO_STACK_POP(program) program->stack[program->index--]
 #define MACRO_STACK_PUSH(program, value) program->stack[++program->index] = value
-#define MACRO_CARET_NEXT(program) program->code[program->caret++]
+#define MACRO_CARET_NEXT(program) program->bytecode[program->caret++]
 #define MACRO_CARET_GOTO_NEXT(program, operation) goto *operation[MACRO_CARET_NEXT(program)]
 
-// #define PUSH(program, value) program->stack[++program->index] = value // push value on top of the stack
-// #define POP(program) program->stack[program->index--] // pop value from top of the stack
-// #define CODE(program) program->code[program->caret++] // get next bytecode
+#define POP(program) program->stack[program->index--] // pop value from top of the stack
+#define PUSH(program, value) program->stack[++program->index] = value // push value on top of the stack
+#define CODE(program) program->bytecode[program->caret++] // get next bytecode
 
 /**
  * @property {int[]} bytecode - byte code instructions
@@ -40,9 +41,9 @@ enum {
  * @property {int} index - virtual stack pointer
  */
 struct Program {
-	int* bytecode;
-	int* frame;
-	int* stack;
+	int *bytecode;
+	int *frame;
+	int *stack;
 
 	int caret;
 	int current;
@@ -56,15 +57,16 @@ struct Program {
  * @return {Program[]}
  */
 struct Program *ProgramConstruct(int size, int* bytecode, int caret) {
-	struct Program *program = malloc(sizeof Program);
+	struct Program *program = malloc(sizeof(program));
+	int *frame = malloc(sizeof(frame) * 16000);
+	int *stack = malloc(sizeof(stack) * 16000);
 
 	program->bytecode = bytecode;
-	program->frame = malloc(size * sizeof int);
-	program->stack = malloc(16000 * sizeof int);
-
+	program->frame = frame;
+	program->stack = stack;
 	program->caret = caret;
 	program->current = 0;
-	program->index = 0;
+	program->index = -1;
 
 	return program;
 }
@@ -73,7 +75,7 @@ struct Program *ProgramConstruct(int size, int* bytecode, int caret) {
  * @param {Program[]} program - program to destroy
  * @return {void}
  */
-void ProgramDestroy(Program *program){
+void ProgramDestroy(struct Program *program){
 	free(program->frame);
 	free(program->stack);
 	free(program);
@@ -94,10 +96,11 @@ void ProgramEvaluate(struct Program* program) {
 	int value1;
 	int value2;
 
+{
 	// indices of labels are the relevant opcodes
   static void* operation[] = {
   	&&LABEL_HALT,
-  	&&LABEL_PRINT
+  	&&LABEL_PRINT,
   	&&LABEL_ADD,
   	&&LABEL_SUBTRACT,
   	&&LABEL_MULTIPLY,
@@ -126,16 +129,18 @@ void ProgramEvaluate(struct Program* program) {
 		// stop the program
 		return;
  	}
- 	LABEL_CONST: {
- 		// get next value from bytecode
- 		value0 = MACRO_CARET_NEXT(program);
 
- 		// move it on top of the stack
- 		MACRO_STACK_PUSH(program, value0);
+ 	LABEL_PRINT: {
+ 		// pop value from top of the stack
+ 		value1 = MACRO_STACK_POP(program);
+
+ 		// print value
+ 		printf("result: %d\n", value1);
 
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_ADD: {
  		// get second value from top of the stack
  		value2 = MACRO_STACK_POP(program);
@@ -149,6 +154,35 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
+ 	LABEL_SUBTRACT: {
+ 		// get second value from top of the stack
+ 		value2 = MACRO_STACK_POP(program);
+
+ 		// get first value from top of the stack
+ 		value1 = MACRO_STACK_POP(program);
+
+ 		// subtract two values and put result on top of the stack
+ 		MACRO_STACK_PUSH(program, value1 - value2);
+
+ 		// goto next instruction
+ 		MACRO_CARET_GOTO_NEXT(program, operation);
+ 	}
+
+ 	LABEL_MULTIPLY: {
+ 		// get second value from top of the stack
+ 		value2 = MACRO_STACK_POP(program);
+
+ 		// get first value from top of the stack
+ 		value1 = MACRO_STACK_POP(program);
+
+ 		// multiply two values and put result on top of the stack
+ 		MACRO_STACK_PUSH(program, value1 * value2);
+
+ 		// goto next instruction
+ 		MACRO_CARET_GOTO_NEXT(program, operation);
+ 	}
+
  	LABEL_LESS_THAN: {
  		// get second value from top of the stack
  		value2 = MACRO_STACK_POP(program);
@@ -162,6 +196,21 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
+ 	LABEL_EQUAL: {
+ 		// get second value from top of the stack
+ 		value2 = MACRO_STACK_POP(program);
+
+ 		// get first value from top of the stack
+ 		value1 = MACRO_STACK_POP(program);
+
+ 		// compare two values and put result on top of the stack
+ 		MACRO_STACK_PUSH(program, value1 == value2 ? 1 : 0);
+
+ 		// goto next instruction
+ 		MACRO_CARET_GOTO_NEXT(program, operation);
+ 	}
+
  	LABEL_JUMP: {
  		// unconditionaly jump to provided address
  		program->caret = MACRO_CARET_NEXT(program);
@@ -169,30 +218,44 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_JUMP_TRUE: {
  		// get address pointer from code
  		address = MACRO_CARET_NEXT(program);
 
  		// pop value from top of the stack, if true jump to provided address
- 		if (POP(program) != 0) {
+ 		if (MACRO_STACK_POP(program) != 0) {
  			program->caret = address;
  		}
 
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_JUMP_FALSE: {
  		// get address pointer from code
  		address = MACRO_CARET_NEXT(program);
 
  		// pop value from top of the stack, if false jump to provided address
- 		if (POP(program) == 0) {
+ 		if (MACRO_STACK_POP(program) == 0) {
  			program->caret = address;
  		}
 
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
+ 	LABEL_CONST: {
+ 		// get next value from bytecode
+ 		value0 = MACRO_CARET_NEXT(program);
+
+ 		// move it on top of the stack
+ 		MACRO_STACK_PUSH(program, value0);
+
+ 		// goto next instruction
+ 		MACRO_CARET_GOTO_NEXT(program, operation);
+ 	}
+
  	LABEL_POP: {
  		// discard value at top of the stack
  		--program->index;
@@ -200,6 +263,7 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_CALL: {
  		// get next value from bytecode(address of procedure jump), expecting arguments on the stack
  		address = MACRO_CARET_NEXT(program);
@@ -225,6 +289,7 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_RETURN: {
  		// pop return value from top of the stack
  		payload = MACRO_STACK_POP(program);
@@ -250,6 +315,7 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_LOAD_LOCAL: {
  		// get next value from bytecode(local variables offset on the stack)
  		offset = MACRO_CARET_NEXT(program);
@@ -260,6 +326,7 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_STORE_LOCAL: {
  		// get value from top of the stack
  		value1 = MACRO_STACK_POP(program);
@@ -268,14 +335,15 @@ void ProgramEvaluate(struct Program* program) {
  		offset = MACRO_CARET_NEXT(program);
 
  		// store value at address received relatively to current index
- 		program->locals[program->current - offset] = value1;
+ 		program->frame[program->current - offset] = value1;
 
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_LOAD_GLOBAL: {
  		// get pointer address from bytecode
- 		addres = MACRO_STACK_POP(program);
+ 		address = MACRO_STACK_POP(program);
 
  		// load value from memory of the provided address
  		value1 = program->frame[address];
@@ -286,6 +354,7 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
+
  	LABEL_STORE_GLOBAL: {
  		// get value from top of the stack
  		value1 = MACRO_STACK_POP(program);
@@ -299,31 +368,13 @@ void ProgramEvaluate(struct Program* program) {
  		// goto next instruction
  		MACRO_CARET_GOTO_NEXT(program, operation);
  	}
- 	LABEL_PRINT: {
- 		// pop value from top of the stack
- 		value1 = MACRO_STACK_POP(program);
+}
 
- 		// print value
- 		printf("%d\n", value1);
+	return;
 
- 		// goto next instruction
- 		MACRO_CARET_GOTO_NEXT(program, operation);
- 	}
-
-/*
 	do {
-		int address;
-		int opcode;
-		int offset;
-		int length;
-		int payload;
-
-		int value0;
-		int value1;
-		int value2;
-
 		// decode operation
-		switch (opcode = CODE(program)) {
+		switch (CODE(program)) {
 			case OP_CONST:
 				// get next value from bytecode
 				value0 = CODE(program);
@@ -352,6 +403,16 @@ void ProgramEvaluate(struct Program* program) {
 
 				// compare two values and put result on top of the stack
 				PUSH(program, value1 < value2 ? 1 : 0);
+				break;
+			case OP_EQUAL:
+				// get second value from top of the stack
+				value2 = POP(program);
+
+				// get first value from top of the stack
+				value1 = POP(program);
+
+				// compare two values and put result on top of the stack
+				PUSH(program, value1 == value2 ? 1 : 0);
 
 				break;
 			case OP_JUMP:
@@ -364,7 +425,17 @@ void ProgramEvaluate(struct Program* program) {
 				address = CODE(program);
 
 				// pop value from top of the stack, if true jump to provided address
-				if (POP(program)) {
+				if (POP(program) != 0) {
+					program->caret = address;
+				}
+
+				break;
+			case OP_JUMP_FALSE:
+				// get address pointer from code
+				address = CODE(program);
+
+				// // pop value from top of the stack, if true jump to provided address
+				if (POP(program) == 0) {
 					program->caret = address;
 				}
 
@@ -436,12 +507,12 @@ void ProgramEvaluate(struct Program* program) {
 				offset = CODE(program);
 
 				// store value at address received relatively to current index
-				program->locals[program->current - offset] = value1;
+				program->frame[program->current - offset] = value1;
 
 				break;
 			case OP_LOAD_GLOBAL:
 				// get pointer address from bytecode
-				addres = POP(program);
+				address = POP(program);
 
 				// load value from memory of the provided address
 				value1 = program->frame[address];
@@ -466,12 +537,10 @@ void ProgramEvaluate(struct Program* program) {
 				value1 = POP(program);
 
 				// print value
-				printf("%d\n", value1);
+				printf("result: %d\n", value1);
 
 				break;
 			case OP_HALT:
-				// implement a call stack
-
 				// release program memory
 				ProgramDestroy(program);
 
@@ -479,5 +548,4 @@ void ProgramEvaluate(struct Program* program) {
 				return;
 		}
 	} while(1);
-*/
 }
