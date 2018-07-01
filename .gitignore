@@ -14,4 +14,4 @@ npm-debug.log
 *.swo
 coverage
 bin/
-*/bin/*
+build/
