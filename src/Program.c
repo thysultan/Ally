@@ -1,12 +1,6 @@
 #include "Shared.h"
 #include "Program.h"
 
-#define MACRO_STACK_POP(program) program->index--
-#define MACRO_STACK_POP_VALUE(program) program->stack[MACRO_STACK_POP(program)]
-#define MACRO_STACK_PUSH_VALUE(program, value) program->stack[++program->index] = value
-#define MACRO_CARET_NEXT_OPCODE(program) program->bytecode[program->caret++]
-#define MACRO_CARET_NEXT_OPCODE_GOTO(program, operation) goto *operation[MACRO_CARET_NEXT_OPCODE(program)]
-
 Program *ProgramConstruct(Int64 *bytecode, Int64 caret, Int64 size) {
 	Program *program = malloc(sizeof(*program));
 	Float64 *frame = malloc(sizeof(*frame) * size);
@@ -14,7 +8,7 @@ Program *ProgramConstruct(Int64 *bytecode, Int64 caret, Int64 size) {
 
 	program->caret = caret;
 	program->current = 0;
-	program->index = -1;
+	program->index = 0;
 	program->bytecode = bytecode;
 	program->frame = frame;
 	program->stack = stack;
@@ -29,329 +23,337 @@ void ProgramDestroy(Program *program) {
 }
 
 void ProgramEvaluate(Program *program) {
-	Int64 offset;
-	Int64 length;
-	Int64 address;
+	Int64 offset = 0;
+	Int64 length = 0;
+	Int64 address = 0;
+	Int64 caret = program->caret;
+	Int64 current = program->current;
+	Int64 index = program->index;
+	Int64 *bytecode = program->bytecode;
+	Float64 *frame = program->frame;
+	Float64 *stack = program->stack;
 
 	// registers
 	Float64 value1;
 	Float64 value2;
 
-	// indices point to relevant opcode
-	static void *operation[] = {
-		&&LABEL_HALT,
-		&&LABEL_PRINT,
-		&&LABEL_ADD,
-		&&LABEL_SUBTRACT,
-		&&LABEL_MULTIPLY,
-		&&LABEL_DIVIDE,
-		&&LABEL_LESS_THAN,
-		&&LABEL_GREATER_THAN,
-		&&LABEL_EQUAL,
-		&&LABEL_JUMP,
-		&&LABEL_JUMP_TRUE,
-		&&LABEL_JUMP_FALSE,
-		&&LABEL_CONST,
-		&&LABEL_CALL,
-		&&LABEL_POP,
-		&&LABEL_RETURN,
-		&&LABEL_LOAD_LOCAL,
-		&&LABEL_STORE_LOCAL,
-		&&LABEL_LOAD_GLOBAL,
-		&&LABEL_STORE_GLOBAL,
+	// indices point to relevant bytecode
+	static void *table[] = {
+		&&LabelHalt,
+		&&LabelPrint,
+		&&LabelAdd,
+		&&LabelSubtract,
+		&&LabelMultiply,
+		&&LabelDivide,
+		&&LabelLessThan,
+		&&LabelGreaterThan,
+		&&LabelEqual,
+		&&LabelJump,
+		&&LabelJumpTrue,
+		&&LabelJumpFalse,
+		&&LabelConst,
+		&&LabelCall,
+		&&LabelPop,
+		&&LabelReturn,
+		&&LabelLoadLocal,
+		&&LabelStoreLocal,
+		&&LabelLoadGlobal,
+		&&LabelStoreGlobal,
 	};
 
 	// goto initial instruction
-	MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+	goto *table[bytecode[caret++]];
 
-	LABEL_HALT: {
+	LabelHalt: {
 		// stop the program
 		return;
 	}
 
-	LABEL_PRINT: {
+	LabelPrint: {
 		// pop value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// print value
 		printf("%d\n", (int)value2);
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_ADD: {
+	LabelAdd: {
 		// get second value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get first value from top of the stack
-		value1 = MACRO_STACK_POP_VALUE(program);
+		value1 = stack[index--];
 
 		// valid number check
 		if (value1 == value1 && value2 == value2) {
 			// add two values and put result on top of the stack
-			MACRO_STACK_PUSH_VALUE(program, value1 + value2);
+			stack[++index] = value1 + value2;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_SUBTRACT: {
+	LabelSubtract: {
 		// get second value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get first value from top of the stack
-		value1 = MACRO_STACK_POP_VALUE(program);
+		value1 = stack[index--];
 
 		// valid number check
 		if (value1 == value1 && value2 == value2) {
 			// subtract two values and put result on top of the stack
-			MACRO_STACK_PUSH_VALUE(program, value1 - value2);
+			stack[++index] = value1 - value2;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_MULTIPLY: {
+	LabelMultiply: {
 		// get second value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get first value from top of the stack
-		value1 = MACRO_STACK_POP_VALUE(program);
+		value1 = stack[index--];
 
 		// valid number check
 		if (value1 == value1 && value2 == value2) {
 			// multiply two values and put result on top of the stack
-			MACRO_STACK_PUSH_VALUE(program, value1 * value2);
+			stack[++index] = value1 * value2;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_DIVIDE: {
+	LabelDivide: {
 		// get second value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get first value from top of the stack
-		value1 = MACRO_STACK_POP_VALUE(program);
+		value1 = stack[index--];
 
 		// valid number check
 		if (value1 == value1 && value2 == value2) {
 			// divide two values and put result on top of the stack
-			MACRO_STACK_PUSH_VALUE(program, value1 / value2);
+			stack[++index] = value1 / value2;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_LESS_THAN: {
+	LabelLessThan: {
 		// get second value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get first value from top of the stack
-		value1 = MACRO_STACK_POP_VALUE(program);
+		value1 = stack[index--];
 
 		// valid number check
 		if (value1 == value1 && value2 == value2) {
 			// compare two values and put result on top of the stack
-			MACRO_STACK_PUSH_VALUE(program, value1 < value2);
+			stack[++index] = value1 < value2;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_GREATER_THAN: {
+	LabelGreaterThan: {
 		// get second value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get first value from top of the stack
-		value1 = MACRO_STACK_POP_VALUE(program);
+		value1 = stack[index--];
 
 		// valid number check
 		if (value1 == value1 && value2 == value2) {
 			// compare two values and put result on top of the stack
-			MACRO_STACK_PUSH_VALUE(program, value1 > value2);
+			stack[++index] = value1 > value2;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-
-	LABEL_EQUAL: {
+	LabelEqual: {
 		// get second value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get first value from top of the stack
-		value1 = MACRO_STACK_POP_VALUE(program);
+		value1 = stack[index--];
 
 		// compare two values and put result on top of the stack
-		MACRO_STACK_PUSH_VALUE(program, value1 == value2);
+		stack[++index] = value1 == value2;
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_JUMP: {
-		// unconditionaly jump to provided address
-		program->caret = MACRO_CARET_NEXT_OPCODE(program);
-
-		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
-	}
-
-	LABEL_JUMP_TRUE: {
+	LabelJump: {
 		// get address pointer from code
-		address = MACRO_CARET_NEXT_OPCODE(program);
+		address = bytecode[caret++];
+
+		// unconditionaly jump to provided address
+		caret = address;
+
+		// goto next instruction
+		goto *table[bytecode[caret++]];
+	}
+
+	LabelJumpTrue: {
+		// get address pointer from code
+		address = bytecode[caret++];
 
 		// pop value from top of the stack, if true jump to provided address
-		if (MACRO_STACK_POP_VALUE(program)) {
-			program->caret = address;
+		if (stack[index--]) {
+			caret = address;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_JUMP_FALSE: {
+	LabelJumpFalse: {
 		// get address pointer from code
-		address = MACRO_CARET_NEXT_OPCODE(program);
+		address = bytecode[caret++];
 
 		// pop value from top of the stack, if false jump to provided address
-		if (!MACRO_STACK_POP_VALUE(program)) {
-			program->caret = address;
+		if (!stack[index--]) {
+			caret = address;
 		}
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_CONST: {
+	LabelConst: {
 		// get next value from bytecode
-		value2 = MACRO_CARET_NEXT_OPCODE(program);
+		value2 = bytecode[caret++];
 
 		// move it on top of the stack
-		MACRO_STACK_PUSH_VALUE(program, value2);
+		stack[++index] = value2;
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_POP: {
-		// discard value at top of the stack
-		MACRO_STACK_POP(program);
+	LabelPop: {
+		// pop value at top of the stack
+		value2 = stack[index--];
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_CALL: {
+	LabelCall: {
 		// get next value from bytecode(address of procedure jump), expecting arguments on the stack
-		address = MACRO_CARET_NEXT_OPCODE(program);
+		address = bytecode[caret++];
 
 		// get next value from bytecode(arguments length)
-		length = MACRO_CARET_NEXT_OPCODE(program);
+		length = bytecode[caret++];
 
 		// put on the top of the stack(arguments length)
-		MACRO_STACK_PUSH_VALUE(program, length);
+		stack[++index] = length;
 
 		// put on the top of the stack(current frame)
-		MACRO_STACK_PUSH_VALUE(program, program->current);
+		stack[++index] = current;
 
 		// put on the top of the stack(bytecode caret)
-		MACRO_STACK_PUSH_VALUE(program, program->caret);
+		stack[++index] = caret;
 
 		// upate current frame
-		program->current = program->index;
+		current = index;
 
 		// update bytecode caret to target procedure address
-		program->caret = address;
+		caret = address;
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_RETURN: {
+	LabelReturn: {
 		// pop return value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// return from current address
-		program->index = program->current;
+		index = current;
 
 		// restore instruction pointer
-		program->caret = MACRO_STACK_POP_VALUE(program);
+		caret = stack[index--];
 
 		// restore current pointer
-		program->current = MACRO_STACK_POP_VALUE(program);
+		current = stack[index--];
 
 		// get procedures args length
-		length = MACRO_STACK_POP_VALUE(program);
+		length = stack[index--];
 
 		// discard remaining args
-		program->index = program->index - length;
+		index = index - length;
 
 		// leave return value on top of the stack
-		MACRO_STACK_PUSH_VALUE(program, value2);
+		stack[++index] = value2;
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_LOAD_LOCAL: {
+	LabelLoadLocal: {
 		// get next value from bytecode(local variables offset on the stack)
-		offset = MACRO_CARET_NEXT_OPCODE(program);
+		offset = bytecode[caret++];
 
 		// put on the top of the stack variable stored relatively to the current index
-		MACRO_STACK_PUSH_VALUE(program, program->stack[program->current - offset]);
+		stack[++index] = stack[current - offset];
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_STORE_LOCAL: {
+	LabelStoreLocal: {
 		// get value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// get next value from bytecode(relative pointer address)
-		offset = MACRO_CARET_NEXT_OPCODE(program);
+		offset = bytecode[caret++];
 
 		// store value at address received relatively to current index
-		program->frame[program->current - offset] = value2;
+		frame[current - offset] = value2;
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_LOAD_GLOBAL: {
+	LabelLoadGlobal: {
 		// get pointer address from bytecode
-		address = MACRO_STACK_POP_VALUE(program);
+		address = stack[index--];
 
 		// load value from memory of the provided address
-		value2 = program->frame[address];
+		value2 = frame[address];
 
 		// put that value on top of the stack
-		MACRO_STACK_PUSH_VALUE(program, value2);
+		stack[++index] = value2;
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 
-	LABEL_STORE_GLOBAL: {
+	LabelStoreGlobal: {
 		// get pointer address from bytecode
-		address = MACRO_CARET_NEXT_OPCODE(program);
+		address = bytecode[caret++];
 
 		// get value from top of the stack
-		value2 = MACRO_STACK_POP_VALUE(program);
+		value2 = stack[index--];
 
 		// store value at address received
-		program->frame[address] = value2;
+		frame[address] = value2;
 
 		// goto next instruction
-		MACRO_CARET_NEXT_OPCODE_GOTO(program, operation);
+		goto *table[bytecode[caret++]];
 	}
 }

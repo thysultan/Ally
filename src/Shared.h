@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <time.h>
 
-typedef unsigned char Uint8; // 1 byte
-typedef unsigned short int Uint16; // 2 byte
-typedef unsigned int Uint32; // 4 byte
-typedef unsigned long int Uint64;  // 8 byte
+typedef unsigned char UInt8; // 1 byte
+typedef unsigned short int UInt16; // 2 byte
+typedef unsigned int UInt32; // 4 byte
+typedef unsigned long int UInt64;  // 8 byte
 
 typedef signed char Int8; // 1 byte
 typedef signed short int Int16; // 2 byte
