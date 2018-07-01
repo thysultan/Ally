@@ -9,7 +9,7 @@ def fib(n):
 start = time.clock()
 
 # fib(28)
+res = fib(28)
 
-print(fib(28))
-print("elapsed: " + str(time.clock() - start))
-
+print("elapsed: " + str((time.clock() - start) * 1000))
+print(res)
