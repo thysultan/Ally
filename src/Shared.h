@@ -19,6 +19,7 @@ typedef float Float32; // 4 byte
 typedef double Float64; // 8 byte
 
 typedef struct {
+	Int64 size; // program size
 	Int64 caret; // bytecode offset
 	Int64 current; // frame offset
 	Int64 index; // stack offset
@@ -29,6 +30,7 @@ typedef struct {
 
 typedef enum {
 	OpcodeHalt, // stop program
+	OpcodeException, // exception procedure
 	OpcodePrint, // print value on top of the stack
 	OpcodeAdd, // addition
 	OpcodeSubtract, // subtraction

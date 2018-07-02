@@ -1,11 +1,12 @@
 #include "Shared.h"
 #include "Program.h"
 
-Program *ProgramConstruct(Int64 *bytecode, Int64 caret, Int64 size) {
+Program *ProgramConstruct(Int64 size, Int64 caret, Int64 *bytecode) {
 	Program *program = malloc(sizeof(*program));
 	Float64 *frame = malloc(sizeof(*frame) * size);
-	Float64 *stack = malloc(sizeof(*stack) * 16000);
+	Float64 *stack = malloc(sizeof(*stack) * size);
 
+	program->size = size;
 	program->caret = caret;
 	program->current = 0;
 	program->index = 0;
@@ -23,15 +24,18 @@ void ProgramDestroy(Program *program) {
 }
 
 void ProgramEvaluate(Program *program) {
-	Int64 offset = 0;
-	Int64 length = 0;
-	Int64 address = 0;
+	Int64 size = program->size;
 	Int64 caret = program->caret;
 	Int64 current = program->current;
 	Int64 index = program->index;
 	Int64 *bytecode = program->bytecode;
 	Float64 *frame = program->frame;
 	Float64 *stack = program->stack;
+
+	Int64 overflow = size - 8000;
+	Int64 offset = 0;
+	Int64 length = 0;
+	Int64 address = 0;
 
 	// registers
 	Float64 value1;
@@ -40,6 +44,7 @@ void ProgramEvaluate(Program *program) {
 	// indices point to relevant bytecode
 	static void *table[] = {
 		&&LabelHalt,
+		&&LabalException,
 		&&LabelPrint,
 		&&LabelAdd,
 		&&LabelSubtract,
@@ -58,7 +63,7 @@ void ProgramEvaluate(Program *program) {
 		&&LabelLoadLocal,
 		&&LabelStoreLocal,
 		&&LabelLoadGlobal,
-		&&LabelStoreGlobal,
+		&&LabelStoreGlobal
 	};
 
 	// goto initial instruction
@@ -67,6 +72,12 @@ void ProgramEvaluate(Program *program) {
 	LabelHalt: {
 		// stop the program
 		return;
+	}
+
+	LabalException: {
+		printf("%s\n", "Exception");
+
+		goto *table[OpcodeHalt];
 	}
 
 	LabelPrint: {
@@ -273,6 +284,11 @@ void ProgramEvaluate(Program *program) {
 
 		// update bytecode caret to target procedure address
 		caret = address;
+
+		// stack overflow
+		if (index > overflow) {
+			goto *table[OpcodeException];
+		}
 
 		// goto next instruction
 		goto *table[bytecode[caret++]];

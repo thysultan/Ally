@@ -2,11 +2,11 @@
 #define PROGRAM_HEADER
 
 /**
- * @param bytecode - byte code instructions
- * @param caret - initial byte code address
  * @param size - initial size of program
+ * @param caret - initial byte code address
+ * @param bytecode - byte code instructions
  */
-Program *ProgramConstruct(Int64 *bytecode, Int64 caret, Int64 size);
+Program *ProgramConstruct(Int64 size, Int64 caret, Int64 *bytecode);
 
 /**
  * @param program - program to destroy

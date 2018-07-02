@@ -3,7 +3,7 @@
 
 Int32 main() {
 	Int64 example[] = {
-		// int fib(n) {
+		// func fib (n) {
 		// if (n < 2) return n;
 		OpcodeLoadLocal, 3,   // 0 - load last function argument (n)
 		OpcodeConst, 2,       // 2 - put 2
@@ -11,7 +11,6 @@ Int32 main() {
 		OpcodeJumpFalse, 10,  // 5 - if !(n < 2), goto 10
 		OpcodeLoadLocal, 3,   // 7 - otherwise put (n)
 		OpcodeReturn,         // 9 - and return it
-
 		// else return fib(n - 1) + fib(n - 2);
 		OpcodeLoadLocal, 3,   // 10 - load last function argument (n)
 		OpcodeConst, 1,       // 12 - put 1
@@ -23,16 +22,17 @@ Int32 main() {
 		OpcodeCall, 0, 1,     // 23 - call fib function with 1 arg from the stack
 		OpcodeAdd,            // 26 - since 2 fibs pushed their ret values on the stack, just add them
 		OpcodeReturn,         // 27 - return from procedure
+		// }
 
-		// entrypoint - main function
-		OpcodeConst, 28,      // 28 - put 28
+		// fib(28);
+		OpcodeConst, 28,      // 28 - put 28, entrypoint
 		OpcodeCall, 0, 1,     // 30 - call function: fib(n) where n = 28;
 		OpcodePrint,          // 33 - print result
 		OpcodeHalt            // 34 - stop program
 	};
 
 	// initialize program
-	Program *program = ProgramConstruct(example, 28, 0);
+	Program *program = ProgramConstruct(512000, 28, example);
 
 	Float64 startTime = clock();
 
