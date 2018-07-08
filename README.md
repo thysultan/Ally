@@ -52,7 +52,23 @@ ALL_CAPS
 
 ## Let
 
-Also known as "variable declaration/assignment", `let` gives names to values. They can be seen and referenced by other pieces of the program. Let bindings created in a operator/function/lambda body `{}` are scoped to that particular body.
+Also known as "variable declaration/assignment", `let` gives names to variables. They can be seen and referenced by other pieces of the program. Let bindings created in a operator/function/lambda body `{}` are scoped to that particular body.
+
+Inline assignment variables without the explicit use fo the `let` keyword are implicitly `let` bindings.
+
+```
+template = "1" // let template = "1"
+```
+
+Let bindings are not required an assignment inline.
+
+```
+let template
+let script
+
+template = "1"
+script = "2"
+```
 
 ---
 
@@ -575,24 +591,6 @@ The `instanceof` operator returns `true` if the value is an instance of specifie
 
 ```
 1 instanceof Number === true
-```
-
-## Let
-
-Variables are implicitly created when assigned.
-
-```
-template = "1"
-```
-
-The `let` operator allows a variable statement without explicit assigmnet.
-
-```
-let template
-let script
-
-template = "1"
-script = "2"
 ```
 
 ## Delete
