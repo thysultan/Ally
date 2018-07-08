@@ -13,10 +13,15 @@ ArrayLiteral                ::= "[" ( ( Elision )? "]" | ElementList Elision "]"
 ElementList                 ::= ( Elision )? AssignmentExpression ( Elision AssignmentExpression )*
 Elision                     ::= ( "," )+
 ObjectLiteral               ::= "{" ( PropertyNameAndValueList )? "}"
+DictionaryLiteral           ::= "{" ( KeyAndValuePairList ) "}"
+
 PropertyNameAndValueList    ::= PropertyNameAndValue ( ( "," PropertyNameAndValue ) | "," )*
 PropertyNameAndValue        ::= ( ( ( Identifier | StringLiteral |  NumberLiteral ) ":" AssignmentExpression ) | SpreadIdentifier )
 
-PrimaryExpression           ::= "this" |  ObjectLiteral | ( "(" Expression ")" ) | Identifier | Literal
+KeyAndValuePairList         ::= KeyAndValuePair ( ( "," KeyAndValuePair ) | "," )*
+KeyAndValuePair             ::= "[" ( AssignmentExpression "," AssignmentExpression )? "]"
+
+PrimaryExpression           ::= "this" |  ObjectLiteral | DictionaryLiteral | ( "(" Expression ")" ) | Identifier | Literal
 MemberExpression            ::= ( ( FunctionExpression | PrimaryExpression ) ( MemberExpressionPart )* )
 MemberExpressionPart        ::= ( "[" Expression "]" ) | ( "." Identifier )
 
@@ -44,7 +49,7 @@ ShiftExpression             ::= AdditiveExpression ( ShiftOperator AdditiveExpre
 ShiftOperator               ::= ( "<<" | ">>" | ">>>" )
 
 RelationalExpression        ::= ShiftExpression ( RelationalOperator ShiftExpression )*
-RelationalOperator          ::= ( "<" | ">" | "<=" | ">=" | "instanceof" | "in" )
+RelationalOperator          ::= ( "<" | ">" | "<=" | ">=" | "typeof" | "instanceof" | "of" | "in" | "pick" | "delete" )
 
 EqualityExpression          ::= RelationalExpression ( EqualityOperator RelationalExpression )*
 EqualityOperator            ::= ( "==" | "!=" | "===" | "!==" )
@@ -85,26 +90,39 @@ Statement                   ::=
   | MatchStatement
   | ThrowStatement
   | TryStatement
+  | TypeofStatement
+  | SizeofStatement
+  | WithStatement
+  | InstanceofStatement
+  | InStatement
+  | DeleteStatement
+  | PickStatement
 
 StatementList               ::= ( Statement )+
-BlockStatement              ::= "{" ( StatementList )? "}"
-VariableStatement           ::= "let" VariableDeclaration
+VariableStatement           ::= ( "let" )? VariableDeclarationList
+VariableDeclaration         ::= Identifier ( Initialiser )?
+VariableDeclarationList     ::= VariableDeclaration ( "," VariableDeclaration )*
 Initialiser                 ::= "=" AssignmentExpression
 EmptyStatement              ::= LineTerminator | ";"
 ExpressionStatement         ::= Expression ( EmptyStatement )?
+BlockStatement              ::= "{" ( StatementList )? "}"
 IfStatement                 ::= "if" Expression BlockStatement ( "else" BlockStatement )?
 
 IterationStatement          ::=
   | ( "while" Expression BlockStatement )
-  | ( "for" VariableDeclaration ";" ( Expression )? ";" ( Expression )? ")" BlockStatement )
-  | ( "for" VariableDeclaration "in" Expression ")" BlockStatement )
+  | ( "for" ( Expression )? ";" ( Expression )? ";" ( Expression )? ")" BlockStatement )
+  | ( "for" Identifier "of" Expression ")" BlockStatement )
 
 ContinueStatement           ::= "continue"
 BreakStatement              ::= "break"
 ReturnStatement             ::= "return" ( Expression )?
-InstanceofStatement         ::= Expression "instanceof" Expression
 TypeofStatement             ::= "typeof" Expression
 SizeofStatement             ::= "sizeof" Expression
+WithStatement               ::= "with" Expression CallExpression
+InstanceofStatement         ::= Expression "instanceof" Expression
+InStatement                 ::= Expression "in" Expression
+DeleteStatement             ::= Expression "delete" ( Expression | ParameterDestructuring )
+PickStatement               ::= Expression "pick" ( Expression | ParameterDestructuring )
 
 MatchStatement              ::= "match" Expression CaseBlock
 SwitchStatement             ::= "switch" Expression CaseBlock
@@ -117,14 +135,15 @@ TryStatement                ::= "try" BlockStatement ( ( Finally | Catch ( Final
 Catch                       ::= "catch" Identifier? BlockStatement
 Finally                     ::= "finally" BlockStatement
 
-PickStatement               ::= "pick" "{" ( ParameterList )? "}"
+RangeStatment               ::= ( DecimalLiteral "..." DecimalLiteral )
+
 TypeStatement               ::=
-  | ( "void" | "number" | "boolean" | "symbol" | "string" | "function" | "any" )
+  | ( "void" | "number" | "boolean" | "symbol" | "string" | "function" )
   | ( ( "object" | "array" ) ( "<" ( Identifier | TypeStatement ) ">" )? )
 
-SpreadIdentifier            ::= ( "..." )? Identifier
-ParameterIdentifier         ::= ( TypeStatement )? SpreadIdentifier ( PickStatement | Initialiser )?
+ParameterIdentifier         ::= ( TypeStatement )? ( ( "..." )? Identifier ) ( PickStatement | Initialiser )?
 ParameterList               ::= ParameterIdentifier ( "," ParameterIdentifier )*
+ParameterDestructuring      ::= ( "{" ( ParameterList | RangeStatment )? "}" )
 
 FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( FunctionBody | ( ( LineTerminator )? Expression ) )
 FunctionDeclaration         ::= "func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
@@ -147,6 +166,3 @@ FromStatement               ::= "from" ( Identifier | StringLiteral )
 ImportIdentifier            ::= Identifier ( 'as' Identifier )?
 ImportList                  ::= ImportIdentifier ( "," ImportIdentifier )*
 ImportStatement             ::= "import" ( ImportList | ( "{" ImportList "}" ) ) FromStatement
-
-LetStatement                ::= "let" LetDeclarationList
-LetDeclarationList          ::= LetDeclaration ( "," LetDeclaration )*

@@ -5,9 +5,9 @@ Pronounced L-I, Ally is a dynamic programming language with semi-optional types.
 ## Reserved
 
 ```
-void, number, boolean, symbol, string, function, array, object, union, any,
+void, number, boolean, symbol, string, function, array, object, union,
 try, catch, finally, if, else, for, in, while, switch, match, case, default,
-continue, break, return, throw, pick, typeof, sizeof, instanceof,
+continue, break, return, throw, pick, typeof, sizeof, instanceof, delete,
 true, false, null, NaN, Infinity,
 public, private, protected, static, this,
 let, func, class, extends, module,
@@ -17,7 +17,7 @@ import, export, as
 ## Reserved(Future)
 
 ```
-enum, abstract, typealias, interface, extern, super, yield, async, await, is
+enum, abstract, typealias, interface, extern, super, yield, async, await, is, with
 ```
 
 ## Comments
@@ -74,7 +74,7 @@ Booleans has the type of `boolean` either `true` or `false`. Boolean operations 
 64-bit (double-precision) floating point numbers. Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
 
 ```
-let a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 100
+a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 100
 ```
 
 Both `.4` and `1.` are not valid, and must be pre/post-fixed with a zero.
@@ -95,7 +95,7 @@ Spaces and appended letters are ignored.
 Strings are delimited with either double quotes ", or single ' quotes. String can span multiple lines.
 
 ```
-let a = '
+a = '
 	Hello
 	World
 '
@@ -104,14 +104,14 @@ let a = '
 String concatenation uses `+`.
 
 ```
-let a = 'Hello' + ' ' + 'World'
+a = 'Hello' + ' ' + 'World'
 ```
 
 String interpolation is delimeted by `$()`
 
 ```
 
-let a = 'Hello $(1 + 2)'
+a = 'Hello $(1 + 2)'
 ```
 
 ## Control
@@ -167,20 +167,20 @@ while condition {
 ### For
 
 ```
-for step++ < 5 {
+for step < 100 {
 }
 
-for step = 0; step < sizeof children; step++ {
+for step = 0, step < 100, step++ {
 }
 ```
 
-### For..In
+### For..Of
 
 ```
-for step in children {
+for step of children {
 }
 
-for step in 0..10 {
+for step of 0...10 {
 }
 ```
 
@@ -224,50 +224,50 @@ func name
 Lambdas are identical to functions and share the same type of `function`.
 
 ```
-let name = => {
+name = => {
 }
 
-let name = a => {
+name = a => {
 }
 
-let name = a, b => {
+name = a, b => {
 }
 
-let name = => {
+name = => {
 }
 
-let name = ...args => {
+name = ...args => {
 }
 
-let name = ...args, a => {
+name = ...args, a => {
 }
 
-let name = a, ...args => {
+name = a, ...args => {
 }
 
-let name = {a, b} => {
+name = {a, b} => {
 }
 
-let name = {a, b = 1} => {
+name = {a, b = 1} => {
 }
 
-let name = a = 1 => {
+name = a = 1 => {
 }
 
-let name = a = 1, b = 2 => {
+name = a = 1, b = 2 => {
 }
 
-let name = a pick {ref, age = 1}, b => {
+name = a pick {ref, age = 1}, b => {
 }
 
-let name =
+name =
 	object a pick {string type, age = 1},
 	number b void => {
 }
 
-let name = => Expression
+name = => Expression
 
-let name = =>
+name = =>
 	Expression
 ```
 
@@ -301,7 +301,7 @@ print( =>
 
 ## Types
 
-Types are optional, you can attach them to function arguments, let bindings and class bodies. The following primitive types exist.
+Types are optional, you can attach them to function arguments, variable bindings and class bodies. The following primitive types exist.
 
 ```
 void
@@ -313,36 +313,19 @@ string
 function
 object
 array
-
-any
 ```
 
 The use of types follow the pattern `type binding`.
 
 ```
-let number age = 1
+number age = 1
 
 func name number age, array<string> subjects, object<Person> person void {
 	return
 }
 
-let name = number age, array<string> subjects, object<Person> person => void {
+name = number age, array<string> subjects, object<Person> person => void {
 	return
-}
-```
-
-## Object
-
-Plain objects are created using the `{}` (curly braces). Objects are immutable with relation to create and delete operations.
-
-```
-let person = {
-	age: 27,
-	year: 1989,
-	print: value => System.write(value),
-	assign: func name key, value {
-		return this[key] = value
-	}
 }
 ```
 
@@ -385,7 +368,7 @@ class Person age, year, document pick {name} {
 	}
 }
 
-let person = Person('23', '1989')
+person = Person('23', '1989')
 
 System.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
 ```
@@ -393,7 +376,7 @@ System.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
 Class instances are created when invoked. Parameters are passed to classes like functions.
 
 ```
-let person = Person(10, 1989)
+person = Person(10, 1989)
 ```
 
 All named arguments in the class are assigned to a corrosponding field.
@@ -428,7 +411,7 @@ class Person {
 	}
 }
 
-let person = Person()
+person = Person()
 
 System.write(typeof person.setter) // null
 ```
@@ -459,22 +442,22 @@ class Student extends Person {
 	}
 }
 
-let student = Student()
+student = Student()
 
 System.write(typeof student.getter) // function
 ```
 
 ## Module
 
-Modules are like files! They can contain let bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `module Identifier {}`.
+Modules are like files! They can contain variable bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `module Identifier {}`.
 
 ```
 module School {
 	import {type as studentType} from Student
 
-	let population = 100
+	population = 100
 
-  export let profession = 'Teacher'
+  export profession = 'Teacher'
 
   export type = (person) =>
   	switch (person) {
@@ -490,13 +473,13 @@ module School {
 }
 
 module Student {
-  export let grade = '7'
+  export grade = '7'
 
 	export default func announcement value {
 		System.write('')
 	}
 
-  export let type = (student) =>
+  export type = (student) =>
   	switch (student) {
   		case '7' {
   			return 'middle school'
@@ -510,6 +493,48 @@ module Student {
 }
 
 import {type} from School
+```
+
+## Object
+
+Plain objects are created using the `{}` (curly braces). Objects are immutable(size). Objects are created in two flavours, plain objects and dictionary objects.
+
+```
+plain = {
+	age: 27,
+	year: 1989,
+	print: value => System.write(value),
+	assign: func name key, value {
+		return this[key] = value
+	}
+}
+
+dictionary = {
+	['age', 27],
+	['year', 1989]
+}
+```
+
+While Dictionary objects can hold any key including objects plain objects can only hold string keys.
+
+```
+plain = {
+	age: 27,
+	year: 1989
+}
+
+dictionary = {
+	[{}, 27],
+	['year', 1989]
+}
+```
+
+## In
+
+The `in` operator returns wether a given key is present in an `object`.
+
+```
+'foo' in {foo: 1} === true
 ```
 
 ## Sizeof
@@ -552,91 +577,139 @@ The `instanceof` operator returns `true` if the value is an instance of specifie
 1 instanceof Number === true
 ```
 
+## Let
+
+Variables are implicitly created when assigned.
+
+```
+template = "1"
+```
+
+The `let` operator allows a variable statement without explicit assigmnet.
+
+```
+let template
+let script
+
+template = "1"
+script = "2"
+```
+
+## Delete
+
+The `delete` operator deletes the corresponding value(s) from an `object`.
+
+```
+dictionary = {['a', 1], ['b', 2], ['c', 3]}
+
+dictionary delete 'a' === {['b', 2], ['c', 3]}
+dictionary delete {b, c} === {}
+```
+
+## Pick
+
+The `pick` operator retrieves the corresponding value(s) from an `object`.
+
+```
+{foo: 1} pick "foo" === 1
+{foo: 1, bar: 2} pick {foo, bar} === {foo: 1, bar: 2}
+[2, 3, 5, 7, 11, 13] pick {1...4} === [3, 5, 7]
+```
+
+In some respects the `pick` operator is much like the subscript `[]` operator. Pick however is aligned to support a range of contexts including destructuring function arguments and picking values from exotic objects.
+
+
+## Spread
+
+The `...` operator is a generic operator that spreads it's contents onto the context of its binding. The different contexts include function arguments `func ...arg`, objects `{...a}` arrays `[...a]` and numbers `0...3`.
+
+```
+var arr = [1, 2]
+var obj = {foo: 1}
+
+{...obj, bar: 2} === {foo: 1, bar: 2}
+
+[0, ...arr] === [0, 1, 2]
+
+[1...3] === [1, 2, 3]
+
+func ...args {
+	System.write(typeof args === 'array')
+}
+```
+
+## With
+
+The `with` operator is a generic operator that invokes builtin standard library functions for the specified values.
+
+```
+with [1,2,3,4] filter(v => v > 2) === [3, 4]
+
+with "1234" replace("1", "0") === "0234"
+
+with "1234" charAt(2) === "3"
+
+with "1234" indexOf("2") === 1
+
+with (with [1,2,3,4] join(" ")) trim() === "1 2 3 4"
+```
+
+## Array
+
+Arrays are immutable(size), Array literals are delimited with brackets `[`, `]` and share the form `[1, 2, 3]`.
+
+```
+// create
+arr = [0, 2, 3, 4...6]
+
+// assigment
+arr[0] = 1
+
+// deep compare
+arr === [1, 2, 3, 4, 5, 6]
+
+// noop push
+arr[3] = 10
+arr[3] === null
+sizeof arr === 3
+
+// noop delete
+arr delete 0
+arr[0] === 1
+sizeof arr === 3
+```
+
 ## Standard Library
-
-### String
-
-```
-String(any target) string
-String.trim(string target, number padding) string
-String.replace(string target, union<object<RegExp>, string> value, union<string, function> replacement) string
-String.slice(string target, number from, number to) string
-String.lower(string target) string
-String.upper(string target) string
-String.char(string target, number index) string
-String.from(number code) string
-String.code(string target, number index) number
-String.index(string target, number from) number
-String.split(string target, union<object<RegExp>, string> separator, number limit) array<string>
-```
-
-### Array
-
-Arrays are immutable(size), Array literals are delimited with brackets `[` and share the form `[1, 2, 3]` or `1..3`.
-
-```
-Array(number target) array
-Array.from(union<array, string> target, function mapper) array
-Array.slice(array target, number from, number to) array
-Array.map(array target, function callback) array
-Array.filter(array target, function callback) array
-Array.concat(...arguments) array
-Array.each(array target, function callback) void
-Array.join(array<any> target, string separator) string
-```
 
 ### RegExp
 
 ```
-RegExp(string value, string flags) object<RegExp>
-RegExp.test(object<RegExp> target, string value) boolean
+RegExp(string value, string flags) obj<RegExp>
+RegExp('value', 'g') === \value\g
 ```
 
-### Map
+### String
 
 ```
-Map(array<array> target) object<Map>
-Map.has(object<Map> target, union<string, symbol> key)
-Map.get(object<Map> target, union<string, symbol> key)
-Map.set(object<Map> target, union<string, symbol> key, any value)
-Map.delete(object<Map> target, union<string, symbol> key)
-Map.clear(object<Map> target)
-```
-
-### WeakMap
-
-```
-WeakMap(array<array> target) object<Map>
-WeakMap.has(object<WeakMap> target, union<string, symbol> key)
-WeakMap.get(object<WeakMap> target, union<string, symbol> key)
-WeakMap.set(object<WeakMap> target, union<string, symbol> key, any value)
-WeakMap.delete(object<WeakMap> target, union<string, symbol> key)
+String(target) string
 ```
 
 ### Object
 
 ```
-Object(any target) object
+Object(target) object
 ```
 
 ### Boolean
 
 ```
-Boolean(any target) boolean
+Boolean(target) boolean
 ```
 
 ### Number
 
 ```
-Number(any target) number
-Number.parse(string target) number
-```
-
-### Symbol
-
-```
-Symbol(string target) symbol
-Symbol.for(string target) symbol
+Number(target) number
 ```
 
 ### Exception
