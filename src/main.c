@@ -2,7 +2,7 @@
 #include "Program.h"
 
 Int32 main() {
-	Int64 example[] = {
+	UInt32 example[] = {
 		// func fib (n) {
 		// if (n < 2) return n;
 		OpcodeLoadLocal, 3,   // 0 - load last function argument (n)
@@ -28,11 +28,12 @@ Int32 main() {
 		OpcodeConst, 28,      // 28 - put 28, entrypoint
 		OpcodeCall, 0, 1,     // 30 - call function: fib(n) where n = 28;
 		OpcodePrint,          // 33 - print result
-		OpcodeHalt            // 34 - stop program
+		OpcodeNoop,           // 34 - noop
+		OpcodeHalt            // 35 - stop program
 	};
 
 	// initialize program
-	Program *program = ProgramConstruct(512000, 28, example);
+	Program *program = ProgramConstruct(example, 512000 * 1, 28);
 
 	Float64 startTime = clock();
 

@@ -1,16 +1,14 @@
 #include "Shared.h"
 #include "Program.h"
 
-Program *ProgramConstruct(Int64 size, Int64 caret, Int64 *bytecode) {
+Program *ProgramConstruct(UInt32 *code, UInt32 size, UInt32 caret) {
 	Program *program = malloc(sizeof(*program));
-	Float64 *frame = malloc(sizeof(*frame) * size);
-	Float64 *stack = malloc(sizeof(*stack) * size);
+	Value *frame = malloc(sizeof(*frame) * size);
+	Value *stack = malloc(sizeof(*stack) * size);
 
 	program->size = size;
 	program->caret = caret;
-	program->current = 0;
-	program->index = 0;
-	program->bytecode = bytecode;
+	program->code = code;
 	program->frame = frame;
 	program->stack = stack;
 
@@ -24,28 +22,29 @@ void ProgramDestroy(Program *program) {
 }
 
 void ProgramEvaluate(Program *program) {
-	Int64 size = program->size;
-	Int64 caret = program->caret;
-	Int64 current = program->current;
-	Int64 index = program->index;
-	Int64 *bytecode = program->bytecode;
-	Float64 *frame = program->frame;
-	Float64 *stack = program->stack;
+	UInt32 size = program->size;
+	UInt32 caret = program->caret;
+	UInt32 *code = program->code;
+	Value *frame = program->frame;
+	Value *stack = program->stack;
 
-	Int64 overflow = size - 8000;
-	Int64 offset = 0;
-	Int64 length = 0;
-	Int64 address = 0;
+	UInt32 index = 0; // stack index
+	UInt32 offset = 0; // generic offset value
+	UInt32 length = 0; // generic length value
+	UInt32 address = 0; // byte code address
+	UInt32 current = 0; // frame index
+	UInt32 overflow = size - (size * 1/32); // stack overflow size
 
 	// registers
-	Float64 value1;
-	Float64 value2;
+	Value value1;
+	Value value2;
 
-	// indices point to relevant bytecode
+	// indices point to relevant code
 	static void *table[] = {
 		&&LabelHalt,
 		&&LabalException,
 		&&LabelPrint,
+		&&LabelNoop,
 		&&LabelAdd,
 		&&LabelSubtract,
 		&&LabelMultiply,
@@ -67,7 +66,7 @@ void ProgramEvaluate(Program *program) {
 	};
 
 	// goto initial instruction
-	goto *table[bytecode[caret++]];
+	goto *table[code[caret++]];
 
 	LabelHalt: {
 		// stop the program
@@ -88,7 +87,12 @@ void ProgramEvaluate(Program *program) {
 		printf("%d\n", (int)value2);
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
+	}
+
+	LabelNoop: {
+		// goto next instruction
+		goto *table[code[caret++]];
 	}
 
 	LabelAdd: {
@@ -105,7 +109,7 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelSubtract: {
@@ -122,7 +126,7 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelMultiply: {
@@ -139,7 +143,7 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelDivide: {
@@ -156,7 +160,7 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelLessThan: {
@@ -173,7 +177,7 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelGreaterThan: {
@@ -190,7 +194,7 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelEqual: {
@@ -204,23 +208,23 @@ void ProgramEvaluate(Program *program) {
 		stack[++index] = value1 == value2;
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelJump: {
 		// get address pointer from code
-		address = bytecode[caret++];
+		address = code[caret++];
 
 		// unconditionaly jump to provided address
 		caret = address;
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelJumpTrue: {
 		// get address pointer from code
-		address = bytecode[caret++];
+		address = code[caret++];
 
 		// pop value from top of the stack, if true jump to provided address
 		if (stack[index--]) {
@@ -228,12 +232,12 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelJumpFalse: {
 		// get address pointer from code
-		address = bytecode[caret++];
+		address = code[caret++];
 
 		// pop value from top of the stack, if false jump to provided address
 		if (!stack[index--]) {
@@ -241,18 +245,18 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelConst: {
-		// get next value from bytecode
-		value2 = bytecode[caret++];
+		// get next value from code
+		value2 = code[caret++];
 
 		// move it on top of the stack
 		stack[++index] = value2;
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelPop: {
@@ -260,15 +264,15 @@ void ProgramEvaluate(Program *program) {
 		value2 = stack[index--];
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelCall: {
-		// get next value from bytecode(address of procedure jump), expecting arguments on the stack
-		address = bytecode[caret++];
+		// get next value from code(address of procedure jump), expecting arguments on the stack
+		address = code[caret++];
 
-		// get next value from bytecode(arguments length)
-		length = bytecode[caret++];
+		// get next value from code(arguments length)
+		length = code[caret++];
 
 		// put on the top of the stack(arguments length)
 		stack[++index] = length;
@@ -276,13 +280,13 @@ void ProgramEvaluate(Program *program) {
 		// put on the top of the stack(current frame)
 		stack[++index] = current;
 
-		// put on the top of the stack(bytecode caret)
+		// put on the top of the stack(code caret)
 		stack[++index] = caret;
 
 		// upate current frame
 		current = index;
 
-		// update bytecode caret to target procedure address
+		// update code caret to target procedure address
 		caret = address;
 
 		// stack overflow
@@ -291,7 +295,7 @@ void ProgramEvaluate(Program *program) {
 		}
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelReturn: {
@@ -317,36 +321,36 @@ void ProgramEvaluate(Program *program) {
 		stack[++index] = value2;
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelLoadLocal: {
-		// get next value from bytecode(local variables offset on the stack)
-		offset = bytecode[caret++];
+		// get next value from code(local variables offset on the stack)
+		offset = code[caret++];
 
 		// put on the top of the stack variable stored relatively to the current index
 		stack[++index] = stack[current - offset];
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelStoreLocal: {
 		// get value from top of the stack
 		value2 = stack[index--];
 
-		// get next value from bytecode(relative pointer address)
-		offset = bytecode[caret++];
+		// get next value from code(relative pointer address)
+		offset = code[caret++];
 
 		// store value at address received relatively to current index
 		frame[current - offset] = value2;
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelLoadGlobal: {
-		// get pointer address from bytecode
+		// get pointer address from code
 		address = stack[index--];
 
 		// load value from memory of the provided address
@@ -356,12 +360,12 @@ void ProgramEvaluate(Program *program) {
 		stack[++index] = value2;
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 
 	LabelStoreGlobal: {
-		// get pointer address from bytecode
-		address = bytecode[caret++];
+		// get pointer address from code
+		address = code[caret++];
 
 		// get value from top of the stack
 		value2 = stack[index--];
@@ -370,6 +374,6 @@ void ProgramEvaluate(Program *program) {
 		frame[address] = value2;
 
 		// goto next instruction
-		goto *table[bytecode[caret++]];
+		goto *table[code[caret++]];
 	}
 }
