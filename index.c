@@ -39,7 +39,6 @@ void eval () {
 	ret: { RSP -= next(); } // return, pop stack, push return value onto stack
 	cal: { RSI = next(); RAX = next(); exec(); } // func call, location, argument length
 
-	pop: { pop(); exec(); } // pop stack
 	psx: { push(STK[next()]); exec(); } // next is index into stack, push onto stack
 	pcx: { push(next()) exec(); } // next is constant, push onto stack
 
