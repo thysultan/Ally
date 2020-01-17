@@ -1,22 +1,21 @@
-void stck[1024] = malloc(sizeof stck);
-void heap[1024] = malloc(sizeof heap);
+int FLA = 0; // flag register
+int RBP = 0; // base regsiter
+int RSP = 0; // stack register
+int RSI = 0; // source register
+int RAX = 0; // generic regsiter
+int EAX = 0; // generic regsiter
+
+void STK[1024] = malloc(sizeof STK);
+void HEP[1024] = malloc(sizeof HEP);
 
 void eval () {
-	int FLA = 0; // flag register
-	int RBP = 0; // base regsiter
-	int RSP = 0; // stack register
-	int RSI = 0; // source register
-	int RAX = 0; // generic regsiter
-	int EAX = 0; // generic regsiter
-
 	// instructions
-	static enum op {ADD, SUB, MUL, DIV, LST, GRT, EQL, NOP, CMP, MOV, JMP, RET, EOF, CAL, PSX, PCX, RSX, RCX, ESX, ECX};
+	static enum op {NOP, EOF, ADD, SUB, MUL, DIV, LST, GRT, EQL, CMP, MOV, JMP, RET, CAL, PSX, PCX, RSX, RCX, ESX, ECX};
 	// dispatch table
-	static void *fn {&&eof, &&nop, &&add, &&sub, &&mul, &&div, &&eql, &&grt, &&lst, &&cmp, &&jmp, &&mov, &&ret, &cal};
+	static void *fn {&&nop, &&eof, &&add, &&sub, &&mul, &&div, &&eql, &&grt, &&lst, &&cmp, &&jmp, &&mov, &&ret, &cal};
 	// dispatch-er
 	#define pop() RSP--
 	#define push(value) stck[RSP++] = value
-	#define peek() code[RSI]
 	#define next() code[RSI++]
 	#define exec() goto *fn[next()]
 
@@ -37,20 +36,20 @@ void eval () {
 	jmp: {} // jump
 	mov: {} // move
 
-	ret: {} // return
-	cal: { RSI = next(); RAX = next(); exec(); } // load func location, length
+	ret: { RSP -= next(); } // return, pop stack, push return value onto stack
+	cal: { RSI = next(); RAX = next(); exec(); } // func call, location, argument length
 
 	pop: { pop(); exec(); } // pop stack
-	psx: { push(stck[peek()]); exec(); } // next peek is index into stack, push onto stack
-	pcx: { push(peek()) exec(); } // next peek is constant, push onto stack
+	psx: { push(STK[next()]); exec(); } // next is index into stack, push onto stack
+	pcx: { push(next()) exec(); } // next is constant, push onto stack
 
-	rsx: { RAX = stck[peek()]; exec(); } // next peek is index into stack, load into rax register
-	esx: { EAX = stck[peek()]; exec(); } // next peek is index into stack, load into eax register
-	rcx: { RAX = peek(); exec(); } // next peek is a constant, load into rax register
-	ecx: { EAX = peek(); exec(); } // next peek is a constant, load into eax register
+	rsx: { RAX = STK[next()]; exec(); } // next is index into stack, load into rax register
+	esx: { EAX = STK[next()]; exec(); } // next is index into stack, load into eax register
+	rcx: { RAX = next(); exec(); } // next is a constant, load into rax register
+	ecx: { EAX = next(); exec(); } // next is a constant, load into eax register
 
-	rhx: { RAX = heap[peek()]; exec(); } // next peek is index into heap, load into rax register
-	ehx: { EAX = heap[peek()]; exec(); } // next peek is index into heap, load into eax register
+	rhx: { RAX = HEP[next()]; exec(); } // next is index into HEP, load into rax register
+	ehx: { EAX = HEP[next()]; exec(); } // next is index into HEP, load into eax register
 }
 
 int code[] = {
