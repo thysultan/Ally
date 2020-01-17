@@ -34,21 +34,11 @@ bool StringCompare(String *aString, String *bString) {
 		return false;
 	}
 
-	UInt32 size = aSize + 1;
-	UInt8 *a = aString->chars;
-	UInt8 *b = bString->chars;
-
 	// compare characters
-	while (--size > 0) {
-		if (*a != *b) {
-			return false;
-		}
-	}
-
-	return true;
+	return memcmp(aString->chars, bString->chars, aSize + 1) == 0;
 }
 
-UInt32 StringHash (String *string) {
+	UInt32 StringHash (String *string) {
 	UInt32 hash = string->hash;
 
 	// hash cache

@@ -6,8 +6,8 @@ Pronounced L-I, Ally is a dynamic programming language with semi-optional types.
 
 ```
 void, number, boolean, symbol, string, function, array, object, union,
-try, catch, finally, if, else, for, in, while, switch, match, case, default,
-continue, break, return, throw, pick, typeof, sizeof, instanceof, delete,
+try, catch, finally, if, else, for, in, of, while, switch, match, case, default,
+continue, break, return, returns, throw, delete, pick, typeof, sizeof, instanceof,
 true, false, null, NaN, Infinity,
 public, private, protected, static, this,
 let, func, class, extends, module,
@@ -173,13 +173,6 @@ try {
 }
 ```
 
-### While
-
-```
-while condition {
-}
-```
-
 ### For
 
 ```
@@ -231,7 +224,7 @@ func name a pick {ref, age = 1}, b {
 
 func name
 	object a pick {string type, age = 1},
-	number b void {
+	number b returns void {
 }
 ```
 
@@ -278,7 +271,7 @@ name = a pick {ref, age = 1}, b => {
 
 name =
 	object a pick {string type, age = 1},
-	number b void => {
+	number b returns void => {
 }
 
 name = => Expression
@@ -336,11 +329,11 @@ The use of types follow the pattern `type binding`.
 ```
 number age = 1
 
-func name number age, array<string> subjects, object<Person> person void {
+func name number age, array<string> subjects, object<Person> person returns void {
 	return
 }
 
-name = number age, array<string> subjects, object<Person> person => void {
+name = number age, array<string> subjects, object<Person> person returns void => {
 	return
 }
 ```
@@ -559,7 +552,7 @@ The `sizeof` operator returns the size of a given array/object/string and `NaN` 
 
 ```
 System.write(sizeof [1, 2, 3])       // 3
-System.write(sizeof {a: 1, b: 2})    // 3
+System.write(sizeof {a: 1, b: 2})    // 2
 System.write(sizeof "Hello")         // 5
 System.write(sizeof 2)               // NaN
 System.write(sizeof Symbol())        // NaN
@@ -590,8 +583,28 @@ System.write(typeof Map([[1, '1']])) // "object"
 The `instanceof` operator returns `true` if the value is an instance of specified class.
 
 ```
-1 instanceof Number === true
+class Person {}
+class Student extends Person {}
+
+1 instanceof Number === false
+Student() instanceof Student === true
+Student() instanceof Person === false
+Person() instanceof Person === true
 ```
+
+## Pick
+
+The `pick` operator retrieves the corresponding value(s) from an `object`.
+
+```
+{foo: 1} pick "foo" === 1
+{foo: 1, bar: 2} pick {foo, bar} === {foo: 1, bar: 2}
+[2, 3, 5, 7, 11, 13] pick [1...4] === [3, 5, 7, 11]
+[2, 3, 5, 7, 11, 13] pick [1, 2, 3, 4] === [3, 5, 7, 11]
+```
+
+In some respects the `pick` operator is much like the subscript `[]` operator. Pick however is aligned to support a range of contexts including destructuring function arguments and picking values from exotic objects.
+
 
 ## Delete
 
@@ -603,19 +616,6 @@ dictionary = {['a', 1], ['b', 2], ['c', 3]}
 dictionary delete 'a' === {['b', 2], ['c', 3]}
 dictionary delete {b, c} === {}
 ```
-
-## Pick
-
-The `pick` operator retrieves the corresponding value(s) from an `object`.
-
-```
-{foo: 1} pick "foo" === 1
-{foo: 1, bar: 2} pick {foo, bar} === {foo: 1, bar: 2}
-[2, 3, 5, 7, 11, 13] pick {1...4} === [3, 5, 7]
-```
-
-In some respects the `pick` operator is much like the subscript `[]` operator. Pick however is aligned to support a range of contexts including destructuring function arguments and picking values from exotic objects.
-
 
 ## Spread
 
@@ -636,22 +636,6 @@ func ...args {
 }
 ```
 
-## With
-
-The `with` operator is a generic operator that invokes builtin standard library functions for the specified values.
-
-```
-with [1,2,3,4] filter(v => v > 2) === [3, 4]
-
-with "1234" replace("1", "0") === "0234"
-
-with "1234" charAt(2) === "3"
-
-with "1234" indexOf("2") === 1
-
-with (with [1,2,3,4] join(" ")) trim() === "1 2 3 4"
-```
-
 ## Array
 
 Arrays are immutable(size), Array literals are delimited with brackets `[`, `]` and share the form `[1, 2, 3]`.
@@ -667,14 +651,14 @@ arr[0] = 1
 arr === [1, 2, 3, 4, 5, 6]
 
 // noop push
-arr[3] = 10
-arr[3] === null
-sizeof arr === 3
+arr[7] = 10
+arr[7] === null
+sizeof arr === 7
 
 // noop delete
 arr delete 0
 arr[0] === 1
-sizeof arr === 3
+sizeof arr === 7
 ```
 
 ## Standard Library

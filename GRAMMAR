@@ -49,7 +49,7 @@ ShiftExpression             ::= AdditiveExpression ( ShiftOperator AdditiveExpre
 ShiftOperator               ::= ( "<<" | ">>" | ">>>" )
 
 RelationalExpression        ::= ShiftExpression ( RelationalOperator ShiftExpression )*
-RelationalOperator          ::= ( "<" | ">" | "<=" | ">=" | "typeof" | "instanceof" | "of" | "in" | "pick" | "delete" )
+RelationalOperator          ::= ( "<" | ">" | "<=" | ">=" | "of" | "in" | "delete" | "pick" | "typeof" | "instanceof" )
 
 EqualityExpression          ::= RelationalExpression ( EqualityOperator RelationalExpression )*
 EqualityOperator            ::= ( "==" | "!=" | "===" | "!==" )
@@ -90,13 +90,13 @@ Statement                   ::=
   | MatchStatement
   | ThrowStatement
   | TryStatement
+  | InStatement
+  | WithStatement
+  | DeleteStatement
+  | PickOfStatement
   | TypeofStatement
   | SizeofStatement
-  | WithStatement
   | InstanceofStatement
-  | InStatement
-  | DeleteStatement
-  | PickStatement
 
 StatementList               ::= ( Statement )+
 VariableStatement           ::= ( "let" )? VariableDeclarationList
@@ -113,16 +113,25 @@ IterationStatement          ::=
   | ( "for" ( Expression )? ";" ( Expression )? ";" ( Expression )? ")" BlockStatement )
   | ( "for" Identifier "of" Expression ")" BlockStatement )
 
+TypeStatement               ::=
+  | ( "void" | "number" | "boolean" | "symbol" | "string" | "function" )
+  | ( ( "object" | "array" ) ( "<" ( Identifier | TypeStatement ) ">" )? )
+
+ThrowStatement              ::= "throw" Expression
+TryStatement                ::= "try" BlockStatement ( ( Finally | Catch ( Finally )? ) )
+Catch                       ::= "catch" Identifier? BlockStatement
+Finally                     ::= "finally" BlockStatement
+
 ContinueStatement           ::= "continue"
 BreakStatement              ::= "break"
 ReturnStatement             ::= "return" ( Expression )?
-TypeofStatement             ::= "typeof" Expression
-SizeofStatement             ::= "sizeof" Expression
-WithStatement               ::= "with" Expression CallExpression
-InstanceofStatement         ::= Expression "instanceof" Expression
 InStatement                 ::= Expression "in" Expression
+WithStatement               ::= "with" Expression CallExpression
 DeleteStatement             ::= Expression "delete" ( Expression | ParameterDestructuring )
 PickStatement               ::= Expression "pick" ( Expression | ParameterDestructuring )
+TypeofStatement             ::= "typeof" Expression
+SizeofStatement             ::= "sizeof" Expression
+InstanceofStatement         ::= Expression "instanceof" Expression
 
 MatchStatement              ::= "match" Expression CaseBlock
 SwitchStatement             ::= "switch" Expression CaseBlock
@@ -130,23 +139,14 @@ CaseBlock                   ::= "{" ( CaseClauses )? ( "}" | DefaultClause ( Cas
 CaseClauses                 ::= ( CaseClause )+
 CaseClause                  ::= ( ( "case" Expression ":" ) ) ( StatementList )?
 
-ThrowStatement              ::= "throw" Expression
-TryStatement                ::= "try" BlockStatement ( ( Finally | Catch ( Finally )? ) )
-Catch                       ::= "catch" Identifier? BlockStatement
-Finally                     ::= "finally" BlockStatement
-
 RangeStatment               ::= ( DecimalLiteral "..." DecimalLiteral )
-
-TypeStatement               ::=
-  | ( "void" | "number" | "boolean" | "symbol" | "string" | "function" )
-  | ( ( "object" | "array" ) ( "<" ( Identifier | TypeStatement ) ">" )? )
 
 ParameterIdentifier         ::= ( TypeStatement )? ( ( "..." )? Identifier ) ( PickStatement | Initialiser )?
 ParameterList               ::= ParameterIdentifier ( "," ParameterIdentifier )*
 ParameterDestructuring      ::= ( "{" ( ParameterList | RangeStatment )? "}" )
 
-FunctionLambda              ::= ( ParameterList )? ( TypeStatement )? "=>" ( FunctionBody | ( ( LineTerminator )? Expression ) )
-FunctionDeclaration         ::= "func" Identifier ( ParameterList )? ( TypeStatement )? FunctionBody
+FunctionLambda              ::= ( ParameterList )? ( "returns" TypeStatement )? "=>" ( FunctionBody | ( ( LineTerminator )? Expression ) )
+FunctionDeclaration         ::= "func" Identifier ( ParameterList )? ( "returns" TypeStatement )? FunctionBody
 FunctionBody                ::= "{" ( SourceElements )? "}"
 
 ClassDeclaration            ::= "class" Identifier ( ( ParameterList )? ( "extends" Identifier )? ) ClassBody
