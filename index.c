@@ -33,8 +33,8 @@ void eval () {
 	};
 
 	// macros
-	#define rest(value) RSP = value
-	#define trim() stack[RSP--]
+	#define retn(value) RSP = value
+	#define pops() stack[RSP--]
 	#define push(value) stack[RSP++] = value
 	#define look(index) stack[RBP + index]
 	#define jump(index) RSI = index
@@ -46,6 +46,7 @@ void eval () {
 	#define exec() goto *fn[next()]
 	#define read() REG[next()]
 	#define load(value) REG[peek()] = value
+	#define pull(value) REG[next()] = pops()
 
 	// example:
 	// mov $1, 02 // $1 = 2
@@ -61,7 +62,7 @@ void eval () {
 	nop: { exec(); }
 	eof: { return; }
 
-	pop: { trim(); exec(); } // pop stack
+	pop: { pull(); exec(); } // pop stack
 	pus: { push(next()); exec(); } // push constant
 	put: { push(read()); exec(); } // push register
 
@@ -92,42 +93,42 @@ void eval () {
 	jle: { if (cond() <= 0) { goto jmp } else { skip(); exec(); } // jump less than equal
 	jge: { if (cond() >= 0) { goto jmp } else { skip(); exec(); } // jump greater than equal
 
-	ret: { rest(trim()); jump(trim()); goto rea; } // return, restore previous stack and source, jump to previous source
+	ret: { retn(pops()); jump(pops()); goto rea; } // return, restore previous stack and source, jump to previous source
 	cal: { push(RBP = RSP); push(RSI); goto jmp; } // call, push current stack and source, jump to new source
 }
 
 // int code[] = {
 // 	             // func fib (n)
 // 	             // if (n < 2) return n
-// 	MOV, $2, 02, // 03 - load 2
-// 	LEA, $1, 00, // 06 - load function argument n
-// 	SUB, $2, $1  // 09 - check (n < 2)
-// 	JNE, 10,     // 11 - if !(n < 2), goto 10
-// 	RET, $1      // 13 - return n
-//
-// 	             // else return fib(n - 1) + fib(n - 2)
-//
-// 	MOV, $2, 01, // 16 - put 1
-// 	LEA, $1, 00, // 19 - load function argument n
-// 	SUB, $2, $1  // 22 - calculate: (n - 1)
-//  PUT, $2,     // 24 - push register onto stack
-// 	CAL, 00      // 27 - call fib function with 1 arg
+// MOV, $2, 02, // 03 - load 2
+// LEA, $1, 00, // 06 - load function argument n
+// SUB, $2, $1, // 09 - check (n < 2)
+// JNE, 10,     // 11 - if !(n < 2), goto 10
+// RET,         // 12 - return
 
-//  MOV, $2, 02, // 30 - load 2
-// 	LEA, $1, 00  // 33 - load (n) again
+// 	            // else return fib(n - 1) + fib(n - 2)
+// MOV, $2, 01, // 15 - put 1
+// LEA, $1, 00, // 18 - load function argument n
+// SUB, $2, $1, // 21 - calculate: (n - 1)
+// PUT, $2,     // 23 - push register onto stack
+// CAL, 00,     // 25 - call fib function with 1 arg
 
-// 	SUB, $2, $1  // 36 - calculate: (n - 2)
-//  PUT, $2,     // 38 - push result onto stack
-// 	CAL, 00      // 41 - call fib function
-//  LEA, $2, 00  // 44 - load result from stack
-//  LEA, $1, 01  // 47 - load result from stack
-// 	ADD, $2, $1  // 50 - since 2 fibs pushed their ret values on the stack, just add them
-// 	RET, $2      // 52 - return from procedure
-// 	             //      fib(28)
-// 	PUS, 28,     // 54 - put 28, entrypoint
-// 	CAL, 00      // 57 - call function: fib(n) where n = 28; argument length: 1
+// MOV, $2, 02, // 28 - load 2
+// LEA, $1, 00, // 31 - load (n) again
 
-// 	SYS, 00,     // 59 - evaulate the system print function
-// 	NOP,         // 60 - noop
-// 	EOF          // 61 - stop program
+// SUB, $2, $1, // 34 - calculate: (n - 2)
+// PUT, $2,     // 36 - push result onto stack
+// CAL, 00,     // 38 - call fib function
+// POP, $2,     // 40 - load result from stack
+// POP, $1,     // 42 - load result from stack
+// ADD, $2, $1, // 45 - since 2 fibs pushed their ret values on the stack, just add them
+// RET, $2,     // 47 - return from procedure
+// 	            //      fib(28)
+// PUS, 28,     // 49 - put 28, entrypoint
+// CAL, 00,     // 51 - call function: fib(n) where n = 28; argument length: 1
+
+// REA, $1, $0  // 54 - load return register to general register
+// SYS, 00,     // 56 - evaulate the system print function
+// NOP,         // 57 - noop
+// EOF          // 58 - stop program
 // };
