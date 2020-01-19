@@ -1,27 +1,21 @@
 void eval () {
 	int stack[1024];
 
-	int data[8]; // register
-
-	int RAX = 0; // rax register index
-	int EAX = 1; // eax register index
-
+	int REG[32]; // general register
 	int RSI = 0; // source register
 	int RSP = 0; // stack register
 	int RBP = 0; // base register
-
 	int ZFA = 0; // zero flag
 
 	// instructions
 	static enum op {
 		NOP, EOF,
+		PUS, POP,
 		ADD, SUB, MUL, DIV, MOD,
 		ROR, XOR, AND, SHL, SHR,
-		EQL, NEQ, LTN, GTN, LTE, GTE,
-		JEQ, JNE, JMP,
 		CMP, CMQ,
-		MOV, MOQ,
-		PUS, POP,
+		MOV, REA, LEA,
+		JMP, JEQ, JNE, JLT, JGT, JLE, JGE,
 		CAL, RET
 	};
 
@@ -39,95 +33,101 @@ void eval () {
 	};
 
 	// macros
-	#define pop() stack[RSP--]
-	#define push(v) stack[RSP++] = v
-	#define move(i, v) stack[i] = v
-	#define jump(i) RSI = i
+	#define rest(value) RSP = value
+	#define trim() stack[RSP--]
+	#define push(value) stack[RSP++] = value
+	#define look(index) stack[RBP + index]
+	#define jump(index) RSI = index
 	#define cond() ZFA
-	#define flag(v) ZFA = v
+	#define flag(value) ZFA = value
 	#define skip() RSI++
 	#define peek() code[RSI]
 	#define next() code[skip()]
 	#define exec() goto *fn[next()]
-	#define read() data[next()]
-	#define write(v) data[peek()] = v
+	#define read() REG[next()]
+	#define load(value) REG[peek()] = value
+
+	// example:
+	// mov $1, 02 // $1 = 2
+	// mov $2, 05 // $2 = 5
+	// mul $1, $2 // $1 = $1 * $2
+	// mov $2, 01 // $2 = 1
+	// add $1, $2 // $1 = $1 + $2
+	// cmp $1, $2 // zf = $1 - $2
+	// jeq $1, 00 // if ($1) {}
+	// jne $1, 00 // if (!$1) {}
 
 	// initialize
 	nop: { exec(); }
 	eof: { return; }
 
-	// example:
-	//
-	// mov rax, 2    // rax = 2
-	// mov eax, 5    // eax = 5
-	// mul rax, eax  // rax = rax * eax
-	// mov eax, 1    // eax = 1
-	// add rax, eax  // rax = rax + eax
-	// cmp rax, eax  // zfa = rax - eax
-	// jeq rax, 0    // if (rax) {}
-	// jne rax, 0    // if (!rax) {}
+	pop: { trim(); exec(); } // pop stack
+	pus: { push(next()); exec(); } // push constant
+	put: { push(read()); exec(); } // push register
 
-	add: { write(read() + read()); exec(); } // add
-	sub: { write(read() - read()); exec(); } // subtract
-	mul: { write(read() * read()); exec(); } // multiple
-	div: { write(read() / read()); exec(); } // divide
-	mod: { write(read() % read()); exec(); } // remainder
+	add: { flag(load(read() + read())); exec(); } // add
+	sub: { flag(load(read() - read())); exec(); } // subtract
+	mul: { flag(load(read() * read())); exec(); } // multiple
+	div: { flag(load(read() / read())); exec(); } // divide
+	mod: { flag(load(read() % read())); exec(); } // remainder
 
-	ror: { write(read() | read()); exec(); } // bitwise or
-	xor: { write(read() ^ read()); exec(); } // bitwise xor
-	and: { write(read() & read()); exec(); } // bitwise and
-	shl: { write(read() << read()); exec(); } // bitwise left shift
-	shr: { write(read() >> read()); exec(); } // bitwise right shift
-
-	eql: { write(read() == read()); exec(); } // equal
-	neq: { write(read() != read()); exec(); } // not equal
-	ltn: { write(read() < read()); exec(); }  // less than
-	gtn: { write(read() > read()); exec(); }  // greater than
-	lte: { write(read() <= read()); exec(); } // less than equal
-	gte: { write(read() >= read()); exec(); } // greater than equal
-
-	jeq: { if (cond()) { goto jmp } else { skip(); exec(); } // jump equal
-	jne: { if (!cond()) { goto jmp } else { skip(); exec(); } // jump not equal
-	jmp: { jump(next()); exec(); } // jump unconditionally
+	ror: { flag(load(read() | read())); exec(); } // bitwise or
+	xor: { flag(load(read() ^ read())); exec(); } // bitwise xor
+	and: { flag(load(read() & read())); exec(); } // bitwise and
+	shl: { flag(load(read() << read())); exec(); } // bitwise left shift
+	shr: { flag(load(read() >> read())); exec(); } // bitwise right shift
 
 	cmp: { flag(read() - read()); exec(); } // compare register
 	cmq: { flag(read() - next()); exec(); } // compare constant
 
-	mov: { write(next()); exec(); } // move register
-	moq: { write(read()); exec(); } // move constant
+	mov: { load(next()); exec(); } // move effective value
+	rea: { load(read()); exec(); } // read effective address
+	lea: { load(look(next())); exec(); } // load effective address
 
-	pus: { push(read()); exec(); } // push stack
-	pop: { pop(); } // pop stack
+	jmp: { jump(next()); exec(); } // jump unconditionally
+	jeq: { if (cond() == 0) { goto jmp } else { skip(); exec(); } // jump equal
+	jne: { if (cond() != 0) { goto jmp } else { skip(); exec(); } // jump not equal
+	jlt: { if (cond() < 0) { goto jmp } else { skip(); exec(); } // jump, less than
+	jgt: { if (cond() > 0) { goto jmp } else { skip(); exec(); } // jump, greater than
+	jle: { if (cond() <= 0) { goto jmp } else { skip(); exec(); } // jump less than equal
+	jge: { if (cond() >= 0) { goto jmp } else { skip(); exec(); } // jump greater than equal
 
-	cal: { jump(next()); exec(); } // call, prepare
-	ret: { exec(); } // return, cleanup
+	ret: { rest(trim()); jump(trim()); goto rea; } // return, restore previous stack and source, jump to previous source
+	cal: { push(RBP = RSP); push(RSI); goto jmp; } // call, push current stack and source, jump to new source
 }
 
 // int code[] = {
-// 	            //      func fib (n)
-// 	            //      if (n < 2) return n
-// 	RSX, 0,     // 00 - load first argument, and push to stack (n)
-// 	ECX, 2,     // 02 - push 2 to stack
-// 	LST,        // 04 - check (n < 2) for the last two elements on the stack
-// 	JMP, 10,    // 05 - if !(n < 2), goto 10
-// 	PSX, 0,     // 07 - otherwise put (n)
-// 	RET,        // 09 - and return it
-// 	            //      else return fib(n - 1) + fib(n - 2)
-// 	RSX, 0,     // 10 - load last function argument (n)
-// 	RCX, 1,     // 12 - put 1
-// 	SUB,        // 14 - calculate: (n - 1), result is on the stack
-// 	CAL, 0, 1,  // 15 - call fib function with 1 arg. from the stack
-// 	RSX, 0,     // 18 - load (n) again
-// 	RCX, 2,     // 20 - put 2
-// 	SUB,        // 22 - calculate: (n - 2), result is on the stack
-// 	CAL, 0, 1,  // 23 - call fib function with 1 arg from the stack
-// 	ADD,        // 26 - since 2 fibs pushed their ret values on the stack, just add them
-// 	RET,        // 27 - return from procedure
-// 	            //      fib(28)
-// 	PCX, 28,    // 28 - put 28, entrypoint
-// 	CAL, 0, 1,  // 30 - call function: fib(n) where n = 28; argument length: 1
+// 	             // func fib (n)
+// 	             // if (n < 2) return n
+// 	MOV, $2, 02, // 03 - load 2
+// 	LEA, $1, 00, // 06 - load function argument n
+// 	SUB, $2, $1  // 09 - check (n < 2)
+// 	JNE, 10,     // 11 - if !(n < 2), goto 10
+// 	RET, $1      // 13 - return n
+//
+// 	             // else return fib(n - 1) + fib(n - 2)
+//
+// 	MOV, $2, 01, // 16 - put 1
+// 	LEA, $1, 00, // 19 - load function argument n
+// 	SUB, $2, $1  // 22 - calculate: (n - 1)
+//  PUT, $2,     // 24 - push register onto stack
+// 	CAL, 00      // 27 - call fib function with 1 arg
 
-// 	SYS, 0,     // 33 - evaulate the system print function, what ever is ontop of the stack
-// 	NOP,        // 34 - noop
-// 	EOF         // 35 - stop program
+//  MOV, $2, 02, // 30 - load 2
+// 	LEA, $1, 00  // 33 - load (n) again
+
+// 	SUB, $2, $1  // 36 - calculate: (n - 2)
+//  PUT, $2,     // 38 - push result onto stack
+// 	CAL, 00      // 41 - call fib function
+//  LEA, $2, 00  // 44 - load result from stack
+//  LEA, $1, 01  // 47 - load result from stack
+// 	ADD, $2, $1  // 50 - since 2 fibs pushed their ret values on the stack, just add them
+// 	RET, $2      // 52 - return from procedure
+// 	             //      fib(28)
+// 	PUS, 28,     // 54 - put 28, entrypoint
+// 	CAL, 00      // 57 - call function: fib(n) where n = 28; argument length: 1
+
+// 	SYS, 00,     // 59 - evaulate the system print function
+// 	NOP,         // 60 - noop
+// 	EOF          // 61 - stop program
 // };
