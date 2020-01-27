@@ -1,0 +1,57 @@
+import 'stdio' as stdio
+import 'libuv' as {set, get}
+
+bool boolean = true | false
+enum boolean {true = !0, false = !true}
+
+int number = 64 000
+big number = 128 00
+
+flt number = 64.000
+dec number = 128.00
+
+str string = 'hello'
+obj object = {int len: 0, str str: ''}
+ptr rawptr = {1024}
+nil nilptr = null
+any strnum = true ? 'str' : 64
+
+str[?] array = ['hello']
+str[5] array = ['hello']
+
+def Person age, name {}
+
+fun fib int n {
+	return n <= 1 ? n : fib(n - 1) + fib(n - 2)
+}
+
+obj run = {
+	obj global = Person(20, 'sam')
+	ptr memory = {1024}
+	any[?] program = []
+
+	fun create str type, ...args {}
+	fun destroy str type, ...args {}
+	fun execute ...args {}
+}
+
+
+fun obj ...arguments {
+	obj object = run.create(typeof obj, ...arguments)
+
+	run.execute(...arguments)
+
+	if object.ref == 0 {
+		run.destroy(typeof object, ...arguments)
+	}
+}
+
+fun man ...arguments {
+	return sizeof arguments
+}
+
+fun jsx a, b {
+	return !{
+		<Component><element><text>{a + b}</text></element></Component>
+	}
+}

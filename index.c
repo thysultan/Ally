@@ -14,7 +14,7 @@ void eval () {
 		ADD, SUB, MUL, DIV, MOD,
 		ROR, XOR, AND, SHL, SHR,
 		CMP, CMQ,
-		MOV, REA, LEA,
+		MOV, MOQ, MOS, MOA,
 		JMP, JEQ, JNE, JLT, JGT, JLE, JGE,
 		CAL, RET
 	};
@@ -27,7 +27,7 @@ void eval () {
 		&&eql, &&neq, &&ltn, &&gtn, &&lte, &&gte,
 		&&jeq, &&jne, &&jmp,
 		&&cmp, &&cmq,
-		&&mov, &&moq,
+		&&mov, &&moq, &mos,
 		&&pus, &&pop,
 		&&cal, &&ret
 	};
@@ -48,16 +48,6 @@ void eval () {
 	#define load(value) REG[peek()] = value
 	#define pull(value) REG[next()] = pops()
 
-	// example:
-	// mov $1, 02 // $1 = 2
-	// mov $2, 05 // $2 = 5
-	// mul $1, $2 // $1 = $1 * $2
-	// mov $2, 01 // $2 = 1
-	// add $1, $2 // $1 = $1 + $2
-	// cmp $1, $2 // zf = $1 - $2
-	// jeq $1, 00 // if ($1) {}
-	// jne $1, 00 // if (!$1) {}
-
 	// initialize
 	nop: { exec(); }
 	eof: { return; }
@@ -66,24 +56,24 @@ void eval () {
 	pus: { push(next()); exec(); } // push constant
 	put: { push(read()); exec(); } // push register
 
-	add: { flag(load(read() + read())); exec(); } // add
-	sub: { flag(load(read() - read())); exec(); } // subtract
-	mul: { flag(load(read() * read())); exec(); } // multiple
-	div: { flag(load(read() / read())); exec(); } // divide
-	mod: { flag(load(read() % read())); exec(); } // remainder
+	add: { load(read() + read()); exec(); } // add
+	sub: { load(read() - read()); exec(); } // subtract
+	mul: { load(read() * read()); exec(); } // multiple
+	div: { load(read() / read()); exec(); } // divide
+	mod: { load(read() % read()); exec(); } // remainder
 
-	ror: { flag(load(read() | read())); exec(); } // bitwise or
-	xor: { flag(load(read() ^ read())); exec(); } // bitwise xor
-	and: { flag(load(read() & read())); exec(); } // bitwise and
-	shl: { flag(load(read() << read())); exec(); } // bitwise left shift
-	shr: { flag(load(read() >> read())); exec(); } // bitwise right shift
+	ror: { load(read() | read()); exec(); } // bitwise or
+	xor: { load(read() ^ read()); exec(); } // bitwise xor
+	and: { load(read() & read()); exec(); } // bitwise and
+	shl: { load(read() << read()); exec(); } // bitwise left shift
+	shr: { load(read() >> read()); exec(); } // bitwise right shift
+
+	mov: { load(next()); exec(); } // load effective register
+	moq: { load(read()); exec(); } // load effective constant
+	mos: { load(look(next())); exec(); } // load effective stack
 
 	cmp: { flag(read() - read()); exec(); } // compare register
 	cmq: { flag(read() - next()); exec(); } // compare constant
-
-	mov: { load(next()); exec(); } // move effective value
-	rea: { load(read()); exec(); } // read effective address
-	lea: { load(look(next())); exec(); } // load effective address
 
 	jmp: { jump(next()); exec(); } // jump unconditionally
 	jeq: { if (cond() == 0) { goto jmp } else { skip(); exec(); } // jump equal
@@ -100,21 +90,21 @@ void eval () {
 // int code[] = {
 // 	             // func fib (n)
 // 	             // if (n < 2) return n
-// MOV, $2, 02, // 03 - load 2
-// LEA, $1, 00, // 06 - load function argument n
-// SUB, $2, $1, // 09 - check (n < 2)
-// JNE, 10,     // 11 - if !(n < 2), goto 10
+// MOQ, $2, 02, // 03 - load 2
+// MOS, $1, 00, // 06 - load function argument n
+// CMP, $2, $1, // 09 - check (n < 2)
+// JGE, 10,     // 11 - if (n >= 2) goto 10
 // RET,         // 12 - return
 
 // 	            // else return fib(n - 1) + fib(n - 2)
-// MOV, $2, 01, // 15 - put 1
-// LEA, $1, 00, // 18 - load function argument n
+// MOQ, $2, 01, // 15 - put 1
+// MOS, $1, 00, // 18 - load function argument n
 // SUB, $2, $1, // 21 - calculate: (n - 1)
 // PUT, $2,     // 23 - push register onto stack
 // CAL, 00,     // 25 - call fib function with 1 arg
 
-// MOV, $2, 02, // 28 - load 2
-// LEA, $1, 00, // 31 - load (n) again
+// MOQ, $2, 02, // 28 - load 2
+// MOS, $1, 00, // 31 - load (n) again
 
 // SUB, $2, $1, // 34 - calculate: (n - 2)
 // PUT, $2,     // 36 - push result onto stack

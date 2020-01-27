@@ -1,23 +1,17 @@
 # Ally
 
-Pronounced L-I, Ally is a dynamic programming language with semi-optional types. The language draws inspiration from JavaScript, Swift and PHP.
+Pronounced L-I, Ally is a static programming language with semi-optional types. The language draws inspiration from C, JavaScript, Swift and PHP.
 
 ## Reserved
 
 ```
-void, number, boolean, symbol, string, function, array, object, union,
-try, catch, finally, if, else, for, in, of, while, switch, match, case, default,
-continue, break, return, returns, throw, delete, pick, typeof, sizeof, instanceof,
+bit, int, big, flt, dec, num, str, obj, ptr, any, def, fun, ext, var,
 true, false, null, NaN, Infinity,
-public, private, protected, static, this,
-let, func, class, extends, module,
-import, export, as
-```
-
-## Reserved(Future)
-
-```
-enum, abstract, typealias, interface, extern, super, yield, async, await, is, with
+import, export, as,
+continue, break, return, returns, throw, delete, pick, typeof, sizeof, instanceof, keyof,
+try, catch, finally, if, else, for, in, switch, case, default,
+super, extends,
+async, await,
 ```
 
 ## Comments
@@ -50,31 +44,11 @@ abc123
 ALL_CAPS
 ```
 
-## Let
-
-Also known as "variable declaration/assignment", `let` gives names to variables. They can be seen and referenced by other pieces of the program. Let bindings created in a operator/function/lambda body `{}` are scoped to that particular body.
-
-Inline assignment variables without the explicit use fo the `let` keyword are implicitly `let` bindings.
-
-```
-template = "1" // let template = "1"
-```
-
-Let bindings are not required an assignment inline.
-
-```
-let template
-let script
-
-template = "1"
-script = "2"
-```
-
 ---
 
 ## Boolean
 
-Booleans has the type of `boolean` either `true` or `false`. Boolean operations include:
+Booleans has the type of `boolean` denoted as `bit` of either values `true` or `false`, or `!0` or `0`. Boolean operations include:
 
 1. && logical and
 2. || logical or
@@ -83,14 +57,21 @@ Booleans has the type of `boolean` either `true` or `false`. Boolean operations 
 4. == equal
 6. != unequal
 4. === deep equal
-5. === deep unequal
+5. !== deep unequal
 
 ## Number
 
-64-bit (double-precision) floating point numbers. Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
+```
+int number = 64 000 // 64 bit integer
+flt number = 64.000 // 64 bit floating point number
+dec number = 128.00 // pronounced decimal, 128 floating point number
+num number = flt | int // pronounced number, either a float or integer depending on the downstream uses.
+```
+
+Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
 
 ```
-a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 100
+num a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 100
 ```
 
 Both `.4` and `1.` are not valid, and must be pre/post-fixed with a zero.
@@ -111,7 +92,7 @@ Spaces and appended letters are ignored.
 Strings are delimited with either double quotes ", or single ' quotes. String can span multiple lines.
 
 ```
-a = '
+str a = '
 	Hello
 	World
 '
@@ -120,14 +101,7 @@ a = '
 String concatenation uses `+`.
 
 ```
-a = 'Hello' + ' ' + 'World'
-```
-
-String interpolation is delimeted by `$()`
-
-```
-
-a = 'Hello $(1 + 2)'
+str a = 'Hello' + ' ' + 'World'
 ```
 
 ## Control
@@ -140,17 +114,7 @@ Control flow operators do not use parenthesis in contrast to function invocation
 switch condition {
 	case a, b {
 	}
-	case default {
-	}
-}
-```
-
-### Match
-
-```
-match condition {
-	case a, b {
-	}
+	case c => 'return'
 	case default {
 	}
 }
@@ -179,7 +143,7 @@ try {
 for step < 100 {
 }
 
-for step = 0, step < 100, step++ {
+for int step = 0, step < 100, step++ {
 }
 ```
 
@@ -195,89 +159,88 @@ for step of 0...10 {
 
 ## Function
 
-Functions are first class values that have the type `function`. These share the form of `func name arguments body`.
+Functions are first class values that have the type `function`. These share the form of `fun name arguments body`.
 
 ```
-func name {
+fun ... {
 }
 
-func name a, b {
+fun name {
 }
 
-func name ...args {
+fun name a, b {
 }
 
-func name ...args, a {
+fun name ...args {
 }
 
-func name a, ...args {
+fun name ...args, a {
 }
 
-func name a = 1 {
+fun name a, ...args {
 }
 
-func name a = 1, b = 2 {
+fun name a = 1 {
 }
 
-func name a pick {ref, age = 1}, b {
+fun name a = 1, b = 2 {
 }
 
-func name
-	object a pick {string type, age = 1},
+fun name a pick {ref, age = 1}, b {
+}
+
+fun name
+	object a pick {str type, age = 1},
 	number b returns void {
 }
 ```
 
 ## Lambdas
 
-Lambdas are identical to functions and share the same type of `function`.
+Lambdas are identical to functions and share the same type of `function`. The expression immediatly after '=>' is the return value of a lambda function, this means that in the following, the return values are empty objects '{}'.
 
 ```
-name = => {
+var name = fun ... => {
 }
 
-name = a => {
+var name = fun name => {
 }
 
-name = a, b => {
+var name = fun name a => {
 }
 
-name = => {
+var name = fun name a, b => {
 }
 
-name = ...args => {
+var name = fun name => {
 }
 
-name = ...args, a => {
+var name = fun name ...args => {
 }
 
-name = a, ...args => {
+var name = fun name ...args, a => {
 }
 
-name = {a, b} => {
+var name = fun name a, ...args => {
 }
 
-name = {a, b = 1} => {
+var name = fun name {a, b} => {
 }
 
-name = a = 1 => {
+var name = fun name {a, b = 1} => {
 }
 
-name = a = 1, b = 2 => {
+var name = fun name a = 1 => {
 }
 
-name = a pick {ref, age = 1}, b => {
+var name = fun name a = 1, b = 2 => {
 }
 
-name =
-	object a pick {string type, age = 1},
-	number b returns void => {
+var name = fun name a pick {ref, age = 1}, b => {
 }
 
-name = => Expression
-
-name = =>
-	Expression
+var name = fun name obj a pick {str type, age = 1}, num b => {
+}
 ```
 
 ## Invocations
@@ -293,109 +256,137 @@ print(
 	print('Hello')
 		print('World'))
 
-print('Hello', func name {
+print('Hello', fun name {
 })
 
-print( => {
+print('Hello', fun ... {
 })
 
-print('Hello', => {
-})
+print(fun ... => print(''))
 
-print( => System.write(''))
+print(fun name => print(''))
 
-print( =>
-	System.write(''))
+print(fun name =>
+	print(''))
 ```
 
 ## Types
 
-Types are optional, you can attach them to function arguments, variable bindings and class bodies. The following primitive types exist.
+Types are semi-optional(inferred where possible), you can attach them to function arguments, variable bindings and class bodies. The following primitive types exist.
 
 ```
-void
-number
-boolean
-symbol
-string
 
-function
-object
-array
+void – pointers, denoted as 'ptr'
+number - numbers, denoted as 'int', 'flt', 'dec', 'num'
+boolean - booleans, denonted as 'bol'
+string - strings, denoted as 'str'
+definition - types, denoted as 'def'
+
+function - functions, denoted as 'fun'
+object - objects, denoted as 'obj'
+array - arrays, denoted as 'type[?]' where '?' is either '?' or a number
+```
+
+In the form of examples this includes.
+
+```
+bool boolean = true | false
+enum enumerate = {true = !0, false = !true}
+
+int number = 64 000
+big number = 128 00
+
+flt number = 64.000
+dec number = 128.00
+
+num number = int | flt | big | dec
+
+str string = 'hello'
+obj object = {int len = 0, str str = ''}
+ptr rawptr = {1024}
+any strnum = true ? 'str' : 64
+def Object = {obj ret, num ref}
+
+str[?] array = ['hello']
+str[5] array = ['hello']
 ```
 
 The use of types follow the pattern `type binding`.
 
 ```
-number age = 1
+int age = 1
 
-func name number age, array<string> subjects, object<Person> person returns void {
+fun name num age, str[] subjects, obj<Person> person {
 	return
 }
 
-name = number age, array<string> subjects, object<Person> person returns void => {
+fun name = num age, str[] subjects, obj<Person> person => {
 	return
 }
 ```
 
 ## Class
 
-Classes are created using the class keyword that follow the pattern `class Name {}`. Keywords `public`, `private`, `protected` and `static` are used to indicate the visibility of class methods/fields.
+Classes are created using the def keyword that follow the pattern `def Name ...args? {}`.
 
 ```
-class Person {
-	public func create name, age {
-	}
-	private func destroy id {
-	}
-	protected func assign key, value {
-	}
+def Person {
+	obj object = {}
+	obj dictionary = {['key', 'value']}
+	ptr memory = {1024}
+
+	any[] program = []
+
+	fun create name, age {}
+	fun assign key, value {}
+	fun destroy id {}
+	fun generic def type, value {}
 }
 ```
 
 Class optional parameters resemble function parameters.
 
 ```
-class Person a pick {key}, b = 1, object c {
-	public number age = key
+def Person a pick {key}, b = 1, obj c {
+	int age = key
 }
 ```
 
 Fields are created statitically or through referenced named parameters.
 
 ```
-class Person age, year, document pick {name} {
-	public x = 0
-	public y = 0
+def Person age, year, document pick {name} {
+	int x = 0
+	int y = 0
 
-	public func write {
-		System.write('Hello' + 'World' + '!')
+	fun write {
+		print('Hello' + 'World' + '!')
 	}
 
-	private func assign key, value {
-		this[key] = value
+	fun assign key, value {
+		super.key = value
 	}
 }
 
-person = Person('23', '1989')
+obj person = Person('23', '1989')
 
-System.write(`Name: $(person.name) Age: $(person.age), Born In: $(person.year)`)
+print('Name: ' + person.name 'Age: ' + person.age + ', Born In: ' + person.year)
 ```
 
 Class instances are created when invoked. Parameters are passed to classes like functions.
 
 ```
-person = Person(10, 1989)
+obj person = Person(10, 1989)
 ```
 
 All named arguments in the class are assigned to a corrosponding field.
 
 ```
-class Element type, props pick {ref, key, xmlns}, children {
-  public func handleEvent object<Event> event {
-    this.dispatchEvent(event, => System.write("dispatchEvent"))
+def Element type, props pick {ref, key, xmlns}, children {
+  fun handleEvent obj<Event> event {
+    super.dispatchEvent(event, => print('dispatchEvent'))
   }
-  private func dispatchEvent object<Event> event, function callback {
+  fun dispatchEvent obj<Event> event, fun callback {
     try {
       callback(event)
     } catch e {
@@ -404,72 +395,62 @@ class Element type, props pick {ref, key, xmlns}, children {
   }
 }
 
-func createElement union<string, function> type, object props, ...children {
+fun createElement any<str, fun> type, obj props, ...children {
   return Element(type, props, children)
 }
 
-System.write(createElement('h1', null, 'Hello').type === 'h1')
+obj person = Person()
+
+print(person.type == 'h1')
 ```
 
-Private members are not accessible except from within the source class.
+Classes can extend other class.
 
 ```
-class Person {
-	private func setter key, value {
-		this[key] = value
+def Person {
+	fun getter key {
+		return super[key]
 	}
 }
 
-person = Person()
-
-System.write(typeof person.setter) // null
-```
-
-Static members are accessible from `class` objects instead of `class` instances.
-
-```
-class Person {
-	static func setter key, value {
+def Student extends Person {
+	get fun key {
+		super.getter(key)
 	}
 }
 
-System.write(typeof Person.setter) // function
+obj student = Student()
+
+print(typeof student.getter) // function
 ```
 
-Classes can extend other class. Protected methods are not accessible except from within the class. The Child `class` receives `public`, `protected` and `static` fields, methods of the Parent `class`.
+## Generics
+
+Given that functions can accept type defintions as arguments. The following is a difinition that accepts defintions as an argument, and sets the type of the the 'value' to any type passed as a definition.
 
 ```
-class Person {
-	protected func getter key {
-		return this[key]
-	}
+def Generic def type {
+	any<type> value
 }
 
-class Student extends Person {
-	public get func key {
-		this.getter(key)
-	}
-}
-
-student = Student()
-
-System.write(typeof student.getter) // function
+obj generic = Generic(Generic)
 ```
+
 
 ## Module
 
-Modules are like files! They can contain variable bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `module Identifier {}`.
+Modules are like files! They can contain variable bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `export Identifier {}`.
 
 ```
-module School {
-	import {type as studentType} from Student
+export School {
+	import Student as {type as studentType}
 
-	population = 100
+	int population = 100
 
-  export profession = 'Teacher'
+  str profession = 'Teacher'
 
-  export type = (person) =>
-  	switch (person) {
+  fun type person {
+  	switch person {
   		case 'Teacher' {
   			return 'A teacher'
   		}
@@ -477,31 +458,31 @@ module School {
   			return 'A director'
   		}
   	}
-
- 	export {population}
+  }
 }
 
-module Student {
-  export grade = '7'
+export Student {
+  export profession from School
 
-	export default func announcement value {
-		System.write('')
+  str grade = '7'
+
+	fun announcement value {
+		print(value)
 	}
 
-  export type = (student) =>
-  	switch (student) {
+  fun type student {
+  	switch student {
   		case '7' {
-  			return 'middle school'
+  			return 'Middle school'
   		}
   		case '8' {
-  			return 'high school'
+  			return 'High school'
   		}
   	}
-
-  export profession from School
+  }
 }
 
-import {type} from School
+import School as {type}
 ```
 
 ## Object
@@ -509,16 +490,16 @@ import {type} from School
 Plain objects are created using the `{}` (curly braces). Objects are immutable(size). Objects are created in two flavours, plain objects and dictionary objects.
 
 ```
-plain = {
-	age: 27,
-	year: 1989,
-	print: value => System.write(value),
-	assign: func name key, value {
-		return this[key] = value
+obj plain = {
+	int age = 27,
+	int year = 1989,
+	fun name value => print(value),
+	fun name key, value {
+		return super[key] = value
 	}
 }
 
-dictionary = {
+obj dictionary = {
 	['age', 27],
 	['year', 1989]
 }
@@ -527,12 +508,12 @@ dictionary = {
 While Dictionary objects can hold any key including objects plain objects can only hold string keys.
 
 ```
-plain = {
-	age: 27,
-	year: 1989
+obj plain = {
+	age = 27,
+	year = 1989
 }
 
-dictionary = {
+obj dictionary = {
 	[{}, 27],
 	['year', 1989]
 }
@@ -543,7 +524,7 @@ dictionary = {
 The `in` operator returns wether a given key is present in an `object`.
 
 ```
-'foo' in {foo: 1} === true
+'foo' in {foo = 1} == true
 ```
 
 ## Sizeof
@@ -551,15 +532,21 @@ The `in` operator returns wether a given key is present in an `object`.
 The `sizeof` operator returns the size of a given array/object/string and `NaN` for invalid values.
 
 ```
-System.write(sizeof [1, 2, 3])       // 3
-System.write(sizeof {a: 1, b: 2})    // 2
-System.write(sizeof "Hello")         // 5
-System.write(sizeof 2)               // NaN
-System.write(sizeof Symbol())        // NaN
-System.write(sizeof null)            // NaN
-System.write(sizeof func {})         // NaN
-System.write(sizeof true)            // NaN
-System.write(sizeof Map([[1, '1']])) // 1
+print(sizeof [1, 2, 3])       // 3
+print(sizeof {a: 1, b: 2})    // 2
+print(sizeof 'Hello')         // 5
+print(sizeof 2)               // 64
+print(sizeof null)            // NaN
+print(sizeof fun a, b {})     // 2
+print(sizeof true)            // 1
+print(sizeof {[1, '1']})      // 1
+```
+
+The `sizeof` operators on primitive types
+
+```
+print(sizeof int)             // 64
+print(sizeof dec)             // 128
 ```
 
 ## Typeof
@@ -567,29 +554,28 @@ System.write(sizeof Map([[1, '1']])) // 1
 The `typeof` operator returns the type of a given value in string form.
 
 ```
-System.write(typeof [1, 2, 3])       // "array"
-System.write(typeof {a: 1, b: 2})    // "object"
-System.write(typeof "Hello")         // "string"
-System.write(typeof 2)               // "number"
-System.write(typeof Symbol())        // "symbol"
-System.write(typeof null)            // "void"
-System.write(typeof func {})         // "function"
-System.write(typeof true)            // "boolean"
-System.write(typeof Map([[1, '1']])) // "object"
+print(typeof int)             // 'definition'
+print(typeof [1, 2, 3])       // 'array'
+print(typeof {a: 1, b: 2})    // 'object'
+print(typeof "Hello")         // 'string'
+print(typeof 2)               // 'number'
+print(typeof null)            // 'void'
+print(typeof fun {})          // 'function'
+print(typeof true)            // 'boolean'
+print(typeof {[1, '1']})      // 'object'
 ```
 
 ## Instanceof
 
-The `instanceof` operator returns `true` if the value is an instance of specified class.
+The `instanceof` operator returns the class that value is an instance of.
 
 ```
-class Person {}
-class Student extends Person {}
+def Person {}
+def Student extends Person {}
 
-1 instanceof Number === false
-Student() instanceof Student === true
-Student() instanceof Person === false
-Person() instanceof Person === true
+instanceof student === Student
+instanceof student !== Person
+instanceof persons === Person
 ```
 
 ## Pick
@@ -597,7 +583,7 @@ Person() instanceof Person === true
 The `pick` operator retrieves the corresponding value(s) from an `object`.
 
 ```
-{foo: 1} pick "foo" === 1
+{foo: 1} pick 'foo' === 1
 {foo: 1, bar: 2} pick {foo, bar} === {foo: 1, bar: 2}
 [2, 3, 5, 7, 11, 13] pick [1...4] === [3, 5, 7, 11]
 [2, 3, 5, 7, 11, 13] pick [1, 2, 3, 4] === [3, 5, 7, 11]
@@ -606,33 +592,22 @@ The `pick` operator retrieves the corresponding value(s) from an `object`.
 In some respects the `pick` operator is much like the subscript `[]` operator. Pick however is aligned to support a range of contexts including destructuring function arguments and picking values from exotic objects.
 
 
-## Delete
-
-The `delete` operator deletes the corresponding value(s) from an `object`.
-
-```
-dictionary = {['a', 1], ['b', 2], ['c', 3]}
-
-dictionary delete 'a' === {['b', 2], ['c', 3]}
-dictionary delete {b, c} === {}
-```
-
 ## Spread
 
-The `...` operator is a generic operator that spreads it's contents onto the context of its binding. The different contexts include function arguments `func ...arg`, objects `{...a}` arrays `[...a]` and numbers `0...3`.
+The `...` operator is a generic operator that spreads it's contents onto the context of its binding. The different contexts include function arguments `fun ...arg`, objects `{...a}` arrays `[...a]` and numbers `0...3`.
 
 ```
-var arr = [1, 2]
-var obj = {foo: 1}
+int[2] arr = [1, 2]
+obj obj = {foo = 1}
 
-{...obj, bar: 2} === {foo: 1, bar: 2}
+{...obj, bar = 2} === {foo = 1, bar = 2}
 
 [0, ...arr] === [0, 1, 2]
 
 [1...3] === [1, 2, 3]
 
-func ...args {
-	System.write(typeof args === 'array')
+fun ...args {
+	print(typeof args === 'array')
 }
 ```
 
@@ -652,13 +627,8 @@ arr === [1, 2, 3, 4, 5, 6]
 
 // noop push
 arr[7] = 10
-arr[7] === null
-sizeof arr === 7
-
-// noop delete
-arr delete 0
-arr[0] === 1
-sizeof arr === 7
+arr[7] == null
+sizeof arr == 6
 ```
 
 ## Standard Library
@@ -666,84 +636,85 @@ sizeof arr === 7
 ### RegExp
 
 ```
-RegExp(string value, string flags) obj<RegExp>
-RegExp('value', 'g') === \value\g
+RegExp(str value, str flags) obj<RegExp>
+RegExp('value', 'g') === {\value\g}
 ```
 
 ### String
 
 ```
-String(target) string
+String(target) str
 ```
 
 ### Object
 
 ```
-Object(target) object
+Object(target) obj
 ```
 
 ### Boolean
 
 ```
-Boolean(target) boolean
+Boolean(target) bit
 ```
 
 ### Number
 
 ```
-Number(target) number
+Number(target) num
 ```
 
 ### Exception
 
 ```
-Exception(string target) object<Exception>
-	object<Exception>.type
-	object<Exception>.message
+Exception(str target) obj<Exception>
+	obj<Exception>.type
+	obj<Exception>.message
 ```
 
 ### Promise
 
 ```
-Promise(function target)
-	object<Promise>.then(function callback, function error, funcion final) object<Promise>
+Promise(fun target)
+	obj<Promise>.then(fun callback, fun error, fun final) obj<Promise>
 ```
 
 ### Math
 
 ```
-Math.random() number
-Math.abs(number target) number
-Math.ceil(number target) number
-Math.exp(number target) number
-Math.floor(number target) number
-Math.round(number target) number
-Math.sign(number target) number
-Math.trunc(number target) number
-Math.sqrt(number target) number
-Math.cbrt(number target) number
-Math.imul(numer x, number y) number
-Math.log(number target) number
-Math.cos(number target) number
-Math.cosh(number target) number
-Math.sin(number target) number
-Math.tan(number target) number
-Math.max(...arguments) number
-Math.min(...arguments) number
-Math.hypot(...arguments) number
+Math.random() num
+Math.abs(num target) num
+Math.ceil(num target) num
+Math.exp(num target) num
+Math.floor(num target) num
+Math.round(num target) num
+Math.sign(num target) num
+Math.trunc(num target) num
+Math.sqrt(num target) num
+Math.cbrt(num target) num
+Math.imul(num x, num y) num
+Math.log(num target) num
+Math.cos(num target) num
+Math.cosh(num target) num
+Math.sin(num target) num
+Math.tan(num target) num
+Math.max(...arguments) num
+Math.min(...arguments) num
+Math.hypot(...arguments) num
 ```
 
 ### JSON
 
 ```
-JSON.parse(string target) object
-JSON.stringify(object target) string
+JSON.parse(str target) obj
+JSON.stringify(obj target) str
 ```
 
 ## System
 
 ```
-System.assert(boolean value)
+System.assert(bit value)
 System.write(...arguments)
+System.print(...arguments)
 ```
 
