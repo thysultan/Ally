@@ -38,14 +38,13 @@ export function parse (type, value) {
 			// ;
 			case 59:
 				break
+			// [ {
+			case 91: case 123: move(1)
 			// ( )
 			case 40: parse(char() + 1, value)
 				break
-			// [ ] { }
-			case 91: case 123: parse(char() + 2, value)
-				break
-			// } \0
-			case 125: case 0: index = offset = length = scanning = 0
+			// \0 ) ] }
+			case 0: case type: index = offset = length = scanning = 0
 				break
 			// " ' ` string
 			case 34: case 39: case 96: index = caret()
@@ -145,7 +144,7 @@ export function parse (type, value) {
 }
 
 /**
- * @return {number} position
+ * @param {number} position
  * @return {number}
  */
 export function peek (position) {
@@ -153,10 +152,18 @@ export function peek (position) {
 }
 
 /**
+ * @param {number} distance
+ * @return {number}
+ */
+export function move (distance) {
+	return character += distance
+}
+
+/**
  * @return {number}
  */
 export function scan () {
-	return peek(position++)
+	return character = peek(position++)
 }
 
 /**
