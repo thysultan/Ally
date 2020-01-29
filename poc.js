@@ -59,7 +59,7 @@ export function parse (type, value) {
 				substr(index, caret())
 				break
 			// \n \t \s whitespace
-			case 10: ++line, column = peek() case 9: case 32:
+			case 10: ++line, column = caret() case 9: case 32:
 				while (code = peek()) {
 					if (code < 32) {
 						scan()
