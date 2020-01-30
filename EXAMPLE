@@ -35,7 +35,6 @@ obj run = {
 	fun execute ...args {}
 }
 
-
 fun obj ...arguments {
 	obj object = run.create(typeof obj, ...arguments)
 
