@@ -1,12 +1,21 @@
 // interface: {type: 'string', props: string[], children: interface[], source: float}
+
 // program: {type: 'program', props: [], children: []}
-// definition: {type: 'definition', props: [], children: []}
-// identifier: {type: 'identifier', props: [], children: []}
-// literal: {type: 'literal', props: [], children: []}
-// statement: {type: 'statement', props: [], children: []}
-// expression: {type: 'expressin', props: [], children: []}
-// declaration: {type: 'declaration', props: [], children: []}
+// literal: {type: 'literal', props: ['type', 'value'], children: []}
+// identifier: {type: 'identifier', props: ['type', 'identifier'], children: []}
+// declaration: {type: 'declaration', props: ['type', 'identifier'], children: []}
+// expression: {type: 'expressin', props: ['type', 'operator'], children: []}
+// statement: {type: 'statement', props: ['type', 'keyword'], children: []}
+// procedure: {type: 'procedure', props: ['type', 'length'], children: []}
 // operator: {type: 'operator', props: [], children: []}
+
+/*
+{
+	type: 'program',
+	props: [],
+	children: []
+}
+*/
 
 /*
 int number = 10 000km
@@ -66,7 +75,9 @@ ptr rawptr = {1024}
 	]
 }
 
-fun fib name, age {}
+fun fib name, age {
+	return int a = 1
+}
 
 {
 	type: 'declaration',
@@ -89,9 +100,27 @@ fun fib name, age {}
 			]
 		},
 		{
-			type: 'statement',
-			props: [],
-			children: []
+			type: 'procedure',
+			props: ['fun', '2'],
+			children: [
+				{
+					type: 'statement',
+					props: ['any', 'return'],
+					children: [
+						{
+							type: 'declaration',
+							props: ['int', 'a'],
+							children: [
+								{
+									type: 'literal',
+									props: ['int', '1'],
+									children: []
+								}
+							]
+						}
+					]
+				}
+			]
 		}
 	]
 }
@@ -109,7 +138,7 @@ a = b = c // (a = (b = c))
 		},
 		{
 			type: 'expression',
-			props: ['equal'],
+			props: ['any', 'equal'],
 			children: [
 				{
 					type: 'identifier',
