@@ -90,7 +90,7 @@ a = b = c // (a = (b = c))
 		},
 		{
 			type: 'expression',
-			props: ['any', 'equal'],
+			props: ['any', 'assignment'],
 			children: [
 				{
 					type: 'identifier',
