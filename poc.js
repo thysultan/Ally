@@ -35,30 +35,32 @@ obj object = {int length = 0, str string: 'a'}
 {
 	type: 'declaration',
 	props: ['obj', 'object'],
-	children: {
-		type; 'literal',
-		props: ['obj', '2'],
-		children: [
-			{
-				type: 'declaration',
-				props: ['int', 'length'],
-				children: {
-					type: 'literal',
-					props: ['int', '0'],
-					children: []
+	children: [
+		{
+			type; 'literal',
+			props: ['obj', '2'],
+			children: [
+				{
+					type: 'declaration',
+					props: ['int', 'length'],
+					children: {
+						type: 'literal',
+						props: ['int', '0'],
+						children: []
+					}
+				},
+				{
+					type: 'declaration',
+					props: ['str', 'string'],
+					children: {
+						type: 'literal',
+						props: ['str', 'a'],
+						children: []
+					}
 				}
-			},
-			{
-				type: 'declaration',
-				props: ['str', 'string'],
-				children: {
-					type: 'literal',
-					props: ['str', 'a'],
-					children: []
-				}
-			}
-		]
-	}
+			]
+		}
+	]
 }
 
 ptr rawptr = {1024}
@@ -71,6 +73,36 @@ ptr rawptr = {1024}
 			type: 'literal',
 			props: ['ptr', '1024'],
 			children: []
+		}
+	]
+}
+
+a = b = c // (a = (b = c))
+
+{
+	type: 'expression',
+	props: ['any', 'assignment'],
+	children: [
+		{
+			type: 'identifier',
+			props: ['any', 'a'],
+			children: []
+		},
+		{
+			type: 'expression',
+			props: ['any', 'equal'],
+			children: [
+				{
+					type: 'identifier',
+					props: ['any', 'b']
+					children: []
+				},
+				{
+					type: 'identifier',
+					props: ['any', 'c'],
+					children: []
+				}
+			]
 		}
 	]
 }
@@ -125,32 +157,76 @@ fun fib name, age {
 	]
 }
 
-a = b = c // (a = (b = c))
+for int i = 0, int j = 0, i < 10, i++ {}
 
 {
-	type: 'expression',
-	props: ['assignment'],
+	type: 'statement',
+	props: ['nil', 'for'],
 	children: [
 		{
-			type: 'identifier',
-			props: ['any', 'a'],
-			children: []
-		},
-		{
-			type: 'expression',
-			props: ['any', 'equal'],
+			type: 'declaration',
+			props: ['i', 'j'],
 			children: [
 				{
 					type: 'identifier',
-					props: ['any', 'b']
-					children: []
+					props: ['int', 'i'],
+					children: [
+						{
+							type: 'literal',
+							props: ['int', '0'],
+							children: []
+						}
+					]
 				},
 				{
 					type: 'identifier',
-					props: ['any', 'c'],
+					props: ['int', 'j'],
+					children: [
+						{
+							type: 'literal',
+							props: ['int', '0'],
+							children: []
+						}
+					]
+				}
+			]
+		},
+		{
+			type: 'expression',
+			props: ['bool', 'compare'],
+			children: [
+				{
+					type: 'identifier',
+					props: ['int', 'i']
+					children: []
+				},
+				{
+					type: 'literal',
+					props: ['int', '10']
 					children: []
 				}
 			]
+		},
+		{
+			type: 'expression',
+			props: ['int', 'addition'],
+			children: [
+				{
+					type: 'identifier',
+					props: ['int', 'i']
+					children: []
+				},
+				{
+					type: 'literal',
+					props: ['int', '1']
+					children: []
+				}
+			]
+		},
+		{
+			type: 'procedure',
+			props: ['for', 'condition'],
+			children: []
 		}
 	]
 }
