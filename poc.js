@@ -1,444 +1,369 @@
-// interface: {type: 'string', props: string[], children: interface[], source: float}
+export var str = ''
+export var ptr = null
 
-// program: {type: 'program', props: [], children: []}
-// literal: {type: 'literal', props: ['type', 'value'], children: []}
-// identifier: {type: 'identifier', props: ['type', 'identifier'], children: []}
-// declaration: {type: 'declaration', props: ['type', 'identifier'], children: []}
-// expression: {type: 'expressin', props: ['type', 'operator'], children: []}
-// statement: {type: 'statement', props: ['type', 'keyword'], children: []}
-// procedure: {type: 'procedure', props: ['type', 'length'], children: []}
-// operator: {type: 'operator', props: [], children: []}
-
-/*
-{
-	type: 'program',
-	props: [],
-	children: []
-}
-*/
-
-/*
-int number = 10 000km
-
-{
-	type: 'declaration',
-	props: ['int', 'number'],
-	children: {
-		type: 'literal',
-		props: ['int', '10000'],
-		children: []
-	}
-}
-
-obj object = {int length = 0, str string: 'a'}
-
-{
-	type: 'declaration',
-	props: ['obj', 'object'],
-	children: [
-		{
-			type; 'literal',
-			props: ['obj', '2'],
-			children: [
-				{
-					type: 'declaration',
-					props: ['int', 'length'],
-					children: {
-						type: 'literal',
-						props: ['int', '0'],
-						children: []
-					}
-				},
-				{
-					type: 'declaration',
-					props: ['str', 'string'],
-					children: {
-						type: 'literal',
-						props: ['str', 'a'],
-						children: []
-					}
-				}
-			]
-		}
-	]
-}
-
-ptr rawptr = {1024}
-
-{
-	type: 'declaration',
-	props: ['ptr', 'rawptr'],
-	children: [
-		{
-			type: 'literal',
-			props: ['ptr', '1024'],
-			children: []
-		}
-	]
-}
-
-a = b = c // (a = (b = c))
-
-{
-	type: 'expression',
-	props: ['any', 'assignment'],
-	children: [
-		{
-			type: 'identifier',
-			props: ['any', 'a'],
-			children: []
-		},
-		{
-			type: 'expression',
-			props: ['any', 'assignment'],
-			children: [
-				{
-					type: 'identifier',
-					props: ['any', 'b']
-					children: []
-				},
-				{
-					type: 'identifier',
-					props: ['any', 'c'],
-					children: []
-				}
-			]
-		}
-	]
-}
-
-fun fib name, age {
-	return int a = 1
-}
-
-{
-	type: 'declaration',
-	props: ['fun', 'fib'],
-	children: [
-		{
-			type: 'declaration',
-			props: ['name', 'age'],
-			children: [
-				{
-					type: 'identifier',
-					props: ['any', 'name'],
-					children: []
-				},
-				{
-					type: 'identifier',
-					props: ['any', 'age'],
-					children: []
-				}
-			]
-		},
-		{
-			type: 'procedure',
-			props: ['fun', '2'],
-			children: [
-				{
-					type: 'statement',
-					props: ['any', 'return'],
-					children: [
-						{
-							type: 'declaration',
-							props: ['int', 'a'],
-							children: [
-								{
-									type: 'literal',
-									props: ['int', '1'],
-									children: []
-								}
-							]
-						}
-					]
-				}
-			]
-		}
-	]
-}
-
-for int i = 0, int j = 0, i < 10, i++ {}
-
-{
-	type: 'statement',
-	props: ['nil', 'for'],
-	children: [
-		{
-			type: 'declaration',
-			props: ['i', 'j'],
-			children: [
-				{
-					type: 'identifier',
-					props: ['int', 'i'],
-					children: [
-						{
-							type: 'literal',
-							props: ['int', '0'],
-							children: []
-						}
-					]
-				},
-				{
-					type: 'identifier',
-					props: ['int', 'j'],
-					children: [
-						{
-							type: 'literal',
-							props: ['int', '0'],
-							children: []
-						}
-					]
-				}
-			]
-		},
-		{
-			type: 'expression',
-			props: ['bool', 'compare'],
-			children: [
-				{
-					type: 'identifier',
-					props: ['int', 'i']
-					children: []
-				},
-				{
-					type: 'literal',
-					props: ['int', '10']
-					children: []
-				}
-			]
-		},
-		{
-			type: 'expression',
-			props: ['int', 'addition'],
-			children: [
-				{
-					type: 'identifier',
-					props: ['int', 'i']
-					children: []
-				},
-				{
-					type: 'literal',
-					props: ['int', '1']
-					children: []
-				}
-			]
-		},
-		{
-			type: 'procedure',
-			props: ['for', 'condition'],
-			children: []
-		}
-	]
-}
-*/
-
+export var flag = 0
+export var code = 0
 export var line = 0
 export var column = 0
+export var offset = 0
 export var length = 0
-export var position = 0
-export var character = 0
+
+// enums
+export var token = {noop: 0, program: 1, keyword: 2, literal: 3, operator: 4, statement: 5, procedure: 6, identifier: 7, expression: 8, declaration: 9}
+export var types = {int: -1, big: -2, flt: -3, dec: -4, num: -5, str: -6, obj: -7, ptr: -8, nil: -9, any: -10, def: -11, fun: -12, enum: -13, bool: -14}
+
+// heaps
 export var characters = ''
-
-export function allocate (value) {
-	characters = value, position = column = 0
-}
+export var enviroment = []
+export var executable = []
 
 /**
  * @param {string} value
- * @return {string[]}
- */
-export function compile (value) {
-	return parse(position = column = 0, 0, [characters = value], [])
-}
-
-/**
- * @param {string} value
- * @param {number} type
- * @param {number} context
  * @return {object}
  */
-export function parse (context, type, props, children) {
-	var code = 0
-	var index = 0
-	var offset = 0
-	var length = 0
-	var position = 0
-	var scanning = 1
+export function compile (value) {
+	return tokenize(offset = column = 0, ptr = [characters = value], ptr = node(token.program, ptr), ptr)
+}
 
-	while (scanning) {
-		switch (next()) {
-			// \0 ) ] }
-			case 0: case type: index = offset = length = position = scanning = 0
-				break
-			// ,
-			case 44:
-				break
-			// ;
-			case 59:
-				break
-			// ! % & * + - / < = > ^ |
-			case 33; case 37: case 38: case 42: case 43: case 45: case 47: case 60: case 61: case 62: case 94: case 124:
-				break
-			// [ {
-			case 91: case 123: shift(1)
-			// ( )
-			case 40: parse(context, char() + 1, props, children)
-				break
-			// " ' ` string
-			case 34: case 39: case 96: position = caret()
-				while (code = next()) {
-					if (code == 92) {
-						next()
-					} else if (code == char()) {
+/**
+ * @param {number} type
+ * @param {any[]} props
+ * @param {object} next
+ * @param {object} root
+ * @return {object}
+ */
+export function tokenize (type, props, next, root) {
+	while (flag = scan()) {
+		switch (flag) {
+			// < <= <<=
+			// > >= >>=
+			// * *= **=
+			case 42 case 60: case 62:
+				switch (peek(0)) {
+					// ** / << / >> / **= / <<= / >>=
+					case flag: push(next = node(token.operator, [substr(caret(), jump(peek(0) == 61 ? 2 : 1)), types.num]), next)
 						break
-					}
-				}
-
-				substr(position, caret())
-				break
-			// \t \n \s whitespace
-			case 9: case 10: case 32: ++line, column = caret() case 9: case 32:
-				while (code = peek()) {
-					if (code < 32) {
-						next()
-					} else {
+					// *=/ <= / >=
+					case 61: push(next = node(token.operator, [substr(caret(), jump(1)), types.bool]), next)
 						break
-					}
+					// < / > / *
+					default: push(next = node(token.operator, [substr(caret(), jump(0)), types.bool]), next)
 				}
 				break
-			// / comments
+			// ! != !==
+			// = == ===
+			case 33: case 61:
+				switch (peek(0)) {
+					// != / == / !== / ===
+					case 61: push(next = node(token.operator, [substr(caret(), jump(peek(0) == 61 ? 2 : 1)), types.bool]), next)
+						break
+					// ! / =
+					default: push(next = node(token.operator, [substr(caret(), jump(0)), flag == 33 ? types.bool : types.any]), next)
+				}
+				break
+			// & && &=
+			// + ++ +=
+			// - -- -=
+			// | || |=
+			case 38: case 43: case 45: case 124:
+				switch (peek(0)) {
+					// && / ++ / -- / &= / += / -= / |=
+					case flag: case 61: push(next = node(token.operator, [substr(caret(), jump(1)), types.num]), next)
+						break
+					// & / + / - / |
+					default: push(next = node(token.operator, [substr(caret(), jump(0)), types.num]), next)
+				}
+				break
+			// % %=
+			// ^ ^=
+			case 37: case 94:
+				switch (peek(0)) {
+					// %= / ^=
+					case 61: push(next = node(token.operator, [substr(caret(), jump(1)), types.num]), next)
+						break
+					// % / ^
+					default: push(next = node(token.operator, [substr(caret(), jump(0)), types.num]), next)
+				}
+				break
+			// / /=
+			// // /*
 			case 47:
-				switch (peek()) {
-					// *
-					case 42:
-						while (next()) {
-							if (char() == 42 && next() == 47) {
-								break
-							}
-						}
+				switch (peek(0)) {
+					// /* //
+					case 42: case 47: comment()
+						break
+					// /=
+					case 61: push(next = node(token.operator, [substr(caret(), jump(1)), types.num]), next)
 						break
 					// /
-					case 47:
-						while (next()) {
-							if (char() == 10) {
-								break
-							}
-						}
-						break
+					default: push(next = node(token.operator, [substr(caret(), jump(0)), types.num]), next)
 				}
 				break
-			// 0-9 numbers
-			case 48: case 49: case 48: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: position = caret()
-				while (code = next()) {
-					if (code < 32) {
-						whitespace()
-					} else if (code > 64) {
-						identifier()
-					}
+			// ? ?. ??
+			case 63:
+				switch (peek(0)) {
+					// ?.  ??
+					case 46: case 63: push(next = node(token.operator, [substr(caret(), jump(1)), types.any]), next)
+						break
+					// ?
+					default: push(next = node(token.operator, [substr(caret(), jump(0)), types.bool]), next)
 				}
-
-				substr(position, caret())
 				break
-			// _
-			case 95: offset = 1, next()
-			// A-z identifiers
-			default: position = caret()
-				while (code = peek()) {
-					if (identifier()) {
-						next()
-					} else {
+			// . .. ...
+			case 46:
+				switch (peek(0)) {
+					// .. / ...
+					case 46: push(next = node(token.operator, [substr(caret(), jump(peek(0) == 46 ? 2 : 1)), types.ptr]), next)
 						break
-					}
+					// .
+					default: push(next = node(token.operator, [substr(caret(), jump(0)), types.any]), next)
 				}
-
-				// keywords
-				switch (substr(position - offset, caret())) {
-					// types
-					case 'int':
-					case 'big':
-					case 'flt':
-					case 'dec':
-					case 'str':
-					case 'ptr':
-					case 'nil':
-					case 'obj':
-					case 'any':
-					case 'var':
+				break
+			// , ;
+			case 44: case 59:
+				break
+			// \0 ) ] }
+			case 0: case type:
+				return root
+			// [ { ( )
+			case 91: case 123: shift(1) case 40: push(parse(flag = shift(1), props, next = node(flag, props), next), next).props = next.next
+				break
+			// " '
+			case 34: case 39: push(next = node(token.literal, [substr(caret(), string()), types.str]), next)
+				break
+			// \n \t \s
+			case 10: ++line, column = caret() case 9: case 32: whitespace()
+				break
+			// 0-9 / A-z / _
+			case 95:
+				switch (alphanumeric(flag)) {
+					case 1: push(next = node(token.literal, [substr(caret(), number()), flag < 0 ? types.flt : types.int]), next)
 						break
-					case 'def':
-					case 'fun':
-						break
-					// control
-					case 'if':
-					case 'else':
-					case 'switch':
-					case 'for':
-					case 'try':
-					case 'catch':
-					case 'break':
-					case 'continue':
-					case 'pick':
-					case 'of':
-					case 'in':
-					case 'as':
-					case 'import':
-					case 'export':
-					case 'sizeof':
-					case 'typeof':
-					case 'instanceof':
-						break
+					case 2: push(next = node(keyword(str = substr(caret(), identifier())), [flag, types.any]), next)
 				}
 		}
 	}
 }
 
-/**
- * @param {number} position
- * @return {number}
+/*
+ * @param {number} type
+ * @param {any} props
+ * @return {object}
  */
-export function peek (position) {
-	return characters.charCodeAt(position)
+export function node (type, props) {
+	return {src: line + ((offset - column) / 1e6), next: null, type, props, children: null}
 }
 
-/**
- * @return {number}
+/*
+ * @param {any} value
+ * @param {object} next
+ * @return {object}
  */
-export function next () {
-	return character = peek(position++)
-}
-
-/**
- * @return {number}
- */
-export function prev () {
-	return character = peek(position--)
+export function push (value, next) {
+	return next.next = value
 }
 
 /**
  * @return {number}
  */
 export function char () {
-	return character
+	return code
 }
 
 /**
- * @param {number} distance
  * @return {number}
  */
-export function shift (distance) {
-	return character += distance
+export function next () {
+	return code = peek(jump(1))
+}
+
+/**
+ * @param {number} index
+ * @return {number}
+ */
+export function peek (index) {
+	return characters.charCodeAt(offset + index)
+}
+
+/**
+ * @param {number} index
+ * @return {number}
+ */
+export function jump (index) {
+	return offset += index
+}
+
+/**
+ * @param {number} index
+ * @return {number}
+ */
+export function shift (index) {
+	return code += index
 }
 
 /**
  * @return {number}
  */
 export function caret () {
-	return position
+	return offset
+}
+
+/**
+ * @return {number}
+ */
+export function number () {
+	while (scan()) {
+		switch (peek(0)) {
+			// .
+			case 46:
+				// ..
+				if (flag > 0) {
+					flag = -1
+				} else {
+					return jump(-1)
+				}
+			// \s
+			 case 32:
+				break
+			default:
+				switch (alphanumeric(peek(0))) {
+					case 0: return caret()
+					case 2: return identifier()
+				}
+		}
+	}
+
+	return caret()
+}
+
+/**
+ * @return {number}
+ */
+export function string () {
+	while (scan()) {
+		switch (peek(0)) {
+			// " '
+			case flag:
+				return caret()
+			// \
+			case 92: scan()
+		}
+	}
+
+	return caret()
+}
+
+/**
+ * @return {number}
+ */
+export function comment () {
+	switch (peek(0)) {
+		// /
+		case 47:
+			while (scan()) {
+				if (char() == 10) {
+					return caret()
+				}
+			}
+			break
+		// *
+		case 42:
+			while (scan()) {
+				if (char() == 42 && scan() == 47) {
+					return caret()
+				}
+			}
+	}
+
+	return caret()
+}
+
+/**
+ * @return {number}
+ */
+export function whitespace () {
+	while (peek(0)) {
+		if (peek(0) < 32) {
+			scan()
+		} else {
+			break
+		}
+	}
+
+	return caret()
 }
 
 /**
  * @return {number}
  */
 export function identifier () {
-	return (character > 64 && character < 91) || (character > 97 && character < 123)
+	while (peek(0)) {
+		if (alphabetic(char())) {
+			scan()
+		} else {
+			break
+		}
+	}
+
+	return caret()
+}
+
+/**
+ * @param {number} value
+ * @return {boolean}
+ */
+export function alphabetic (value) {
+	if (value == 94) {
+		return 1
+	} else if (value > 64 && value < 91) {
+		return 2
+	} else if (value > 97 && value < 123) {
+		return 3
+	} else {
+		return 0
+	}
+}
+
+/**
+ * @param {number}
+ * @return {boolean}
+ */
+export function alphanumeric (value) {
+	if (value > 48 && value < 58) {
+		return 1
+	} else if (alphabetic(value)) {
+		return 2
+	} else if (value > 127) {
+		return 3
+	} else {
+		return 0
+	}
+}
+
+/**
+ * @param {string} value
+ * @return {boolean}
+ */
+export function keyword (value) {
+	switch (value) {
+		// literals
+		case 'null': case 'true': case 'false':
+		// imports/exports
+		case 'as': case 'import': case 'export':
+		// exceptions
+		case 'try': case 'catch': case 'finally': case 'throw':
+		// introspections
+		case 'super': case 'pick': case 'keyof': case 'typeof': case 'sizeof': case 'instanceof':
+		// actions
+		case 'delete': case 'await':
+		// modifiers
+		case 'extends':
+		// control flow
+		case 'for': case 'in': case 'of': case 'if': case 'else': case 'switch': case 'case': case 'default': case 'continue': case 'break': case 'return':
+		// types
+		case 'int': case 'big': case 'flt': case 'dec': case 'num': case 'str': case 'obj': case 'ptr': case 'var': case 'def': case 'fun': case 'void': case 'enum': case 'bool':
+			return token.keyword
+		default:
+			return token.identifier
+	}
 }

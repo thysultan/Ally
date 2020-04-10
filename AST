@@ -1,0 +1,246 @@
+node: {type: 'string', props: string[], children: node[], source: float}
+program: {type: 'program', props: ['text', 'table'], children: []}
+literal: {type: 'literal', props: ['type', 'value'], children: []}
+statement: {type: 'statement', props: ['type', 'keyword'], children: []}
+procedure: {type: 'procedure', props: ['type', 'length'], children: []}
+identifier: {type: 'identifier', props: ['type', 'identifier'], children: []}
+expression: {type: 'expressin', props: ['type', 'operator'], children: []}
+declaration: {type: 'declaration', props: ['type', 'identifier'], children: []}
+
+{
+	type: 'program',
+	props: [],
+	children: []
+}
+
+int number = 10 000km
+
+{
+	type: 'declaration',
+	props: ['int', 'number'],
+	children: {
+		type: 'literal',
+		props: ['int', '10000'],
+		children: []
+	}
+}
+
+obj object = {int length = 0, str string: 'a'}
+
+{
+	type: 'declaration',
+	props: ['obj', 'object'],
+	children: [
+		{
+			type; 'literal',
+			props: ['obj', '2'],
+			children: [
+				{
+					type: 'declaration',
+					props: ['int', 'length'],
+					children: {
+						type: 'literal',
+						props: ['int', '0'],
+						children: []
+					}
+				},
+				{
+					type: 'declaration',
+					props: ['str', 'string'],
+					children: {
+						type: 'literal',
+						props: ['str', 'a'],
+						children: []
+					}
+				}
+			]
+		}
+	]
+}
+
+ptr rawptr = {1024}
+
+{
+	type: 'declaration',
+	props: ['ptr', 'rawptr'],
+	children: [
+		{
+			type: 'literal',
+			props: ['ptr', '1024'],
+			children: []
+		}
+	]
+}
+
+a = b = c // (a = (b = c))
+
+{
+	type: 'expression',
+	props: ['any', '='],
+	children: [
+		{
+			type: 'identifier',
+			props: ['any', 'a'],
+			children: []
+		},
+		{
+			type: 'expression',
+			props: ['any', '='],
+			children: [
+				{
+					type: 'identifier',
+					props: ['any', 'b']
+					children: []
+				},
+				{
+					type: 'identifier',
+					props: ['any', 'c'],
+					children: []
+				}
+			]
+		}
+	]
+}
+
+a + a
+
+{
+	type: 'expression',
+	props: ['any', '+'],
+	children: [
+		{
+			type: 'identifier',
+			props: ['any', 'a'],
+			children: []
+		},
+		{
+			type: 'identifier',
+			props: ['any', 'a'],
+			children: []
+		}
+	]
+}
+
+fun fib name, age {
+	return int a = 1
+}
+
+{
+	type: 'declaration',
+	props: ['fun', 'fib'],
+	children: [
+		{
+			type: 'declaration',
+			props: ['name', 'age'],
+			children: [
+				{
+					type: 'identifier',
+					props: ['any', 'name'],
+					children: []
+				},
+				{
+					type: 'identifier',
+					props: ['any', 'age'],
+					children: []
+				}
+			]
+		},
+		{
+			type: 'procedure',
+			props: ['fun', '2'],
+			children: [
+				{
+					type: 'statement',
+					props: ['any', 'return'],
+					children: [
+						{
+							type: 'declaration',
+							props: ['int', 'a'],
+							children: [
+								{
+									type: 'literal',
+									props: ['int', '1'],
+									children: []
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
+
+for int i = 0, int j = 0, i < 10, i++ {}
+
+{
+	type: 'statement',
+	props: ['nil', 'for'],
+	children: [
+		{
+			type: 'declaration',
+			props: ['i', 'j'],
+			children: [
+				{
+					type: 'identifier',
+					props: ['int', 'i'],
+					children: [
+						{
+							type: 'literal',
+							props: ['int', '0'],
+							children: []
+						}
+					]
+				},
+				{
+					type: 'identifier',
+					props: ['int', 'j'],
+					children: [
+						{
+							type: 'literal',
+							props: ['int', '0'],
+							children: []
+						}
+					]
+				}
+			]
+		},
+		{
+			type: 'expression',
+			props: ['bool', '<'],
+			children: [
+				{
+					type: 'identifier',
+					props: ['int', 'i']
+					children: []
+				},
+				{
+					type: 'literal',
+					props: ['int', '10']
+					children: []
+				}
+			]
+		},
+		{
+			type: 'expression',
+			props: ['int', '+'],
+			children: [
+				{
+					type: 'identifier',
+					props: ['int', 'i']
+					children: []
+				},
+				{
+					type: 'literal',
+					props: ['int', '1']
+					children: []
+				}
+			]
+		},
+		{
+			type: 'procedure',
+			props: ['for', '2'],
+			children: []
+		}
+	]
+}
