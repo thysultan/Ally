@@ -310,7 +310,7 @@ export function identifier () {
 
 /**
  * @param {number} value
- * @return {boolean}
+ * @return {number}
  */
 export function alphabetic (value) {
 	if (value == 94) {
@@ -326,7 +326,7 @@ export function alphabetic (value) {
 
 /**
  * @param {number}
- * @return {boolean}
+ * @return {number}
  */
 export function alphanumeric (value) {
 	if (value > 48 && value < 58) {
@@ -342,7 +342,7 @@ export function alphanumeric (value) {
 
 /**
  * @param {string} value
- * @return {boolean}
+ * @return {number}
  */
 export function keyword (value) {
 	switch (value) {
