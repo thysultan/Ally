@@ -7,6 +7,12 @@ identifier: {type: 'identifier', props: ['type', 'identifier'], children: []}
 expression: {type: 'expressin', props: ['type', 'operator'], children: []}
 declaration: {type: 'declaration', props: ['type', 'identifier'], children: []}
 
+obj object = {int length = 0 str string = ''}  // type identifier operator {type identifier operator literal type identifier operator literal}
+fun object = int length pick {a, b} str str {} // type identifier operator type identifier operator {} type identifier {}
+fun object int length pick {a, b} str str {}   // type identifier type identifier operator {} type identifier {}
+fun int length pick {a, b} str str {}          // type type identifier operator {} type identifier {}
+f(a (b + c)) === f(a, (b + c))                 // identifier(identifier seperator(identifier operator identifier))
+
 {
 	type: 'program',
 	props: [],
