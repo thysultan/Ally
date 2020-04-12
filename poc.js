@@ -2,16 +2,16 @@ export var str = ''
 export var ptr = null
 
 export var tail = 0
+export var body = 0
 export var head = 0
-export var code = 0
 export var line = 0
 export var column = 0
 export var offset = 0
 export var length = 0
 
 // enums
-export var token = {noop: 0, type: 1, program: 2, keyword: 3, literal: 4, operator: 5, statement: 6, procedure: 7, identifier: 9, expression: 10, declaration: 11}
-export var types = {int: -1, big: -2, flt: -3, dec: -4, num: -5, str: -6, obj: -7, ptr: -8, nil: -9, any: -10, def: -11, fun: -12, enum: -13, bool: -14}
+export var token = {type: 1, program: 2, keyword: 3, literal: 4, operator: 5, separator: 6, statement: 7, procedure: 8, identifier: 9, expression: 10, declaration: 11}
+export var types = {int: -1, big: -2, flt: -3, dec: -4, num: -5, str: -6, obj: -7, ptr: -8, nil: -9, var: -10, def: -11, fun: -12, enum: -13, bool: -14}
 
 // heaps
 export var characters = ''
@@ -42,13 +42,13 @@ export function tokenize (type, props, next, root) {
 			case 42 case 60: case 62:
 				switch (peek(0)) {
 					// ** / << / >> / **= / <<= / >>=
-					case head: push(next, next = node(token.operator, [substr(caret(), jump(peek(0) == 61 ? 2 : 1)), types.num]))
+					case head: push(next, next = node(token.operator, [hash(head, scan(), peek(0) == 61 ? scan() : 1), types.num]))
 						break
 					// *=/ <= / >=
-					case 61: push(next, next = node(token.operator, [substr(caret(), jump(1)), types.bool]))
+					case 61: push(next, next = node(token.operator, [hash(head, scan()), types.bool]))
 						break
 					// < / > / *
-					default: push(next, next = node(token.operator, [substr(caret(), jump(0)), types.bool]))
+					default: push(next, next = node(token.operator, [head, types.bool]))
 				}
 				break
 			// ! != !==
@@ -56,10 +56,10 @@ export function tokenize (type, props, next, root) {
 			case 33: case 61:
 				switch (peek(0)) {
 					// != / == / !== / ===
-					case 61: push(next, next = node(token.operator, [substr(caret(), jump(peek(0) == 61 ? 2 : 1)), types.bool]))
+					case 61: push(next, next = node(token.operator, [hash(head, scan(), peek(0) == 61 ? scan() : 1), types.bool]))
 						break
 					// ! / =
-					default: push(next, next = node(token.operator, [substr(caret(), jump(0)), head == 33 ? types.bool : types.any]))
+					default: push(next, next = node(token.operator, [head, head == 33 ? types.bool : types.var]))
 				}
 				break
 			// & && &=
@@ -69,10 +69,10 @@ export function tokenize (type, props, next, root) {
 			case 38: case 43: case 45: case 124:
 				switch (peek(0)) {
 					// && / ++ / -- / &= / += / -= / |=
-					case head: case 61: push(next, next = node(token.operator, [substr(caret(), jump(1)), types.num]))
+					case head: case 61: push(next, next = node(token.operator, [hash(head, scan()), types.num]))
 						break
 					// & / + / - / |
-					default: push(next, next = node(token.operator, [substr(caret(), jump(0)), types.num]))
+					default: push(next, next = node(token.operator, [head, types.num]))
 				}
 				break
 			// % %=
@@ -80,10 +80,10 @@ export function tokenize (type, props, next, root) {
 			case 37: case 94:
 				switch (peek(0)) {
 					// %= / ^=
-					case 61: push(next, next = node(token.operator, [substr(caret(), jump(1)), types.num]))
+					case 61: push(next, next = node(token.operator, [hash(head, scan()), types.num]))
 						break
 					// % / ^
-					default: push(next, next = node(token.operator, [substr(caret(), jump(0)), types.num]))
+					default: push(next, next = node(token.operator, [head, types.num]))
 				}
 				break
 			// / /=
@@ -94,30 +94,30 @@ export function tokenize (type, props, next, root) {
 					case 42: case 47: comment()
 						break
 					// /=
-					case 61: push(next, next = node(token.operator, [substr(caret(), jump(1)), types.num]))
+					case 61: push(next, next = node(token.operator, [hash(head, scan()), types.num]))
 						break
 					// /
-					default: push(next, next = node(token.operator, [substr(caret(), jump(0)), types.num]))
+					default: push(next, next = node(token.operator, [head, types.num]))
 				}
 				break
 			// ? ?. ??
 			case 63:
 				switch (peek(0)) {
 					// ?.  ??
-					case 46: case 63: push(next, next = node(token.operator, [substr(caret(), jump(1)), types.any]))
+					case 46: case 63: push(next, next = node(token.operator, [hash(head, scan()), types.var]))
 						break
 					// ?
-					default: push(next, next = node(token.operator, [substr(caret(), jump(0)), types.bool]))
+					default: push(next, next = node(token.operator, [head, types.bool]))
 				}
 				break
 			// . .. ...
 			case 46:
 				switch (peek(0)) {
 					// .. / ...
-					case 46: push(next, next = node(token.operator, [substr(caret(), jump(peek(0) == 46 ? 2 : 1)), types.ptr]))
+					case 46: push(next, next = node(token.operator, [hash(head, scan(), peek(0) == 46 ? scan() : 1), types.ptr]))
 						break
 					// .
-					default: push(next, next = node(token.operator, [substr(caret(), jump(0)), types.any]))
+					default: push(next, next = node(token.operator, [head, types.var]))
 				}
 				break
 			// , ;
@@ -127,7 +127,7 @@ export function tokenize (type, props, next, root) {
 			case type:
 				return root
 			// [ { (
-			case 91: case 123: shift(1) case 40: push(tail == 40 && head == 32 ? push(next, next = node(token.noop, props)) : next, parse(head = shift(1), props, next = node(head, props), next)).props = next.next
+			case 91: case 123: shift(1) case 40: push(tail == 40 && head == 32 ? push(next, next = node(token.separator, props)) : next, parse(head = shift(1), props, next = node(head, props), next)).props = next.next
 				break
 			// " '
 			case 34: case 39: push(next, next = node(token.literal, [substr(caret(), string()), types.str]))
@@ -140,7 +140,7 @@ export function tokenize (type, props, next, root) {
 				switch (alphanumeric(head)) {
 					case 1: push(next, next = node(token.literal, [substr(caret(), number()), head < 0 ? types.flt : types.int]))
 						break
-					case 2: push(next, next = node(keyword(str = substr(caret(), identifier())), [head, types.any]))
+					case 2: push(next, next = node(keyword(str = substr(caret(), identifier())), [str, types.var]))
 				}
 		}
 	}
@@ -164,18 +164,28 @@ export function push (next, value) {
 	return next.next = value
 }
 
+/*
+ * @param {number} head
+ * @param {number} body
+ * @param {number} tail
+ * @return {number}
+ */
+export function hash (head, body, tail) {
+	return head * body * tail
+}
+
 /**
  * @return {number}
  */
 export function char () {
-	return code
+	return body
 }
 
 /**
  * @return {number}
  */
 export function next () {
-	return code = peek(jump(1))
+	return body = peek(jump(1))
 }
 
 /**
@@ -199,7 +209,7 @@ export function jump (index) {
  * @return {number}
  */
 export function shift (index) {
-	return code += index
+	return body += index
 }
 
 /**
