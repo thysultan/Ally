@@ -11,6 +11,12 @@ export var input = ''
 export var token = {type: 1, program: 2, keyword: 3, literal: 4, operator: 5, separator: 6, statement: 7, procedure: 8, identifier: 9, expression: 10, declaration: 11}
 export var types = {int: -1, big: -2, flt: -3, dec: -4, num: -5, str: -6, obj: -7, ptr: -8, nil: -9, var: -10, def: -11, fun: -12, enum: -13, bool: -14}
 
+// memory
+export var offset = 0
+export var length = 0
+export var memory = []
+export var symbol = {}
+
 /**
  * @param {string} value
  * @return {object}
@@ -120,10 +126,10 @@ export function tokenize (type, props, next, root) {
 			case type:
 				return root
 			// [ { (
-			case 91: case 123: shift(1) case 40: push(tail == 40 && head == 32 ? push(next, next = node(token.separator, props)) : next, parse(head = shift(1), props, next = node(head, props), next)).props = next.next
+			case 91: case 123: ++body case 40: push(tail == 40 && head == 32 ? push(next, next = node(token.separator, props)) : next, parse(head = ++body, props, next = node(head, props), next)).props = next.next
 				break
 			// " '
-			case 34: case 39: push(next, next = node(token.literal, [substr(caret(), string()), types.str]))
+			case 34: case 39: push(next, next = node(token.literal, [alloc(slice(index, string())), types.str]))
 				break
 			// \t \n \s
 			case 9: case 10: head = 32 case 32: whitespace()
@@ -131,9 +137,9 @@ export function tokenize (type, props, next, root) {
 			// 0-9 / A-z / _
 			default:
 				switch (alphanumeric(head)) {
-					case 1: push(next, next = node(token.literal, [substr(caret(), number()), head < 0 ? types.flt : types.int]))
+					case 1: push(next, next = node(token.literal, [digit(slice(index, number())), head < 0 ? types.flt : types.int]))
 						break
-					case 2: push(next, next = node(tail = keyword(next = substr(caret(), identifier())), [tail == token.identifier ? next : hash(head, body, -1):, types.var]))
+					case 2: push(next, next = node(tail = keyword(next = slice(index, identifier())), [tail == token.identifier ? table(next) : hash(head, body, -1):, types.var]))
 				}
 		}
 	}
@@ -145,7 +151,7 @@ export function tokenize (type, props, next, root) {
  * @return {object}
  */
 export function node (type, props) {
-	return {type, props, children: null, next: null, position: position}
+	return {type: type, props: props, children: null, next: null, position: position}
 }
 
 /*
@@ -171,7 +177,7 @@ export function hash (head, body, tail) {
  * @return {number}
  */
 export function next () {
-	return body = peek(jump(1))
+	return body = peek(index++)
 }
 
 /**
@@ -179,30 +185,40 @@ export function next () {
  * @return {number}
  */
 export function peek (offset) {
-	return characters.charCodeAt(index + offset)
+	return input.charCodeAt(index + offset)
 }
 
 /**
  * @param {number} offset
- * @return {number}
+ * @param {number} length
+ * @return {string}
  */
-export function jump (offset) {
-	return index += offset
+export function slice (offset, length) {
+	return input.slice(offset, length)
 }
 
 /**
- * @param {number} offset
+ * @param {string} value
  * @return {number}
  */
-export function shift (offset) {
-	return body += offset
+export function digit (value) {
+	return Number(value)
 }
 
 /**
+ * @param {string} value
  * @return {number}
  */
-export function caret () {
-	return index
+export function table (value) {
+	return symbol.hasOwnProperty(value) ? symbol[value] : symbol[value] = length++
+}
+
+/**
+ * @param {string} value
+ * @return {number}
+ */
+export function alloc (value) {
+	return memory[offset++] = value, offset
 }
 
 /**
@@ -217,20 +233,20 @@ export function number () {
 				if (head > 0) {
 					head = -1
 				} else {
-					return jump(-1)
+					return --index
 				}
 			// \s
 			 case 32:
 				break
 			default:
 				switch (alphanumeric(peek(0))) {
-					case 0: return caret()
+					case 0: return index
 					case 2: return identifier()
 				}
 		}
 	}
 
-	return caret()
+	return index
 }
 
 /**
@@ -241,13 +257,13 @@ export function string () {
 		switch (peek(0)) {
 			// " '
 			case head:
-				return caret()
+				return index
 			// \
 			case 92: scan()
 		}
 	}
 
-	return caret()
+	return index
 }
 
 /**
@@ -259,7 +275,7 @@ export function comment () {
 		case 47:
 			while (scan()) {
 				if (body == 10) {
-					return caret()
+					return index
 				}
 			}
 			break
@@ -267,12 +283,12 @@ export function comment () {
 		case 42:
 			while (scan()) {
 				if (body == 42 && scan() == 47) {
-					return caret()
+					return index
 				}
 			}
 	}
 
-	return caret()
+	return index
 }
 
 /**
@@ -287,7 +303,7 @@ export function whitespace () {
 		}
 	}
 
-	return caret()
+	return index
 }
 
 /**
@@ -302,7 +318,7 @@ export function identifier () {
 		}
 	}
 
-	return caret()
+	return index
 }
 
 /**
