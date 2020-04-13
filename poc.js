@@ -176,7 +176,7 @@ export function hash (head, body, tail) {
 /**
  * @return {number}
  */
-export function next () {
+export function scan () {
 	return body = peek(index++)
 }
 
