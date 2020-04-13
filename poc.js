@@ -1,34 +1,27 @@
-export var str = ''
-export var ptr = null
-
-export var tail = 0
-export var body = 0
+// stack
 export var head = 0
-export var line = 0
-export var column = 0
-export var offset = 0
-export var length = 0
+export var body = 0
+export var tail = 0
+
+// input
+export var index = 0
+export var input = ''
 
 // enums
 export var token = {type: 1, program: 2, keyword: 3, literal: 4, operator: 5, separator: 6, statement: 7, procedure: 8, identifier: 9, expression: 10, declaration: 11}
 export var types = {int: -1, big: -2, flt: -3, dec: -4, num: -5, str: -6, obj: -7, ptr: -8, nil: -9, var: -10, def: -11, fun: -12, enum: -13, bool: -14}
-
-// heaps
-export var characters = ''
-export var enviroment = []
-export var executable = []
 
 /**
  * @param {string} value
  * @return {object}
  */
 export function compile (value) {
-	return tokenize(offset = column = 0, ptr = [characters = value], ptr = node(token.program, ptr), ptr)
+	return tokenize(index = 0, input = value, node(token.program, value), null)
 }
 
 /**
  * @param {number} type
- * @param {any[]} props
+ * @param {any} props
  * @param {object} next
  * @param {object} root
  * @return {object}
@@ -132,15 +125,15 @@ export function tokenize (type, props, next, root) {
 			// " '
 			case 34: case 39: push(next, next = node(token.literal, [substr(caret(), string()), types.str]))
 				break
-			// \n \t \s
-			case 10: ++line, column = caret() case 9: case 32: head = 32, whitespace()
+			// \t \n \s
+			case 9: case 10: head = 32 case 32: whitespace()
 				break
 			// 0-9 / A-z / _
-			case 95:
+			default:
 				switch (alphanumeric(head)) {
 					case 1: push(next, next = node(token.literal, [substr(caret(), number()), head < 0 ? types.flt : types.int]))
 						break
-					case 2: push(next, next = node(keyword(str = substr(caret(), identifier())), [str, types.var]))
+					case 2: push(next, next = node(tail = keyword(next = substr(caret(), identifier())), [tail == token.identifier ? next : hash(head, body, -1):, types.var]))
 				}
 		}
 	}
@@ -152,7 +145,7 @@ export function tokenize (type, props, next, root) {
  * @return {object}
  */
 export function node (type, props) {
-	return {src: line + ((offset - column) / 1e6), next: null, type, props, children: null}
+	return {type, props, children: null, next: null, position: position}
 }
 
 /*
@@ -177,46 +170,39 @@ export function hash (head, body, tail) {
 /**
  * @return {number}
  */
-export function char () {
-	return body
-}
-
-/**
- * @return {number}
- */
 export function next () {
 	return body = peek(jump(1))
 }
 
 /**
- * @param {number} index
+ * @param {number} offset
  * @return {number}
  */
-export function peek (index) {
-	return characters.charCodeAt(offset + index)
+export function peek (offset) {
+	return characters.charCodeAt(index + offset)
 }
 
 /**
- * @param {number} index
+ * @param {number} offset
  * @return {number}
  */
-export function jump (index) {
-	return offset += index
+export function jump (offset) {
+	return index += offset
 }
 
 /**
- * @param {number} index
+ * @param {number} offset
  * @return {number}
  */
-export function shift (index) {
-	return body += index
+export function shift (offset) {
+	return body += offset
 }
 
 /**
  * @return {number}
  */
 export function caret () {
-	return offset
+	return index
 }
 
 /**
@@ -272,7 +258,7 @@ export function comment () {
 		// /
 		case 47:
 			while (scan()) {
-				if (char() == 10) {
+				if (body == 10) {
 					return caret()
 				}
 			}
@@ -280,7 +266,7 @@ export function comment () {
 		// *
 		case 42:
 			while (scan()) {
-				if (char() == 42 && scan() == 47) {
+				if (body == 42 && scan() == 47) {
 					return caret()
 				}
 			}
@@ -309,7 +295,7 @@ export function whitespace () {
  */
 export function identifier () {
 	while (peek(0)) {
-		if (alphabetic(char())) {
+		if (alphabetic(body)) {
 			scan()
 		} else {
 			break
@@ -375,11 +361,10 @@ export function keyword (value) {
 		case 'super': case 'keyof': case 'typeof': case 'sizeof': case 'instanceof':
 		// actions
 		case 'pick': case 'await': case 'delete':
-			return token.operator
 		// modifiers
 		case 'in': case 'of': case 'extends':
 		// control flow
-		case 'for': case 'if': case 'else': case 'switch': case 'case': case 'default': case 'continue': case 'break': case 'return':
+		case 'if': case 'else': case 'for': case 'switch': case 'case': case 'default': case 'break': case 'continue': case 'return':
 			return token.keyword
 		default:
 			return token.identifier
