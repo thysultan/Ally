@@ -1,56 +1,48 @@
 // stack
-export var head = 0
-export var tail = 0
-export var flag = 0
-export var root = null
+export var stack = 0
+export var track = 0
+export var trace = 0
 
 // input
 export var index = 0
 export var input = ''
 
 // enums
-export var token = {type: 1, program: 2, keyword: 3, literal: 4, operator: 5, separator: 6, statement: 7, procedure: 8, identifier: 9, expression: 10, declaration: 11}
-export var types = {int: -1, big: -2, flt: -3, dec: -4, num: -5, str: -6, obj: -7, ptr: -8, nil: -9, var: -10, def: -11, fun: -12, enum: -13, bool: -14}
+export var token = {type: 0, program: 1, keyword: 2, literal: 3, operator: 4, separator: 5, statement: 6, procedure: 7, identifier: 8, expression: 9, declaration: 10}
+export var types = {nil: 0, int: 1, flt: 2, num: 3, str: 4, obj: 5, ptr: 6, var: 7, def: 8, fun: 9, bool: 10}
 
-// memory
-export var offset = 0
-export var length = 0
-export var memory = []
-export var symbol = {}
-
-console.log(compile('"100" var a 1 23 b 111km 10'), memory, symbol)
+console.log(parse('"100" var abc 123_000 111km 10e4'))
 
 /**
  * @param {string} value
  * @return {object}
  */
-export function compile (value) {
-	return tokenize(index = head++, input = value, root = node(token.program, value), root)
+export function parse (value) {
+	return lexer(index = stack++, value = node(token.program, input = value), value)
 }
 
 /**
- * @param {number} type
- * @param {any} props
- * @param {object} next
- * @param {object} root
+ * @param {number} value
+ * @param {object} child
+ * @param {object} frame
  * @return {object}
  */
-export function tokenize (type, props, next, root) {
-	while (tail = head) {
-		switch (flag = scan()) {
+export function lexer (value, child, frame) {
+	while (track = stack) {
+		switch (trace = scan()) {
 			// < <= <<=
 			// > >= >>=
 			// * *= **=
 			case 42: case 60: case 62:
 				switch (peek()) {
-					// ** / << / >> / **= / <<= / >>=
-					case flag: push(next, next = node(token.operator, [hash(flag, scan(), peek() == 61 ? scan() : 1), types.num]))
+					// ** << >> **= <<= >>=
+					case stack: push(child, child = node(token.operator, [hash(scan(), peek() == 61 ? scan() : 1), types.num]))
 						break
-					// *=/ <= / >=
-					case 61: push(next, next = node(token.operator, [hash(flag, scan()), types.bool]))
+					// *= <= >=
+					case 61: push(child, child = node(token.operator, [hash(scan(), 1), types.bool]))
 						break
-					// < / > / *
-					default: push(next, next = node(token.operator, [flag, types.bool]))
+					// < > *
+					default: push(child, child = node(token.operator, [stack, types.bool]))
 				}
 				break
 			// ! != !==
@@ -58,10 +50,10 @@ export function tokenize (type, props, next, root) {
 			case 33: case 61:
 				switch (peek()) {
 					// != / == / !== / ===
-					case 61: push(next, next = node(token.operator, [hash(flag, scan(), peek() == 61 ? scan() : 1), types.bool]))
+					case 61: push(child, child = node(token.operator, [hash(stack, scan(), peek() == 61 ? scan() : 1), types.bool]))
 						break
 					// ! / =
-					default: push(next, next = node(token.operator, [flag, flag == 33 ? types.bool : types.var]))
+					default: push(child, child = node(token.operator, [stack, stack == 33 ? types.bool : types.var]))
 				}
 				break
 			// & && &=
@@ -70,22 +62,22 @@ export function tokenize (type, props, next, root) {
 			// | || |=
 			case 38: case 43: case 45: case 124:
 				switch (peek()) {
-					// && / ++ / -- / &= / += / -= / |=
-					case flag: case 61: push(next, next = node(token.operator, [hash(flag, scan()), types.num]))
+					// &= += -= |= && ++ -- ||
+					case 61: case stack: push(child, child = node(token.operator, [hash(scan(), 1), types.num]))
 						break
-					// & / + / - / |
-					default: push(next, next = node(token.operator, [flag, types.num]))
+					// & + - |
+					default: push(child, child = node(token.operator, [stack, types.num]))
 				}
 				break
 			// % %=
 			// ^ ^=
 			case 37: case 94:
 				switch (peek()) {
-					// %= / ^=
-					case 61: push(next, next = node(token.operator, [hash(flag, scan()), types.num]))
+					// %= ^=
+					case 61: push(child, child = node(token.operator, [hash(scan(), 1), types.num]))
 						break
-					// % / ^
-					default: push(next, next = node(token.operator, [flag, types.num]))
+					// % ^
+					default: push(child, child = node(token.operator, [stack, types.num]))
 				}
 				break
 			// / /=
@@ -93,102 +85,74 @@ export function tokenize (type, props, next, root) {
 			case 47:
 				switch (peek()) {
 					// /*
-					case 42: flag = 42
+					case 42: comment(42)
+						break
 					// //
-					case 47: comment()
+					case 47: comment(47)
 						break
 					// /=
-					case 61: push(next, next = node(token.operator, [hash(flag, scan()), types.num]))
+					case 61: push(child, child = node(token.operator, [hash(scan(), 1), types.num]))
 						break
 					// /
-					default: push(next, next = node(token.operator, [flag, types.num]))
+					default: push(child, child = node(token.operator, [stack, types.num]))
 				}
 				break
 			// ? ?. ??
 			case 63:
 				switch (peek()) {
 					// ?.  ??
-					case 46: case 63: push(next, next = node(token.operator, [hash(flag, scan()), types.var]))
+					case 46: case 63: push(child, child = node(token.operator, [hash(scan(), 1), types.var]))
 						break
 					// ?
-					default: push(next, next = node(token.operator, [flag, types.bool]))
+					default: push(child, child = node(token.operator, [stack, types.bool]))
 				}
 				break
 			// . .. ...
 			case 46:
 				switch (peek()) {
-					// .. / ...
-					case 46: push(next, next = node(token.operator, [hash(flag, scan(), peek() == 46 ? scan() : 1), types.ptr]))
+					// .. ...
+					case 46: push(child, child = node(token.operator, [hash(scan(), peek() == 46 ? scan() : 1), types.ptr]))
 						break
 					// .
-					default: push(next, next = node(token.operator, [flag, types.var]))
+					default: push(child, child = node(token.operator, [stack, types.var]))
 				}
 				break
 			// , ;
 			case 44: case 59:
 				break
 			// ) ] }
-			case type:
-				return root
+			case value: return frame
 			// [ {
-			case 91: case 123: ++head
+			case 91: case 123: stack = stack + 1
 			// (
-			case 40: push(tail == 40 && flag == 32 ? push(next, next = node(token.separator, props)) : next, parse(flag = ++head, props, next = node(flag, props), next)).props = next.next
+			case 40: push(track == 40 && track == 32 ? push(child, child = node(token.separator, [0, 0])) : child, lexer(++stack, child = node(stack, [0, 0]), child)).props = child.child
 				break
 			// " '
-			case 34: case 39: push(next, next = node(token.literal, [alloc(slice(index, string())), types.str]))
+			case 34: case 39: push(child, child = node(token.literal, [index - string(stack), types.str]))
 				break
 			// \t \n
-			case 9: case 10: flag = 32
+			case 9: case 10: trace = 32
 			// \s
 			case 32: whitespace()
 				break
-			// 0-9 / A-z / _
+			// 0-9 A-Z a-z _
 			default:
-				switch (alphanumeric(flag)) {
-					case 1: push(next, next = node(token.literal, [digit(slice(index - 1, number())), flag < 0 ? types.flt : types.int]))
+				switch (alphanumeric(stack)) {
+					case 1: push(child, child = node(token.literal, [number(0, 0, sign(track)), trace == 1 ? types.flt : types.int]))
 						break
-					case 2: push(next, next = node(tail = keyword(next = slice(index - 1, identifier())), [tail == token.identifier ? table(next) : hash(flag, head, -1), types.var]))
+					case 2: push(child, child = node(numeric(track) ? token.operator : token.identifier, [index - identifier(), token.var]))
 				}
 		}
 	}
 
-	return root
-}
-
-/*
- * @param {number} type
- * @param {any} props
- * @return {object}
- */
-export function node (type, props) {
-	return {type: type, props: props, children: null, next: null, index: index}
-}
-
-/*
- * @param {object} next
- * @param {any} value
- * @return {object}
- */
-export function push (next, value) {
-	return next.next = value
-}
-
-/*
- * @param {number} head
- * @param {number} body
- * @param {number} tail
- * @return {number}
- */
-export function hash (head, body, tail) {
-	return head * body * tail
+	return frame
 }
 
 /**
  * @return {number}
  */
 export function scan () {
-	return head = code(index++)
+	return stack = code(index++)
 }
 
 /**
@@ -199,88 +163,79 @@ export function peek () {
 }
 
 /**
- * @param {number} offset
+ * @param {number} value
  * @return {number}
  */
-export function code (offset) {
-	return input.charCodeAt(offset) | 0
+export function code (value) {
+	return input.charCodeAt(value) | 0
+}
+
+/*
+ * @param {number} value
+ * @return {number}
+ */
+export function sign (value) {
+	return value == 45 ? -1 : 1
+}
+
+/*
+ * @param {number} value
+ * @param {number} depth
+ * @return {number}
+ */
+export function hash (value, depth) {
+	return trace * value * depth
+}
+
+/*
+ * @param {object} value
+ * @param {object} child
+ * @return {object}
+ */
+export function push (value, child) {
+	return value.child = child
+}
+
+/*
+ * @param {number} value
+ * @param {object} props
+ * @return {object}
+ */
+export function node (value, props) {
+	return {value, props, index, child: null}
 }
 
 /**
- * @param {number} offset
- * @param {number} length
- * @return {string}
- */
-export function slice (offset, length) {
-	return input.slice(offset, length)
-}
-
-/**
- * @param {string} value
+ * @param {number} value
+ * @param {number} point
+ * @param {number} float
  * @return {number}
  */
-export function digit (value) {
-	return Number(value.replace(/[a-zA-Z\s]/g, ''))
-}
-
-/**
- * @param {string} value
- * @return {number}
- */
-export function table (value) {
-	return symbol.hasOwnProperty(value) ? symbol[value] : symbol[value] = length++
-}
-
-/**
- * @param {string} value
- * @return {number}
- */
-export function alloc (value) {
-	return memory[offset] = value, ++offset
-}
-
-/**
- * @return {number}
- */
-export function number () {
-	while (head) {
-		// record offset when encounting a dot .
-		// when done, add the second segment(if a float) a + (b / (10 ^ index - offset))
-		// add sign from tail if tail is -
+export function number (value, point, float) {
+	while (stack) {
 		switch (scan()) {
-			case 46:
-				if (flag > 0) {
-					flag = -index
-				} else {
-					return index -= 2
-				}
+			// .
+			case 46: peek() == 46 ? stack = 0 : point = trace = 1
+			// _
 		 	case 95:
 		 		break
-	 	 	case 32:
-	 	 		if (alphanumeric(peek()) == 1) {
-	 	 			head = 48
-	 	 		}
-			default:
-				switch (alphanumeric(head)) {
-					case 0: return --index
-					case 1: // value = value * 10 + head - 48 // number
-						break
-					case 2: return identifier()
-				}
+		 	// 0-9 A-Z a-z
+			default: numeric(stack) ? (value = value * 10 + stack - 48, float = point ? float / 10 : float) : stack = 0
 		}
 	}
 
-	return --index
+	return index += stack = -1, value *= float
 }
 
 /**
+ * @param {number} value
  * @return {number}
  */
-export function string () {
-	while (head) {
-		if (scan() == flag) {
+export function string (value) {
+	while (stack) {
+		if (value == scan()) {
 			break
-		} else if (head == 92) {
+		} else if (stack == 92) {
 			scan()
 		}
 	}
@@ -289,11 +244,12 @@ export function string () {
 }
 
 /**
+ * @param {number} value
  * @return {number}
  */
-export function comment () {
-	while (head) {
-		if (flag == 47) {
+export function comment (value) {
+	while (stack) {
+		if (value == 47) {
 			if (scan() == 10) {
 				break
 			}
@@ -311,7 +267,7 @@ export function comment () {
  * @return {number}
  */
 export function whitespace () {
-	while (head) {
+	while (stack) {
 		if (scan() > 32) {
 			break
 		}
@@ -324,13 +280,21 @@ export function whitespace () {
  * @return {number}
  */
 export function identifier () {
-	while (head) {
+	while (stack) {
 		if (!alphabetic(scan())) {
 			break
 		}
 	}
 
 	return --index
+}
+
+/**
+ * @param {number} value
+ * @return {number}
+ */
+export function numeric (value) {
+	return value > 47 && value < 58 ? 1 : 0
 }
 
 /**
@@ -354,7 +318,7 @@ export function alphabetic (value) {
  * @return {number}
  */
 export function alphanumeric (value) {
-	if (value > 47 && value < 58) {
+	if (numeric(value)) {
 		return 1
 	} else if (alphabetic(value)) {
 		return 2
@@ -362,39 +326,5 @@ export function alphanumeric (value) {
 		return 3
 	} else {
 		return 0
-	}
-}
-
-/**
- * @param {string} value
- * @return {number}
- */
-export function keyword (value) {
-	switch (value) {
-		// types(numbers)
-		case 'int': case 'big': case 'flt': case 'dec':
-		// types(generic)
-		case 'num': case 'str': case 'obj': case 'ptr': case 'var':
-		// types(exotics)
-		case 'def': case 'fun': case 'nil': case 'enum': case 'bool':
-			return token.type
-		// literals
-		case 'null': case 'true': case 'false':
-			return token.literal
-		// imports/exports
-		case 'as': case 'import': case 'export':
-		// exceptions
-		case 'try': case 'throw': case 'catch': case 'finally':
-		// introspections
-		case 'super': case 'keyof': case 'typeof': case 'sizeof': case 'instanceof':
-		// actions
-		case 'pick': case 'await': case 'delete':
-		// modifiers
-		case 'in': case 'of': case 'extends':
-		// control flow
-		case 'if': case 'else': case 'for': case 'switch': case 'case': case 'default': case 'break': case 'continue': case 'return':
-			return token.keyword
-		default:
-			return token.identifier
 	}
 }

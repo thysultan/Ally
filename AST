@@ -1,11 +1,12 @@
-node: {type: 'string', props: string[], children: node[], source: float}
-program: {type: 'program', props: ['text', 'table'], children: []}
-literal: {type: 'literal', props: ['type', 'value'], children: []}
-statement: {type: 'statement', props: ['type', 'keyword'], children: []}
-procedure: {type: 'procedure', props: ['type', 'length'], children: []}
-identifier: {type: 'identifier', props: ['type', 'identifier'], children: []}
-expression: {type: 'expressin', props: ['type', 'operator'], children: []}
-declaration: {type: 'declaration', props: ['type', 'identifier'], children: []}
+node: {value: number, props: number[], index: number, child: node}
+
+program: {type: token.program, props: [number, number], index: number, child: node}
+literal: {type: token.literal, props: [value | offset, type], index: number, child: node}
+statement: {type: token.statement, props: [kind, type], index: number, child: node}
+procedure: {type: token.procedure, props: [kind, type], index: number, child: node}
+identifier: {type: token.identifier, props: [hash, type], index: number, child: node}
+expression: {type: token.expression, props: [kind, type], index: number, child: node}
+declaration: {type: token.declaration, props: [kind, type], index: number, child: node}
 
 obj object = {int length = 0 str string = ''}  // type identifier operator {type identifier operator literal type identifier operator literal}
 fun object = int length pick {a, b} str str {} // type identifier operator type identifier operator {} type identifier {}
@@ -19,7 +20,7 @@ f(a (b + c)) === f(a, (b + c))                 // identifier(identifier seperato
 	children: []
 }
 
-int number = 10 000km
+int number = 124_000
 
 {
 	type: 'declaration',
