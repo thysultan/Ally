@@ -11,7 +11,8 @@ export var input = ''
 export var token = {type: 0, program: 1, keyword: 2, literal: 3, operator: 4, separator: 5, statement: 6, procedure: 7, identifier: 8, expression: 9, declaration: 10}
 export var types = {nil: 0, int: 1, flt: 2, num: 3, str: 4, obj: 5, ptr: 6, var: 7, def: 8, fun: 9, bool: 10}
 
-console.log(parse('"100" var abc 123_000 111km 10e4'))
+// console.log(parse('"100" var abc 123_000 111km 10e4'))
+console.log(parse('abc'))
 
 /**
  * @param {string} value
@@ -125,22 +126,22 @@ export function lexer (value, child, frame) {
 			// [ {
 			case 91: case 123: stack = stack + 1
 			// (
-			case 40: push(track == 40 && track == 32 ? push(child, child = node(token.separator, [0, 0])) : child, lexer(++stack, child = node(stack, [0, 0]), child)).props = child.child
+			case 40: push(stack == 40 && track == 32 ? push(child, child = node(token.separator, [0, 0])) : child, lexer(stack = stack + 1, child = node(stack, [0, 0]), child)).props = child.child
 				break
 			// " '
-			case 34: case 39: push(child, child = node(token.literal, [index - string(stack), types.str]))
+			case 34: case 39: push(child, child = node(token.literal, [index - string(stack) - 1, types.str]))
 				break
 			// \t \n
-			case 9: case 10: trace = 32
+			case 9: case 10: stack = 32
 			// \s
-			case 32: whitespace()
+			case 32: index = whitespace() - 1
 				break
 			// 0-9 A-Z a-z _
 			default:
 				switch (alphanumeric(stack)) {
 					case 1: push(child, child = node(token.literal, [number(0, 0, sign(track)), trace == 1 ? types.flt : types.int]))
 						break
-					case 2: push(child, child = node(numeric(track) ? token.operator : token.identifier, [index - identifier(), token.var]))
+					case 2: push(child, child = node(numeric(track) ? token.operator : token.identifier, [identifier(stack), types.var]))
 				}
 		}
 	}
@@ -202,7 +203,21 @@ export function push (value, child) {
  * @return {object}
  */
 export function node (value, props) {
-	return {value, props, index, child: null}
+	return {value, props, index, child: null, __proto__: null}
+}
+
+/*
+ * @param {number} value
+ * @param {number} digit
+ * @param {number} power
+ * @return {number}
+ */
+export function join (value, digit, power) {
+  while (digit >= power) {
+    power *= 10
+  }
+
+  return value * power + digit
 }
 
 /**
@@ -219,12 +234,11 @@ export function number (value, point, float) {
 			// _
 		 	case 95:
 		 		break
-		 	// 0-9 A-Z a-z
 			default: numeric(stack) ? (value = value * 10 + stack - 48, float = point ? float / 10 : float) : stack = 0
 		}
 	}
 
-	return index += stack = -1, value *= float
+	return stack = index--, value * float
 }
 
 /**
@@ -235,12 +249,10 @@ export function string (value) {
 	while (stack) {
 		if (value == scan()) {
 			break
-		} else if (stack == 92) {
-			scan()
 		}
 	}
 
-	return index - 1
+	return index
 }
 
 /**
@@ -273,20 +285,23 @@ export function whitespace () {
 		}
 	}
 
-	return --index
+	return index
 }
 
 /**
+ * @param {number} value
  * @return {number}
  */
-export function identifier () {
+export function identifier (value) {
 	while (stack) {
-		if (!alphabetic(scan())) {
+		if (alphanumeric(scan())) {
+			value = join(value, stack, 10)
+		} else {
 			break
 		}
 	}
 
-	return --index
+	return value
 }
 
 /**
@@ -302,15 +317,7 @@ export function numeric (value) {
  * @return {number}
  */
 export function alphabetic (value) {
-	if (value == 95) {
-		return 1
-	} else if (value > 64 && value < 91) {
-		return 2
-	} else if (value > 96 && value < 123) {
-		return 3
-	} else {
-		return 0
-	}
+	return value == 95 || (value > 64 && value < 91) || (value > 96 && value < 123) ? 1 : 0
 }
 
 /**
