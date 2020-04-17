@@ -9,10 +9,12 @@ export var input = ''
 
 // enums
 export var token = {type: 0, program: 1, keyword: 2, literal: 3, operator: 4, separator: 5, statement: 6, procedure: 7, identifier: 8, expression: 9, declaration: 10}
-export var types = {nil: 0, int: 1, flt: 2, num: 3, str: 4, obj: 5, ptr: 6, var: 7, def: 8, fun: 9, bool: 10}
+export var types = {nil: -1, int: -2, flt: -3, num: -4, str: -5, obj: -6, ptr: -7, var: -8, def: -9, fun: -10, bool: -11, if: -12, in: -13, of: -14, as: -15, for: -16,
+	try: -17, null: -18, true: -19, else: -20, case: -21, pick: -22, false: -23, break: -24, keyof: -25, throw: -26, catch: -27, super: -28, await: -29, return: -30,
+	switch: -31, delete: -32, typeof: -33, sizeof: -34, import: -35, export: -36, default: -37, extends: -38, finally: -39, continue: -40, instanceof: -41}
 
-// console.log(parse('"100" var abc 123_000 111km 10e4'))
-console.log(parse('abc'))
+// symbols
+export var table = {}
 
 /**
  * @param {string} value
@@ -136,13 +138,11 @@ export function lexer (value, child, frame) {
 			// \s
 			case 32: index = whitespace() - 1
 				break
-			// 0-9 A-Z a-z _
-			default:
-				switch (alphanumeric(stack)) {
-					case 1: push(child, child = node(token.literal, [number(0, 0, sign(track)), trace == 1 ? types.flt : types.int]))
-						break
-					case 2: push(child, child = node(numeric(track) ? token.operator : token.identifier, [identifier(stack), types.var]))
-				}
+			// 0-9
+			case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: push(child, child = node(token.literal, [number(0, 0, track == 45 ? -1 : 1 ), trace == 1 ? types.flt : types.int]))
+				break
+			// A-Z a-z _
+			default: push(child, child = node(track == -1 ? token.operator : keyword(index, track = identifier(stack)), [track - index, trace]))
 		}
 	}
 
@@ -153,30 +153,31 @@ export function lexer (value, child, frame) {
  * @return {number}
  */
 export function scan () {
-	return stack = code(index++)
+	return stack = code(input, index++)
 }
 
 /**
  * @return {number}
  */
 export function peek () {
-	return code(index)
+	return code(input, index)
 }
 
 /**
  * @param {number} value
- * @return {number}
+ * @return {boolean}
  */
-export function code (value) {
-	return input.charCodeAt(value) | 0
+export function word (value) {
+	return (value == 95 || value > 127) || (value > 64 && value < 91) || (value > 96 && value < 123)
 }
 
-/*
+/**
  * @param {number} value
+ * @param {number} index
  * @return {number}
  */
-export function sign (value) {
-	return value == 45 ? -1 : 1
+export function code (value, index) {
+	return value.charCodeAt(index) | 0
 }
 
 /*
@@ -206,20 +207,6 @@ export function node (value, props) {
 	return {value, props, index, child: null, __proto__: null}
 }
 
-/*
- * @param {number} value
- * @param {number} digit
- * @param {number} power
- * @return {number}
- */
-export function join (value, digit, power) {
-  while (digit >= power) {
-    power *= 10
-  }
-
-  return value * power + digit
-}
-
 /**
  * @param {number} value
  * @param {number} point
@@ -231,14 +218,18 @@ export function number (value, point, float) {
 		switch (scan()) {
 			// .
 			case 46: peek() == 46 ? stack = 0 : point = trace = 1
+				break
 			// _
 		 	case 95:
 		 		break
-			default: numeric(stack) ? (value = value * 10 + stack - 48, float = point ? float / 10 : float) : stack = 0
+		 	// 0-9
+		 	case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: value = value * 10 + stack - 48, float = point ? float / 10 : float
+		 		break
+			default: stack = 0
 		}
 	}
 
-	return stack = index--, value * float
+	return index += stack = -1, value * float
 }
 
 /**
@@ -247,7 +238,7 @@ export function number (value, point, float) {
  */
 export function string (value) {
 	while (stack) {
-		if (value == scan()) {
+		if (scan() == value) {
 			break
 		}
 	}
@@ -294,8 +285,8 @@ export function whitespace () {
  */
 export function identifier (value) {
 	while (stack) {
-		if (alphanumeric(scan())) {
-			value = join(value, stack, 10)
+		if (word(scan())) {
+			value = stack + (value << 6) + (value << 16) - value
 		} else {
 			break
 		}
@@ -305,33 +296,147 @@ export function identifier (value) {
 }
 
 /**
- * @param {number} value
+ * @param {string} value
+ * @param {number} count
  * @return {number}
  */
-export function numeric (value) {
-	return value > 47 && value < 58 ? 1 : 0
-}
-
-/**
- * @param {number} value
- * @return {number}
- */
-export function alphabetic (value) {
-	return value == 95 || (value > 64 && value < 91) || (value > 96 && value < 123) ? 1 : 0
-}
-
-/**
- * @param {number}
- * @return {number}
- */
-export function alphanumeric (value) {
-	if (numeric(value)) {
-		return 1
-	} else if (alphabetic(value)) {
-		return 2
-	} else if (value > 127) {
-		return 3
-	} else {
-		return 0
+export function compare (value, count) {
+	while (count) {
+		if (code(value, --count) != code(input, index - count)) {
+			return 0
+		}
 	}
+
+	return 1
 }
+
+/**
+ * @param {string} value
+ * @param {string} count
+ * @return {number}
+ */
+export function keyword (value, count) {
+	switch (index) {
+		case 2:
+			if (compare('if', 2)) {
+				return trace = types.if, token.keyword
+			} else if (compare('in', 2)) {
+				return trace = types.in, token.keyword
+			} else if (compare('of', 2)) {
+				return trace = types.of, token.keyword
+			} else if (compare('as', 2)) {
+				return trace = types.as, token.keyword
+			} else {
+				break
+			}
+		case 3:
+		 	if (compare('int', 3)) {
+		 		return trace = types.int, token.type
+		 	} else if (compare('flt', 3)) {
+		 		return trace = types.flt, token.type
+		 	} else if (compare('num', 3)) {
+		 		return trace = types.num, token.type
+		 	} else if (compare('str', 3)) {
+		 		return trace = types.str, token.type
+		 	} else if (compare('obj', 3)) {
+		 		return trace = types.obj, token.type
+		 	} else if (compare('ptr', 3)) {
+		 		return trace = types.ptr, token.type
+		 	} else if (compare('var', 3)) {
+		 		return trace = types.var, token.type
+		 	} else if (compare('def', 3)) {
+		 		return trace = types.def, token.type
+		 	} else if (compare('fun', 3)) {
+		 		return trace = types.fun, token.type
+		 	} else if (compare('nil', 3)) {
+		 		return trace = types.nil, token.type
+		 	} else if (compare('for', 3)) {
+		 		return trace = types.for, token.keyword
+		 	} else if (compare('try', 3)) {
+		 		return trace = types.try, token.keyword
+		 	} else {
+				break
+			}
+		case 4:
+			if (compare('enum', 4)) {
+				return types.enum
+			} else if (compare('bool', 4)) {
+				return trace = types.bool, token.type
+			} else if (compare('null', 4)) {
+				return trace = types.null, token.literal
+			} else if (compare('true', 4)) {
+				return trace = types.true, token.literal
+			} else if (compare('else', 4)) {
+				return trace = types.else, token.keyword
+			} else if (compare('case', 4)) {
+				return types.case
+			} else if (compare('pick', 4)) {
+				return trace = types.pick, token.keyword
+			} else {
+				break
+			}
+		case 5:
+			if (compare('false', 5)) {
+				return trace = types.false, token.literal
+			} else if (compare('break', 5)) {
+				return trace = types.break, token.keyword
+			} else if (compare('keyof', 5)) {
+				return trace = types.keyof, token.keyword
+			} else if (compare('throw', 5)) {
+				return trace = types.throw, token.keyword
+			} else if (compare('catch', 5)) {
+				return trace = types.catch, token.keyword
+			} else if (compare('super', 5)) {
+				return trace = types.super, token.keyword
+			} else if (compare('await', 5)) {
+				return trace = types.await, token.keyword
+			} else {
+				break
+			}
+		case 6:
+			if (compare('return', 6)) {
+				return trace = types.return, token.keyword
+			} else if (compare('switch', 6)) {
+				return trace = types.switch, token.keyword
+			} else if (compare('delete', 6)) {
+				return trace = types.delete, token.keyword
+			} else if (compare('typeof', 6)) {
+				return trace = types.typeof, token.keyword
+			} else if (compare('sizeof', 6)) {
+				return trace = types.sizeof, token.keyword
+			} else if (compare('import', 6)) {
+				return trace = types.import, token.keyword
+			} else if (compare('export', 6)) {
+				return trace = types.export, token.keyword
+			} else {
+				break
+			}
+		case 7:
+			if (compare('default', 7)) {
+				return trace = types.default, token.keyword
+			} else if (compare('extends', 7)) {
+				return trace = types.extends, token.keyword
+			} else if (compare('finally', 7)) {
+				return trace = types.finally, token.keyword
+			} else {
+				break
+			}
+		case 8:
+			if (compare('continue', 8)) {
+				return trace = types.continue, token.keyword
+			} else {
+				break
+			}
+		case 9:
+			if (compare('instanceof', 9)) {
+				return trace = types.instanceof, token.keyword
+			} else {
+				break
+			}
+	}
+
+	return token.identifier
+}
+
+console.log(parse('abc'))
+// console.log(parse('"100" var abc 123_000 111km 10e4'))
