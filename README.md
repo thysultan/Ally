@@ -364,7 +364,7 @@ def Person age, year, document pick {name} {
 	}
 
 	fun assign key, value {
-		super.key = value
+		def.key = value
 	}
 }
 
@@ -384,7 +384,7 @@ All named arguments in the class are assigned to a corrosponding field.
 ```
 def Element type, props pick {ref, key, xmlns}, children {
   fun handleEvent obj<Event> event {
-    super.dispatchEvent(event, => print('dispatchEvent'))
+    def.dispatchEvent(event, => print('dispatchEvent'))
   }
   fun dispatchEvent obj<Event> event, fun callback {
     try {
@@ -415,7 +415,7 @@ def Person {
 
 def Student extends Person {
 	get fun key {
-		super.getter(key)
+		def.getter(key)
 	}
 }
 

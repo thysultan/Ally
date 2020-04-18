@@ -7,14 +7,9 @@ export var trace = 0
 export var index = 0
 export var input = ''
 
-// enums
+// token
 export var token = {type: 0, program: 1, keyword: 2, literal: 3, operator: 4, separator: 5, statement: 6, procedure: 7, identifier: 8, expression: 9, declaration: 10}
-export var types = {nil: -1, int: -2, flt: -3, num: -4, str: -5, obj: -6, ptr: -7, var: -8, def: -9, fun: -10, bool: -11, if: -12, in: -13, of: -14, as: -15, for: -16,
-	try: -17, null: -18, true: -19, else: -20, case: -21, pick: -22, false: -23, break: -24, keyof: -25, throw: -26, catch: -27, super: -28, await: -29, return: -30,
-	switch: -31, delete: -32, typeof: -33, sizeof: -34, import: -35, export: -36, default: -37, extends: -38, finally: -39, continue: -40, instanceof: -41}
-
-// symbols
-export var table = {}
+export var types = {bit: 0, int: 1, flt: 2, num: 3, str: 4, obj: 5, ptr: 6, nil: 7, def: 8, fun: 9, var: 10}
 
 /**
  * @param {string} value
@@ -39,13 +34,13 @@ export function lexer (value, child, frame) {
 			case 42: case 60: case 62:
 				switch (peek()) {
 					// ** << >> **= <<= >>=
-					case stack: push(child, child = node(token.operator, [hash(scan(), peek() == 61 ? scan() : 1), types.num]))
+					case stack: push(child, child = node(token.operator, [oper(stack, scan(), peek() == 61 ? scan() : 1), types.num]))
 						break
 					// *= <= >=
-					case 61: push(child, child = node(token.operator, [hash(scan(), 1), types.bool]))
+					case 61: push(child, child = node(token.operator, [oper(stack, scan(), 1), types.bit]))
 						break
 					// < > *
-					default: push(child, child = node(token.operator, [stack, types.bool]))
+					default: push(child, child = node(token.operator, [stack, types.bit]))
 				}
 				break
 			// ! != !==
@@ -53,7 +48,7 @@ export function lexer (value, child, frame) {
 			case 33: case 61:
 				switch (peek()) {
 					// != / == / !== / ===
-					case 61: push(child, child = node(token.operator, [hash(stack, scan(), peek() == 61 ? scan() : 1), types.bool]))
+					case 61: push(child, child = node(token.operator, [oper(stack, scan(), peek() == 61 ? scan() : 1), types.bit]))
 						break
 					// ! / =
 					default: push(child, child = node(token.operator, [stack, stack == 33 ? types.bool : types.var]))
@@ -66,7 +61,7 @@ export function lexer (value, child, frame) {
 			case 38: case 43: case 45: case 124:
 				switch (peek()) {
 					// &= += -= |= && ++ -- ||
-					case 61: case stack: push(child, child = node(token.operator, [hash(scan(), 1), types.num]))
+					case 61: case stack: push(child, child = node(token.operator, [oper(stack, scan(), 1), types.num]))
 						break
 					// & + - |
 					default: push(child, child = node(token.operator, [stack, types.num]))
@@ -77,7 +72,7 @@ export function lexer (value, child, frame) {
 			case 37: case 94:
 				switch (peek()) {
 					// %= ^=
-					case 61: push(child, child = node(token.operator, [hash(scan(), 1), types.num]))
+					case 61: push(child, child = node(token.operator, [oper(stack, scan(), 1), types.num]))
 						break
 					// % ^
 					default: push(child, child = node(token.operator, [stack, types.num]))
@@ -94,7 +89,7 @@ export function lexer (value, child, frame) {
 					case 47: comment(47)
 						break
 					// /=
-					case 61: push(child, child = node(token.operator, [hash(scan(), 1), types.num]))
+					case 61: push(child, child = node(token.operator, [oper(stack, scan(), 1), types.num]))
 						break
 					// /
 					default: push(child, child = node(token.operator, [stack, types.num]))
@@ -104,17 +99,17 @@ export function lexer (value, child, frame) {
 			case 63:
 				switch (peek()) {
 					// ?.  ??
-					case 46: case 63: push(child, child = node(token.operator, [hash(scan(), 1), types.var]))
+					case 46: case 63: push(child, child = node(token.operator, [oper(stack, scan(), 1), types.var]))
 						break
 					// ?
-					default: push(child, child = node(token.operator, [stack, types.bool]))
+					default: push(child, child = node(token.operator, [stack, types.bit]))
 				}
 				break
 			// . .. ...
 			case 46:
 				switch (peek()) {
 					// .. ...
-					case 46: push(child, child = node(token.operator, [hash(scan(), peek() == 46 ? scan() : 1), types.ptr]))
+					case 46: push(child, child = node(token.operator, [oper(stack, scan(), peek() == 46 ? scan() : 1), types.ptr]))
 						break
 					// .
 					default: push(child, child = node(token.operator, [stack, types.var]))
@@ -139,10 +134,10 @@ export function lexer (value, child, frame) {
 			case 32: index = whitespace() - 1
 				break
 			// 0-9
-			case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: push(child, child = node(token.literal, [number(0, 0, track == 45 ? -1 : 1 ), trace == 1 ? types.flt : types.int]))
+			case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: push(child, child = node(token.literal, [number(trace = 0, 1), trace ? types.flt : types.int]))
 				break
 			// A-Z a-z _
-			default: push(child, child = node(track == -1 ? token.operator : keyword(index, track = identifier(stack)), [track - index, trace]))
+			default: push(child, child = node(track == -1 ? token.operator : token.identifier, [index - 1, identifier(index)]))
 		}
 	}
 
@@ -153,14 +148,22 @@ export function lexer (value, child, frame) {
  * @return {number}
  */
 export function scan () {
-	return stack = code(input, index++)
+	return stack = code(index++)
 }
 
 /**
  * @return {number}
  */
 export function peek () {
-	return code(input, index)
+	return code(index)
+}
+
+/**
+ * @param {number} value
+ * @return {number}
+ */
+export function code (value) {
+	return input.charCodeAt(value) | 0
 }
 
 /**
@@ -171,22 +174,14 @@ export function word (value) {
 	return (value == 95 || value > 127) || (value > 64 && value < 91) || (value > 96 && value < 123)
 }
 
-/**
- * @param {number} value
- * @param {number} index
- * @return {number}
- */
-export function code (value, index) {
-	return value.charCodeAt(index) | 0
-}
-
 /*
  * @param {number} value
- * @param {number} depth
+ * @param {number} child
+ * @param {number} power
  * @return {number}
  */
-export function hash (value, depth) {
-	return trace * value * depth
+export function oper (value, child, power) {
+	return value * child * power
 }
 
 /*
@@ -210,26 +205,24 @@ export function node (value, props) {
 /**
  * @param {number} value
  * @param {number} point
- * @param {number} float
  * @return {number}
  */
-export function number (value, point, float) {
-	while (stack) {
-		switch (scan()) {
-			// .
-			case 46: peek() == 46 ? stack = 0 : point = trace = 1
+export function number (value, point) {
+	do {
+		if (stack > 47 && stack < 58) {
+			value = value * 10 + stack - 48, point = trace ? point / 10 : point
+		} else if (stack == 46) {
+			if (peek() != 46) {
+				trace = 1
+			} else {
 				break
-			// _
-		 	case 95:
-		 		break
-		 	// 0-9
-		 	case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: value = value * 10 + stack - 48, float = point ? float / 10 : float
-		 		break
-			default: stack = 0
+			}
+		} else if (stack != 95) {
+			break
 		}
-	}
+	} while (scan())
 
-	return index += stack = -1, value * float
+	return index += stack = -1, value * point
 }
 
 /**
@@ -285,158 +278,13 @@ export function whitespace () {
  */
 export function identifier (value) {
 	while (stack) {
-		if (word(scan())) {
-			value = stack + (value << 6) + (value << 16) - value
-		} else {
+		if (!word(scan())) {
 			break
 		}
 	}
 
-	return value
+	return index - value
 }
 
-/**
- * @param {string} value
- * @param {number} count
- * @return {number}
- */
-export function compare (value, count) {
-	while (count) {
-		if (code(value, --count) != code(input, index - count)) {
-			return 0
-		}
-	}
-
-	return 1
-}
-
-/**
- * @param {string} value
- * @param {string} count
- * @return {number}
- */
-export function keyword (value, count) {
-	switch (index) {
-		case 2:
-			if (compare('if', 2)) {
-				return trace = types.if, token.keyword
-			} else if (compare('in', 2)) {
-				return trace = types.in, token.keyword
-			} else if (compare('of', 2)) {
-				return trace = types.of, token.keyword
-			} else if (compare('as', 2)) {
-				return trace = types.as, token.keyword
-			} else {
-				break
-			}
-		case 3:
-		 	if (compare('int', 3)) {
-		 		return trace = types.int, token.type
-		 	} else if (compare('flt', 3)) {
-		 		return trace = types.flt, token.type
-		 	} else if (compare('num', 3)) {
-		 		return trace = types.num, token.type
-		 	} else if (compare('str', 3)) {
-		 		return trace = types.str, token.type
-		 	} else if (compare('obj', 3)) {
-		 		return trace = types.obj, token.type
-		 	} else if (compare('ptr', 3)) {
-		 		return trace = types.ptr, token.type
-		 	} else if (compare('var', 3)) {
-		 		return trace = types.var, token.type
-		 	} else if (compare('def', 3)) {
-		 		return trace = types.def, token.type
-		 	} else if (compare('fun', 3)) {
-		 		return trace = types.fun, token.type
-		 	} else if (compare('nil', 3)) {
-		 		return trace = types.nil, token.type
-		 	} else if (compare('for', 3)) {
-		 		return trace = types.for, token.keyword
-		 	} else if (compare('try', 3)) {
-		 		return trace = types.try, token.keyword
-		 	} else {
-				break
-			}
-		case 4:
-			if (compare('enum', 4)) {
-				return types.enum
-			} else if (compare('bool', 4)) {
-				return trace = types.bool, token.type
-			} else if (compare('null', 4)) {
-				return trace = types.null, token.literal
-			} else if (compare('true', 4)) {
-				return trace = types.true, token.literal
-			} else if (compare('else', 4)) {
-				return trace = types.else, token.keyword
-			} else if (compare('case', 4)) {
-				return types.case
-			} else if (compare('pick', 4)) {
-				return trace = types.pick, token.keyword
-			} else {
-				break
-			}
-		case 5:
-			if (compare('false', 5)) {
-				return trace = types.false, token.literal
-			} else if (compare('break', 5)) {
-				return trace = types.break, token.keyword
-			} else if (compare('keyof', 5)) {
-				return trace = types.keyof, token.keyword
-			} else if (compare('throw', 5)) {
-				return trace = types.throw, token.keyword
-			} else if (compare('catch', 5)) {
-				return trace = types.catch, token.keyword
-			} else if (compare('super', 5)) {
-				return trace = types.super, token.keyword
-			} else if (compare('await', 5)) {
-				return trace = types.await, token.keyword
-			} else {
-				break
-			}
-		case 6:
-			if (compare('return', 6)) {
-				return trace = types.return, token.keyword
-			} else if (compare('switch', 6)) {
-				return trace = types.switch, token.keyword
-			} else if (compare('delete', 6)) {
-				return trace = types.delete, token.keyword
-			} else if (compare('typeof', 6)) {
-				return trace = types.typeof, token.keyword
-			} else if (compare('sizeof', 6)) {
-				return trace = types.sizeof, token.keyword
-			} else if (compare('import', 6)) {
-				return trace = types.import, token.keyword
-			} else if (compare('export', 6)) {
-				return trace = types.export, token.keyword
-			} else {
-				break
-			}
-		case 7:
-			if (compare('default', 7)) {
-				return trace = types.default, token.keyword
-			} else if (compare('extends', 7)) {
-				return trace = types.extends, token.keyword
-			} else if (compare('finally', 7)) {
-				return trace = types.finally, token.keyword
-			} else {
-				break
-			}
-		case 8:
-			if (compare('continue', 8)) {
-				return trace = types.continue, token.keyword
-			} else {
-				break
-			}
-		case 9:
-			if (compare('instanceof', 9)) {
-				return trace = types.instanceof, token.keyword
-			} else {
-				break
-			}
-	}
-
-	return token.identifier
-}
-
-console.log(parse('abc'))
+console.log(parse('-123.23km'))
 // console.log(parse('"100" var abc 123_000 111km 10e4'))
