@@ -113,11 +113,5 @@ export function word (value) {
  * @return {number}
  */
 export function sign (value) {
-	switch (value) {
-		// ! % & * + - . / < = > ? ^ | ~
-		case 33: case 37: case 38: case 42: case 43: case: 45: case 46: case 47: case 60: case 61: case 62: case 63: case 94: case 124: case 126:
-			return 1
-		default:
-			return 0
-	}
+	return ((value == 33 || value == 37 || value == 38 || value == 94 || value == 124 || value == 126) (value > 41 && value < 48) (value > 59 && value < 64)) | 0
 }

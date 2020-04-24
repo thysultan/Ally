@@ -13,17 +13,17 @@ import {identifier} from './Identifier.js'
  * @return {object}
  */
 export function lexer (value, child, frame) {
-	while (read()) {
-		switch (scan()) {
-			// , ;
-			case 44: case 59: push(child, child = node(read(), [0, 0]))
-				break
+	while (1) {
+		switch (scan() == value ? 0 : read()) {
 			// ) ] }
-			case value: return frame
+			case 0: return frame
 			// [ {
 			case 91: case 123: char(read() + 1)
 			// (
 			case 40: push(read() == 40 && look(-1) == 32 ? push(child, child = node(32, [0, 0])) : child, tokenization(char(read() + 1), child = node(read(), [0, 0]), child)).props = [child.child, token.var]
+				break
+			// , ;
+			case 44: case 59: push(child, child = node(read(), [0, 0]))
 				break
 			// " '
 			case 34: case 39: push(child, child = node(token.literal, [string(read()) - caret() - 1, token.str]))
@@ -33,17 +33,19 @@ export function lexer (value, child, frame) {
 			// \s
 			case 32: jump(whitespace())
 				break
-			// 0-9
-			case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: push(child, child = node(token.literal, [number(0), token.num]))
-				break
 			// /
 			case 47:
 				if (comment(peek())) {
 					break
 				}
-			default: push(child, child = sign(read()) ? node(token.operator, [operator(scan()), token.var]) : node(token.identifier, [caret() - 1, identifier(2166136261, caret())]))
+			default:
+				if (numb(read())) {
+					push(child, child = node(token.literal, [number(0), token.num]))
+				} else if (word(read())) {
+					push(child, child = node(token.identifier, [caret() - 1, identifier(2166136261, caret())]))
+				} else {
+					push(child, child = node(token.operator, [operator(scan()), token.var]))
+				}
 		}
 	}
-
-	return frame
 }
