@@ -1,4 +1,4 @@
-import {scan, read, peek, char, jump, caret, alloc} from 'Scanner.js'
+import {scan, read, peek, char, jump, caret} from 'Scanner.js'
 import {node, push} from './Node.js'
 import {token} from './Token.js'
 import {string} from './String.js'
@@ -30,7 +30,7 @@ export function lexer (value, child, frame) {
 			// ?
 			case 63:
 			// .
-			case 46: push(child, child = node(token.operator, operator(scan())))
+			case 46: push(child, child = node(token.operator, [operator(scan()), token.var]))
 				break
 			// , ;
 			case 44: case 59: push(child, child = node(read(), [0, 0]))
