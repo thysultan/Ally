@@ -24,7 +24,7 @@ fun fib int n {
 obj run = {
 	obj global = Person(20 'sam')
 	ptr memory = {1024}
-	any[?] program = []
+	var program = []
 
 	fun create str type ...args {}
 	fun destroy str type ...args {}

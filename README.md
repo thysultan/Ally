@@ -6,12 +6,11 @@ Pronounced L-I, Ally is a static programming language with semi-optional types. 
 
 ```
 bit, int, big, flt, dec, num, str, obj, ptr, any, def, fun, ext, var,
-true, false, null, NaN, Infinity,
+nan, true, false, null,
 import, export, as,
 continue, break, return, returns, throw, delete, pick, typeof, sizeof, instanceof, keyof,
 try, catch, finally, if, else, for, in, switch, case, default,
-super, extends,
-async, await,
+super, extends, await
 ```
 
 ## Comments
@@ -27,8 +26,6 @@ Block comments can nest and span multiple lines, starting with /* and ending wit
 ```
 /* multi-line
    comment. */
-
-/* This is /* a nested */ comment. */
 ```
 
 Identifiers
@@ -51,21 +48,23 @@ ALL_CAPS
 Booleans has the type of `boolean` denoted as `bit` of either values `true` or `false`, or `!0` or `0`. Boolean operations include:
 
 1. && logical and
-2. || logical or
-3. ! logical not
-3. <=, >=, <, >
-4. == equal
-6. != unequal
-4. === deep equal
-5. !== deep unequal
+1. || logical or
+1. ! logical not
+1. <=, >=, <, >
+1. <<=, >>=, <<, >>, <<<, >>>
+1. ?. ?? ?=
+1. == equal
+1. != unequal
+1. === deep equal
+1. !== deep unequal
 
 ## Number
 
 ```
-int number = 64 000 // 64 bit integer
+int number = 64_000 // 32/64 bit integer
 flt number = 64.000 // 64 bit floating point number
-dec number = 128.00 // pronounced decimal, 128 floating point number
 num number = flt | int // pronounced number, either a float or integer depending on the downstream uses.
+int binary = 0b0101 // also included is octal and hexadecimal notation
 ```
 
 Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
@@ -81,10 +80,10 @@ Both `.4` and `1.` are not valid, and must be pre/post-fixed with a zero.
 0.4
 ```
 
-Spaces and appended letters are ignored.
+Underscores and appended letters are ignored.
 
 ```
-10 000 000km
+10_000_000km
 ```
 
 ## String
@@ -115,7 +114,7 @@ switch condition {
 	case a, b {
 	}
 	case c => 'return'
-	case default {
+	case {
 	}
 }
 ```
@@ -190,8 +189,8 @@ fun name a pick {ref, age = 1}, b {
 }
 
 fun name
-	object a pick {str type, age = 1},
-	number b returns void {
+	obj a pick {str type, age = 1},
+	num b {
 }
 ```
 
@@ -277,35 +276,30 @@ Types are semi-optional(inferred where possible), you can attach them to functio
 ```
 
 void – pointers, denoted as 'ptr'
-number - numbers, denoted as 'int', 'flt', 'dec', 'num'
-boolean - booleans, denonted as 'bol'
+number - numbers, denoted as 'int', 'flt'
+boolean - booleans, denonted as 'bit'
 string - strings, denoted as 'str'
 definition - types, denoted as 'def'
 
 function - functions, denoted as 'fun'
 object - objects, denoted as 'obj'
-array - arrays, denoted as 'type[?]' where '?' is either '?' or a number
+array - arrays, denoted as 'type[?]' where '?' is either '?' or a number and 'type' is any of the above listed types
 ```
 
 In the form of examples this includes.
 
 ```
-bool boolean = true | false
-enum enumerate = {true = !0, false = !true}
+bit boolean = true | false
 
-int number = 64 000
-big number = 128 00
-
+int number = 64_000
 flt number = 64.000
-dec number = 128.00
 
-num number = int | flt | big | dec
+num number = int | flt
 
 str string = 'hello'
 obj object = {int len = 0, str str = ''}
 ptr rawptr = {1024}
-any strnum = true ? 'str' : 64
-def Object = {obj ret, num ref}
+var strnum = true ? 'str' : 64
 
 str[?] array = ['hello']
 str[5] array = ['hello']
@@ -368,7 +362,7 @@ def Person age, year, document pick {name} {
 	}
 }
 
-obj person = Person('23', '1989')
+obj person = Person('23', '1989', {name: 'Sultan'})
 
 print('Name: ' + person.name 'Age: ' + person.age + ', Born In: ' + person.year)
 ```
@@ -395,11 +389,11 @@ def Element type, props pick {ref, key, xmlns}, children {
   }
 }
 
-fun createElement any<str, fun> type, obj props, ...children {
+fun createElement var<str, fun> type, obj props, ...children {
   return Element(type, props, children)
 }
 
-obj person = Person()
+obj person = Person('h1', {}, '')
 
 print(person.type == 'h1')
 ```
@@ -414,7 +408,7 @@ def Person {
 }
 
 def Student extends Person {
-	get fun key {
+	fun get key {
 		def.getter(key)
 	}
 }
@@ -430,7 +424,7 @@ Given that functions can accept type defintions as arguments. The following is a
 
 ```
 def Generic def type {
-	any<type> value
+	var<type> value
 }
 
 obj generic = Generic(Generic)
@@ -529,14 +523,14 @@ The `in` operator returns wether a given key is present in an `object`.
 
 ## Sizeof
 
-The `sizeof` operator returns the size of a given array/object/string and `NaN` for invalid values.
+The `sizeof` operator returns the size of a given array/object/string and `nan` for invalid values.
 
 ```
 print(sizeof [1, 2, 3])       // 3
 print(sizeof {a: 1, b: 2})    // 2
 print(sizeof 'Hello')         // 5
 print(sizeof 2)               // 64
-print(sizeof null)            // NaN
+print(sizeof null)            // nan
 print(sizeof fun a, b {})     // 2
 print(sizeof true)            // 1
 print(sizeof {[1, '1']})      // 1
@@ -546,7 +540,7 @@ The `sizeof` operators on primitive types
 
 ```
 print(sizeof int)             // 64
-print(sizeof dec)             // 128
+print(sizeof flt)             // 64
 ```
 
 ## Typeof
@@ -559,7 +553,7 @@ print(typeof [1, 2, 3])       // 'array'
 print(typeof {a: 1, b: 2})    // 'object'
 print(typeof "Hello")         // 'string'
 print(typeof 2)               // 'number'
-print(typeof null)            // 'void'
+print(typeof null)            // 'nil'
 print(typeof fun {})          // 'function'
 print(typeof true)            // 'boolean'
 print(typeof {[1, '1']})      // 'object'
@@ -631,52 +625,28 @@ arr[7] == null
 sizeof arr == 6
 ```
 
-## Standard Library
+## Standard Library?
 
 ### RegExp
 
 ```
 RegExp(str value, str flags) obj<RegExp>
-RegExp('value', 'g') === {\value\g}
+RegExp('value', 'g') === \value\g
 ```
 
-### String
+### JSON
 
 ```
-String(target) str
+JSON.parse(str target) obj
+JSON.stringify(obj target) str
 ```
 
-### Object
+## System
 
 ```
-Object(target) obj
-```
-
-### Boolean
-
-```
-Boolean(target) bit
-```
-
-### Number
-
-```
-Number(target) num
-```
-
-### Exception
-
-```
-Exception(str target) obj<Exception>
-	obj<Exception>.type
-	obj<Exception>.message
-```
-
-### Promise
-
-```
-Promise(fun target)
-	obj<Promise>.then(fun callback, fun error, fun final) obj<Promise>
+System.assert(bit value)
+System.write(...arguments)
+System.print(...arguments)
 ```
 
 ### Math
@@ -701,20 +671,5 @@ Math.tan(num target) num
 Math.max(...arguments) num
 Math.min(...arguments) num
 Math.hypot(...arguments) num
-```
-
-### JSON
-
-```
-JSON.parse(str target) obj
-JSON.stringify(obj target) str
-```
-
-## System
-
-```
-System.assert(bit value)
-System.write(...arguments)
-System.print(...arguments)
 ```
 

@@ -1,0 +1,38 @@
+a + b * 30
+// ly_add(a, ly_mul(b, 30))
+
+int number = 64_000
+// int ly_id_hash_type = 64000;
+
+flt number = 64.000
+// double ly_id_hash_type = 64.000;
+
+str string = 'hello'
+// char ly_id_hash_type[] = 'hello';
+
+obj object = {int len = 0 str str = ''}
+// struct ly_id_hash_type {int type; int ly_0; char ly_1[]};
+// int ly_id_hash_type_c (int ly_0, char ly_1[]) { return {type = 0; .ly_0 = ly_0; .ly_1 = ly_1;}; };
+// struct ly_id_hash_type object = ly_id_hash_type_constructor(0, 0, '');
+
+ptr rawptr = {1024}
+// void ly_id_hash_type[] = malloc(sizeof(ly_id_hash_type) * 1024);
+
+nil nilptr = null
+// void* nilptr = NULL
+
+var strnum = true ? 'str' : 64
+// void* strnum = 1 ? alloc(0, 'str') : alloc(0, 64)
+
+str[?] array = ['hello']
+// char array[] = {'hello'}
+
+str[5] array = ['hello']
+// char array[5] = {'hello'}
+
+def Person age name {}
+// struct ly_id_hash_type {age, name}
+// int ly_id_hash_type_c (int ly_0, char ly_1[]) { return {type = 1; .age = ly_1; .name = ly_0;}; };
+
+fun fib int n { return n <= 1 ? n : fib(n - 1) + fib(n - 2) }
+int ly_hash_type (ly_0) { return n <= 1 ? n : fib(n - 1) + fib(n - 2) }
