@@ -1,5 +1,6 @@
-import {scan, read, peek, char, jump, sign, caret, alloc} from 'Scanner.js'
-import {node, push, token} from './Node.js'
+import {scan, read, peek, char, jump, caret, alloc} from 'Scanner.js'
+import {node, push} from './Node.js'
+import {token} from './Token.js'
 import {string} from './String.js'
 import {number} from './Number.js'
 import {comment} from './Comment.js'
@@ -14,98 +15,25 @@ import {identifier} from './Identifier.js'
 export function lexer (value, child, frame) {
 	while (read()) {
 		switch (scan()) {
-			// < <= <<=
-			// > >= >>=
-			// * *= **=
-			case 42: case 60: case 62:
-				switch (peek()) {
-					// *= <= >=
-					case 61: push(child, child = node(token.operator, [sign(read(), scan(), 1), token.bit]))
-						break
-					// ** << >> *** <<< >>> **= <<= >>=
-					case read(): push(child, child = node(token.operator, [sign(read(), scan(), peek() == 61 || peek() == read() ? scan() : 1), token.num]))
-						break
-					// < > *
-					default: push(child, child = node(token.operator, [read(), token.bit]))
-				}
-				break
-			// ! != !==
-			// = == ===
-			case 33: case 61:
-				switch (peek()) {
-					// != / == / !== / ===
-					case 61: push(child, child = node(token.operator, [sign(read(), scan(), peek() == 61 ? scan() : 1), token.bit]))
-						break
-					// =>
-					case 60: push(child, child = node(token.operator, [sign(read(), scan(), 1), token.var]))
-						break
-					// ! / =
-					default: push(child, child = node(token.operator, [read(), read() == 33 ? token.bit : token.var]))
-				}
-				break
-			// & && &=
-			// + ++ +=
-			// - -- -=
-			// | || |=
-			case 38: case 43: case 45: case 124:
-				switch (peek()) {
-					// &= += -= |= && ++ -- ||
-					case 61: case read(): push(child, child = node(token.operator, [sign(read(), scan(), 1), token.num]))
-						break
-					// & + - |
-					default: push(child, child = node(token.operator, [read(), token.num]))
-				}
-				break
-			// % %=
-			// ^ ^=
-			case 37: case 94:
-				switch (peek()) {
-					// %= ^=
-					case 61: push(child, child = node(token.operator, [sign(read(), scan(), 1), token.num]))
-						break
-					// % ^
-					default: push(child, child = node(token.operator, [read(), token.num]))
-				}
-				break
 			// / /=
 			// // /*
 			case 47:
-				switch (peek()) {
-					// /*
-					case 42: comment(42)
-						break
-					// //
-					case 47: comment(47)
-						break
-					// /=
-					case 61: push(child, child = node(token.operator, [sign(read(), scan(), 1), token.num]))
-						break
-					// /
-					default: push(child, child = node(token.operator, [read(), token.num]))
+				if (comment(peek())) {
+					break
 				}
-				break
-			// ? ?. ?= ??
+			// < > *
+			case 42: case 60: case 62:
+			// ! =
+			case 33: case 61:
+			// & + - | % ^
+			case 38: case 43: case 45: case 124: case 37: case 94:
+			// ?
 			case 63:
-				switch (peek()) {
-					// ?. ?= ??
-					case 46: case 61: case 63: push(child, child = node(token.operator, [sign(read(), scan(), 1), token.var]))
-						break
-					// ?
-					default: push(child, child = node(token.operator, [read(), token.bit]))
-				}
-				break
-			// . .. ...
-			case 46:
-				switch (peek()) {
-					// .. ...
-					case 46: push(child, child = node(token.operator, [sign(read(), scan(), peek() == 46 ? scan() : 1), token.ptr]))
-						break
-					// .
-					default: push(child, child = node(token.operator, [read(), token.var]))
-				}
+			// .
+			case 46: push(child, child = node(token.operator, operator(scan())))
 				break
 			// , ;
-			case 44: case 59: push(child, child = read(), [0, 0])
+			case 44: case 59: push(child, child = node(read(), [0, 0]))
 				break
 			// ) ] }
 			case value: return frame

@@ -1,4 +1,4 @@
-import {char, jump, alloc, dealloc} from './Scanner.js'
+import {char, jump, alloc} from './Scanner.js'
 import {node} from './Node.js'
 import {lexer} from './Lexer.js'
 import {parse} from './Parse.js'
@@ -11,7 +11,7 @@ export var frame = null
  * @return {object}
  */
 export function main (value) {
-	return dealloc(parse(char(1), lexer(jump(0), frame = node(token.program, [0, alloc(value)]), frame)))
+	return parse(char(1), lexer(jump(0), frame = node(token.program, [0, alloc(value)]), frame))
 }
 
 console.log(main('123'), frame)

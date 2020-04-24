@@ -1,4 +1,4 @@
-import {token} from './Node.js'
+import {token} from './Token.js'
 
 /**
  * @param {object} value
@@ -19,6 +19,8 @@ export function parse (value, child) {
 					case token.bit:
 					case token.int:
 					case token.flt:
+					case token.big:
+					case token.dec:
 					case token.num:
 					case token.str:
 					case token.obj:
@@ -87,10 +89,10 @@ export function parse (value, child) {
 				}
 				break
 			// (
-			case 40: // expression sub-expr
+			case 40: // expression
 				break
 			// [
-			case 91: // expression sub-proc
+			case 91: // membership
 				break
 			// {
 			case 123: // procedure
