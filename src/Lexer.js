@@ -15,23 +15,6 @@ import {identifier} from './Identifier.js'
 export function lexer (value, child, frame) {
 	while (read()) {
 		switch (scan()) {
-			// / /=
-			// // /*
-			case 47:
-				if (comment(peek())) {
-					break
-				}
-			// < > *
-			case 42: case 60: case 62:
-			// ! =
-			case 33: case 61:
-			// & + - | % ^
-			case 38: case 43: case 45: case 124: case 37: case 94:
-			// ?
-			case 63:
-			// .
-			case 46: push(child, child = node(token.operator, [operator(scan()), token.var]))
-				break
 			// , ;
 			case 44: case 59: push(child, child = node(read(), [0, 0]))
 				break
@@ -53,8 +36,12 @@ export function lexer (value, child, frame) {
 			// 0-9
 			case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: push(child, child = node(token.literal, [number(0), token.num]))
 				break
-			// A-Z a-z _
-			default: push(child, child = node(token.identifier, [caret() - 1, identifier(2166136261, caret())]))
+			// /
+			case 47:
+				if (comment(peek())) {
+					break
+				}
+			default: push(child, child = sign(read()) ? node(token.operator, [operator(scan()), token.var]) : node(token.identifier, [caret() - 1, identifier(2166136261, caret())]))
 		}
 	}
 
