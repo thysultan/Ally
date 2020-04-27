@@ -1,4 +1,4 @@
-import {scan, word, hash, caret} from './Lexer.js'
+import {scan, read, move, word, hash, caret} from './Scanner.js'
 
 /**
  * @param {number} value
@@ -7,8 +7,12 @@ import {scan, word, hash, caret} from './Lexer.js'
  */
 export function identifier (value, index) {
 	do {
-		value = hash(value, caret() - index)
-	} while (!word(scan()))
+		if (word(read())) {
+			move(value = hash(value, caret() - index))
+		} else {
+			break
+		}
+	} while (scan(0))
 
 	return value
 }

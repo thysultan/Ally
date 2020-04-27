@@ -1,14 +1,17 @@
-import {scan, read, caret} from './Lexer.js'
+import {scan, read, move, caret} from './Scanner.js'
 
 /**
+ * @param {number} value
  * @return {number}
  */
-export function whitespace () {
-	do {
-		if (read() > 32) {
+export function whitespace (value) {
+	while (scan(0)) {
+		if (read() > value) {
 			break
+		} else {
+			move(0)
 		}
-	} while (scan())
+	}
 
 	return caret()
 }

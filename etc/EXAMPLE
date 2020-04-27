@@ -22,7 +22,7 @@ fun fib int n {
 }
 
 obj run = {
-	obj global = Person(20 'sam')
+	obj[Person] global = Person(20 'sam')
 	ptr memory = {1024}
 	var program = []
 
@@ -33,6 +33,7 @@ obj run = {
 
 fun obj ...arguments {
 	obj object = run.create(typeof obj ...arguments)
+	ptr pointer = ptr(object)
 
 	run.execute(...arguments)
 

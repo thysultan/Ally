@@ -1,7 +1,8 @@
-import {char, jump, alloc} from './Scanner.js'
-import {node} from './Node.js'
-import {lexer} from './Lexer.js'
-import {parse} from './Parse.js'
+import {char, jump, alloc, read} from './src/Scanner.js'
+import {node} from './src/Node.js'
+import {token} from './src/Token.js'
+import {lexer} from './src/Lexer.js'
+import {parser} from './src/Parser.js'
 
 // abstract syntax tree
 export var frame = null
@@ -11,8 +12,7 @@ export var frame = null
  * @return {object}
  */
 export function main (value) {
-	return parse(char(1), lexer(jump(0), frame = node(token.program, [0, alloc(value)]), frame))
+	return parse(lexer(char(1), frame = node(token.program, [jump(0), alloc(value)]), frame), frame.child, frame)
 }
 
-console.log(main('123'), frame)
-// console.log(parse('"100" var abc 123_000 111km 10e4'))
+console.log(main('"100" var abc 123_000 111km 10e4'))

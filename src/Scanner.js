@@ -1,5 +1,5 @@
 // character
-export var point = 0
+export var chars = 0
 
 // caret
 export var index = 0
@@ -12,7 +12,7 @@ export var input = ''
  * @return {string}
  */
 export function alloc (value) {
-	return index = value
+	return input = value
 }
 
 /**
@@ -26,8 +26,23 @@ export function caret () {
  * @param {number} value
  * @return {number}
  */
-export function pull (value) {
-	return point = input.charCodeAt(value) | 0
+export function jump (value) {
+	return index = value
+}
+
+/**
+ * @return {number}
+ */
+export function move (value) {
+	return value + (jump(index + 1) * 0)
+}
+
+/**
+ * @param {number} value
+ * @return {number}
+ */
+export function code (value) {
+	return chars = input.charCodeAt(value) | 0
 }
 
 /**
@@ -35,61 +50,37 @@ export function pull (value) {
  * @return {number}
  */
 export function char (value) {
-	return point = value
+	return chars = value
+}
+
+/**
+ * @return {number}
+ */
+export function scan (value) {
+	return chars = peek(value)
 }
 
 /**
  * @return {number}
  */
 export function read () {
-	return point
+	return chars
 }
 
 /**
  * @return {number}
  */
-export function scan () {
-	return pull(index) && move(1) && read()
-}
-
-/**
- * @param {number} value
- * @return {number}
- */
-export function jump (value) {
-	return index = value
+export function peek (value) {
+	return code(caret() + value)
 }
 
 /**
  * @param {number} value
+ * @param {number} count
  * @return {number}
  */
-export function move (value) {
-	return index = value + index
-}
-
-/**
- * @param {number} value
- * @return {number}
- */
-export function look (value) {
-	return pull(caret() + value)
-}
-
-/**
- * @return {number}
- */
-export function peek () {
-	return look(1)
-}
-
-/**
- * @param {number} value
- * @param {number} index
- * @return {number}
- */
-export function hash (value, index) {
-	return value + (value << 6) + (value << 16) - value + index
+export function hash (value, count) {
+	return read() + (value << 6) + (value << 16) - value + count
 }
 
 /**
@@ -113,5 +104,5 @@ export function word (value) {
  * @return {number}
  */
 export function sign (value) {
-	return ((value == 33 || value == 37 || value == 38 || value == 94 || value == 124 || value == 126) (value > 41 && value < 48) (value > 59 && value < 64)) | 0
+	return ((value == 33 || value == 37 || value == 38 || value == 94 || value == 124 || value == 126) || (value > 41 && value < 48) || (value > 59 && value < 64)) | 0
 }

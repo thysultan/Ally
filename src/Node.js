@@ -1,3 +1,5 @@
+import {caret} from './Scanner.js'
+
 /*
  * @param {object} value
  * @param {object} child

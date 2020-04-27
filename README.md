@@ -63,7 +63,7 @@ Booleans has the type of `boolean` denoted as `bit` of either values `true` or `
 ```
 int number = 64_000 // 32/64 bit integer
 flt number = 64.000 // 64 bit floating point number
-num number = flt | int // pronounced number, either a float or integer depending on the downstream uses.
+num number = 64_000 // pronounced number, either a float or integer depending on the downstream uses.
 int binary = 0b0101 // also included is octal and hexadecimal notation
 ```
 
@@ -115,6 +115,7 @@ switch condition {
 	}
 	case c => 'return'
 	case {
+		print('default')
 	}
 }
 ```
@@ -161,9 +162,6 @@ for step of 0...10 {
 Functions are first class values that have the type `function`. These share the form of `fun name arguments body`.
 
 ```
-fun ... {
-}
-
 fun name {
 }
 
@@ -199,47 +197,31 @@ fun name
 Lambdas are identical to functions and share the same type of `function`. The expression immediatly after '=>' is the return value of a lambda function, this means that in the following, the return values are empty objects '{}'.
 
 ```
-var name = fun ... => {
-}
+fun name => 'return'
 
-var name = fun name => {
-}
+fun name a => 'return'
 
-var name = fun name a => {
-}
+fun name a, b => 'return'
 
-var name = fun name a, b => {
-}
+fun name => 'return'
 
-var name = fun name => {
-}
+fun name ...args => 'return'
 
-var name = fun name ...args => {
-}
+fun name ...args, a => 'return'
 
-var name = fun name ...args, a => {
-}
+fun name a, ...args => 'return'
 
-var name = fun name a, ...args => {
-}
+fun name {a, b} => 'return'
 
-var name = fun name {a, b} => {
-}
+fun name {a, b = 1} => 'return'
 
-var name = fun name {a, b = 1} => {
-}
+fun name a = 1 => 'return'
 
-var name = fun name a = 1 => {
-}
+fun name a = 1, b = 2 => 'return'
 
-var name = fun name a = 1, b = 2 => {
-}
+fun name a pick {ref, age = 1}, b => 'return'
 
-var name = fun name a pick {ref, age = 1}, b => {
-}
-
-var name = fun name obj a pick {str type, age = 1}, num b => {
-}
+fun name obj a pick {str type, age = 1}, num b => 'return'
 ```
 
 ## Invocations
@@ -257,11 +239,6 @@ print(
 
 print('Hello', fun name {
 })
-
-print('Hello', fun ... {
-})
-
-print(fun ... => print(''))
 
 print(fun name => print(''))
 
@@ -294,7 +271,7 @@ bit boolean = true | false
 int number = 64_000
 flt number = 64.000
 
-num number = int | flt
+num number = 64_000
 
 str string = 'hello'
 obj object = {int len = 0, str str = ''}
@@ -310,13 +287,11 @@ The use of types follow the pattern `type binding`.
 ```
 int age = 1
 
-fun name num age, str[] subjects, obj<Person> person {
-	return
+fun name num age, str[] subjects, obj[Person] person {
+	return 'return'
 }
 
-fun name = num age, str[] subjects, obj<Person> person => {
-	return
-}
+fun name num age, str[] subjects, obj[Person] person => 'return'
 ```
 
 ## Class
@@ -377,10 +352,10 @@ All named arguments in the class are assigned to a corrosponding field.
 
 ```
 def Element type, props pick {ref, key, xmlns}, children {
-  fun handleEvent obj<Event> event {
+  fun handleEvent obj[Event] event {
     def.dispatchEvent(event, => print('dispatchEvent'))
   }
-  fun dispatchEvent obj<Event> event, fun callback {
+  fun dispatchEvent obj[Event] event, fun callback {
     try {
       callback(event)
     } catch e {
@@ -389,7 +364,7 @@ def Element type, props pick {ref, key, xmlns}, children {
   }
 }
 
-fun createElement var<str, fun> type, obj props, ...children {
+fun createElement var[str, fun] type, obj props, ...children {
   return Element(type, props, children)
 }
 
@@ -424,7 +399,7 @@ Given that functions can accept type defintions as arguments. The following is a
 
 ```
 def Generic def type {
-	var<type> value
+	var[type] value
 }
 
 obj generic = Generic(Generic)
@@ -611,7 +586,7 @@ Arrays are immutable(size), Array literals are delimited with brackets `[`, `]` 
 
 ```
 // create
-arr = [0, 2, 3, 4...6]
+num[] arr = [0, 2, 3, 4...6]
 
 // assigment
 arr[0] = 1
@@ -627,13 +602,6 @@ sizeof arr == 6
 
 ## Standard Library?
 
-### RegExp
-
-```
-RegExp(str value, str flags) obj<RegExp>
-RegExp('value', 'g') === \value\g
-```
-
 ### JSON
 
 ```
@@ -648,6 +616,14 @@ System.assert(bit value)
 System.write(...arguments)
 System.print(...arguments)
 ```
+
+### RegExp
+
+```
+RegExp(str value, str flags) obj[RegExp]
+RegExp('value', 'g') === \value\g
+```
+
 
 ### Math
 

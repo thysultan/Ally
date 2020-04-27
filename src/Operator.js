@@ -1,17 +1,17 @@
-import {scan, read, sign} from './Lexer.js'
+import {scan, read, move, sign} from './Scanner.js'
 
 /**
  * @param {number} value
  * @return {number}
  */
-function operator (value) {
-	do {
+export function operator (value) {
+	while (scan(0)) {
 		if (sign(read())) {
-			value *= read()
+			move(value *= read())
 		} else {
 			break
 		}
-	} while (scan())
+	}
 
 	return value
 }
