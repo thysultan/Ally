@@ -3,51 +3,53 @@ import 'libuv' as {set, get}
 
 bln boolean = true | false
 
-int number = 64 000
+int number = 64_000
 flt number = 64.000
 
 str string = 'hello'
-obj object = {int len = 0 str str = ''}
+obj object = {int int = 0, str str = ''}
 ptr rawptr = {1024}
 nil nilptr = null
 var strnum = true ? 'str' : 64
 
-str[?] array = ['hello']
-str[5] array = ['hello']
-
-def Person age name {}
+str[1] array = ['hello']
+str[2] array = ['hello', 'world']
 
 fun fib int n {
 	return n <= 1 ? n : fib(n - 1) + fib(n - 2)
-}
-
-obj run = {
-	obj[Person] global = Person(20 'sam')
-	ptr memory = {1024}
-	var program = []
-
-	fun create str type ...args {}
-	fun destroy str type ...args {}
-	fun execute ...args {}
-}
-
-fun obj ...arguments {
-	obj object = run.create(typeof obj ...arguments)
-	ptr pointer = ptr(object)
-
-	run.execute(...arguments)
-
-	if object.ref == 0 {
-		run.destroy(typeof object ...arguments)
-	}
 }
 
 fun man ...arguments {
 	return sizeof arguments
 }
 
-fun jsx a, b {
-	return !{
-		<Component><element><text>{a + b}</text></element></Component>
+obj run = {
+	obj global = []
+	ptr memory = {1024}
+
+	fun create type, value {
+		var val = {type * value}
+		var ret = super.excute()
+
+		if val.ref == 0 {
+			super.destroy(typeof val, val)
+		}
 	}
 }
+
+def map {
+	get key {}
+	set key, value {}
+}
+
+def vec flt x, flt y, flt z
+
+fun dot obj[vec] a, obj[vec] b {
+	return a.x * b.x + a.y * b.y + a.z * b.z
+}
+
+dot(vec(1, 2, 3), vec(4, 5, 6))
+
+dot(fun a, b{
+	return dot(fun c, d => a * b * c * d)
+})
