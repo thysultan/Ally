@@ -1,7 +1,7 @@
 /**
  * @type {number}
  */
-export var token = 0
+export var chars = 0
 
 /**
  * @type {number}
@@ -12,6 +12,11 @@ export var index = 0
  * @type {string}
  */
 export var input = null
+
+/**
+ * @type {object}
+ */
+export var token = null
 
 /**
  * @type {object}
@@ -52,7 +57,7 @@ export function move (value) {
  * @return {number}
  */
 export function char (value) {
-	return token = input.charCodeAt(value) | 0
+	return chars = input.charCodeAt(value) | 0
 }
 
 /**
@@ -60,21 +65,21 @@ export function char (value) {
  * @return {number}
  */
 export function flag (value) {
-	return token = value
+	return chars = value
 }
 
 /**
  * @return {number}
  */
 export function scan (value) {
-	return token = look(value)
+	return chars = look(value)
 }
 
 /**
  * @return {number}
  */
 export function read () {
-	return token
+	return chars
 }
 
 /**
@@ -118,10 +123,19 @@ export function sign (value) {
 }
 
 /**
+ * @param {object?} value
  * @return {number}
  */
-export function root (value) {
-	return value == null ? child = value : child
+export function prev (value) {
+	return value == null ? child : token = value
+}
+
+/**
+ * @param {object?} value
+ * @return {number}
+ */
+export function next (value) {
+	return value == null ? token : (child = token, token = value)
 }
 
 /*
@@ -129,7 +143,7 @@ export function root (value) {
  * @return {number}
  */
 export function kind (value) {
-	return value == null ? child.value = value : child.value
+	return value == null ? token.value : token.value = value
 }
 
 /*
@@ -137,7 +151,7 @@ export function kind (value) {
  * @return {number}
  */
 export function type (value) {
-	return value == null ? child.types = value : child.types
+	return value == null ? token.types : token.types = value
 }
 
 /*
@@ -145,7 +159,7 @@ export function type (value) {
  * @return {number}
  */
 export function prop (value) {
-	return value == null ? child.props = value ? child.props
+	return value == null ? token.props : token.props = value
 }
 
 /*
@@ -157,4 +171,13 @@ export function prop (value) {
  */
 export function node (value, types, props, child) {
 	return {value, types, props, child, caret: caret()}
+}
+
+/*
+ * @param {number} value
+ * @param {object} child
+ * @return {object}
+ */
+export function pass (value, child) {
+	return value.some(value => value === child.value) ? child : throws(value)
 }
