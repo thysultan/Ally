@@ -1,53 +1,38 @@
 import 'stdio' as stdio
 import 'libuv' as {set, get}
+import 'https://example.com' {print} // urls as modules?
 
 int number = 64_000
 flt number = 64.000
 
+big number = 128_000
+dec number = 128.000
+
 str string = 'hello'
-obj object = {int int = 0, str str = ''}
-var nilptr = null
-var rawptr = {1024}
-var strnum = true ? 'str' : 64
+obj object = {int a = 0, str b = ''}
 
-str[1] array = ['hello']
-str[2] array = ['hello', 'world']
+chr array[] = ['a', 'b', 'c', 'd']
 
-fun fib int n {
+str array[] = ['a']
+str array[][] = [['a']]
+
+obj memory[1024] = []
+
+fun fib (int n) {
 	return n <= 1 ? n : fib(n - 1) + fib(n - 2)
 }
 
-fun man ...arguments {
-	return sizeof arguments
+def vec (flt x, flt y, flt z) {
+	obj memory[1024] = []
+	fun execute (....args) => super.exec(args)
 }
 
-obj run = {
-	obj global = []
-	ptr memory = {1024}
-
-	fun create type, value {
-		var val = {type * value}
-		var ret = super.excute()
-
-		if val.ref == 0 {
-			super.destroy(typeof val, val)
-		}
-	}
-}
-
-def map {
-	get key {}
-	set key, value {}
-}
-
-def vec flt x, flt y, flt z
-
-fun dot obj[vec] a, obj[vec] b {
+fun dot (obj a[vec], obj b[vec]) {
 	return a.x * b.x + a.y * b.y + a.z * b.z
 }
 
-dot(vec(1, 2, 3), vec(4, 5, 6))
+fun call (fun a, fun b) {
+	return a(1, 2) + b(3, 4)
+}
 
-dot(fun a, b{
-	return dot(fun c, d => a * b * c * d)
-})
+dot(vec(1, 2, 3), vec(4, 5, 6))

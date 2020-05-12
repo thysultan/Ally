@@ -5,10 +5,10 @@ Pronounced L-I, Ally is a static programming language with semi-optional types. 
 ## Reserved
 
 ```
-bit, int, big, flt, dec, num, str, obj, ptr, any, def, fun, ext, var,
-nan, true, false, null,
+int, flt, str, obj, def, fun, var,
+true, false, null,
 import, export, as,
-continue, break, return, returns, throw, delete, pick, typeof, sizeof, instanceof, keyof,
+continue, break, return, throw, delete, pick, typeof, sizeof, instanceof, keyof,
 try, catch, finally, if, else, for, in, switch, case, default,
 super, extends, await
 ```
@@ -21,7 +21,7 @@ Line comments start with `//` and end at the end of the line.
 // This is a comment.
 ```
 
-Block comments can nest and span multiple lines, starting with /* and ending with */.
+Block comments can nest and span multiple lines, starting with `/*` and ending with `*/`.
 
 ```
 /* multi-line
@@ -45,7 +45,7 @@ ALL_CAPS
 
 ## Boolean
 
-Booleans has the type of `boolean` denoted as `bit` of either values `true` or `false`, or `!0` or `0`. Boolean operations include:
+Booleans values are identified by either `true` or `false`, or `!0` or `0`. Boolean operations include:
 
 1. && logical and
 1. || logical or
@@ -63,14 +63,13 @@ Booleans has the type of `boolean` denoted as `bit` of either values `true` or `
 ```
 int number = 64_000 // 32/64 bit integer
 flt number = 64.000 // 64 bit floating point number
-num number = 64_000 // pronounced number, either a float or integer depending on the downstream uses.
 int binary = 0b0101 // also included is octal and hexadecimal notation
 ```
 
 Provides the usual operations: `+`, `-`, `*`, `/`, `++`, `--` etc.
 
 ```
-num a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 100
+flt a = ( 1 + 2.9 >> 2 / 1e6 + - 1 - 70e2 * 4 ) + 100
 ```
 
 Both `.4` and `1.` are not valid, and must be pre/post-fixed with a zero.
@@ -165,25 +164,25 @@ Functions are first class values that have the type `function`. These share the 
 fun name {
 }
 
-fun name a, b {
+fun name var a, var b {
 }
 
 fun name ...args {
 }
 
-fun name ...args, a {
+fun name ...args, var a {
 }
 
-fun name a, ...args {
+fun name var a, ...args {
 }
 
-fun name a = 1 {
+fun name var a = 1 {
 }
 
-fun name a = 1, b = 2 {
+fun name var a = 1, var b = 2 {
 }
 
-fun name a pick {ref, age = 1}, b {
+fun name var a pick {ref, age = 1}, var b {
 }
 
 fun name
@@ -194,34 +193,34 @@ fun name
 
 ## Lambdas
 
-Lambdas are identical to functions and share the same type of `function`. The expression immediatly after '=>' is the return value of a lambda function, this means that in the following, the return values are empty objects '{}'.
+Lambdas are identical to functions and share the same type of `function`. The expression immediatly after '=>' is the return value of a lambda function.
 
 ```
 fun name => 'return'
 
-fun name a => 'return'
+fun name var a => 'return'
 
-fun name a, b => 'return'
+fun name var a, var b => 'return'
 
 fun name => 'return'
 
 fun name ...args => 'return'
 
-fun name ...args, a => 'return'
+fun name ...args, var a => 'return'
 
-fun name a, ...args => 'return'
+fun name var a, ...args => 'return'
 
-fun name {a, b} => 'return'
+fun name var a pick {ref, age} => 'return'
 
-fun name {a, b = 1} => 'return'
+fun name var a pick {ref, age = 1} => 'return'
 
-fun name a = 1 => 'return'
+fun name var a = 1 => 'return'
 
-fun name a = 1, b = 2 => 'return'
+fun name var a = 1, var b = 2 => 'return'
 
-fun name a pick {ref, age = 1}, b => 'return'
+fun name var a pick {ref, age = 1}, var b => 'return'
 
-fun name obj a pick {str type, age = 1}, num b => 'return'
+fun name obj a pick {str type, age = 1}, int b => 'return'
 ```
 
 ## Invocations
@@ -251,35 +250,34 @@ print(fun name =>
 Types are semi-optional(inferred where possible), you can attach them to function arguments, variable bindings and class bodies. The following primitive types exist.
 
 ```
-
-void – pointers, denoted as 'ptr'
 number - numbers, denoted as 'int', 'flt'
-boolean - booleans, denonted as 'bit'
 string - strings, denoted as 'str'
 definition - types, denoted as 'def'
 
 function - functions, denoted as 'fun'
 object - objects, denoted as 'obj'
-array - arrays, denoted as 'type[?]' where '?' is either '?' or a number and 'type' is any of the above listed types
+array - arrays, denoted as 'type identifier[?]' where '?' is either 'empty' or a number or 'type' is any of the above listed types
 ```
 
 In the form of examples this includes.
 
 ```
-bit boolean = true | false
+chr number = 8_000
 
 int number = 64_000
 flt number = 64.000
 
-num number = 64_000
+big number = 128_000
+dec number = 128.000
 
-str string = 'hello'
 obj object = {int len = 0, str str = ''}
-ptr rawptr = {1024}
-var strnum = true ? 'str' : 64
+str string = 'hello'
 
-str[?] array = ['hello']
-str[5] array = ['hello']
+str array[1] = ['hello']
+str array[2] = ['hello', 'world']
+
+str array[2][] = [['hello'], ['world']]
+obj array[2][vec] = [[vec()], [vec()]]
 ```
 
 The use of types follow the pattern `type binding`.
@@ -287,11 +285,11 @@ The use of types follow the pattern `type binding`.
 ```
 int age = 1
 
-fun name num age, str[] subjects, obj[Person] person {
+fun name int age, str subjects[], obj person[Person] {
 	return 'return'
 }
 
-fun name num age, str[] subjects, obj[Person] person => 'return'
+fun name int age, str subjects[], obj person[Person] => 'return'
 ```
 
 ## Class
@@ -302,14 +300,12 @@ Classes are created using the def keyword that follow the pattern `def Name ...a
 def Person {
 	obj object = {}
 	obj dictionary = {['key', 'value']}
-	ptr memory = {1024}
+	var memory[1024] = []
 
-	any[] program = []
-
-	fun create name, age {}
-	fun assign key, value {}
-	fun destroy id {}
-	fun generic def type, value {}
+	fun create var name, var age {}
+	fun assign var key, var value {}
+	fun destroy var id {}
+	fun generic def type, var value {}
 }
 ```
 
@@ -333,7 +329,7 @@ def Person age, year, document pick {name} {
 	}
 
 	fun assign key, value {
-		def.key = value
+		super.key = value
 	}
 }
 
@@ -353,7 +349,7 @@ All named arguments in the class are assigned to a corrosponding field.
 ```
 def Element type, props pick {ref, key, xmlns}, children {
   fun handleEvent obj[Event] event {
-    def.dispatchEvent(event, => print('dispatchEvent'))
+    super.dispatchEvent(event, => print('dispatchEvent'))
   }
   fun dispatchEvent obj[Event] event, fun callback {
     try {
@@ -395,7 +391,7 @@ print(typeof student.getter) // function
 
 ## Generics
 
-Given that functions can accept type defintions as arguments. The following is a difinition that accepts defintions as an argument, and sets the type of the the 'value' to any type passed as a definition.
+Given that functions can accept type defintions as arguments. The following is a definition that accepts defintions as an argument, and sets the type of the the 'value' to any type passed as a definition.
 
 ```
 def Generic def type {
@@ -403,55 +399,6 @@ def Generic def type {
 }
 
 obj generic = Generic(Generic)
-```
-
-
-## Module
-
-Modules are like files! They can contain variable bindings, nested modules, etc. Whatever you can place in a program, you may place inside a module definition's {} body and vice-versa. Modules can import and export using the `import` and `export` operators. Modules share a common pattern of `export Identifier {}`.
-
-```
-export School {
-	import Student as {type as studentType}
-
-	int population = 100
-
-  str profession = 'Teacher'
-
-  fun type person {
-  	switch person {
-  		case 'Teacher' {
-  			return 'A teacher'
-  		}
-  		case 'Director' {
-  			return 'A director'
-  		}
-  	}
-  }
-}
-
-export Student {
-  export profession from School
-
-  str grade = '7'
-
-	fun announcement value {
-		print(value)
-	}
-
-  fun type student {
-  	switch student {
-  		case '7' {
-  			return 'Middle school'
-  		}
-  		case '8' {
-  			return 'High school'
-  		}
-  	}
-  }
-}
-
-import School as {type}
 ```
 
 ## Object
@@ -566,10 +513,10 @@ In some respects the `pick` operator is much like the subscript `[]` operator. P
 The `...` operator is a generic operator that spreads it's contents onto the context of its binding. The different contexts include function arguments `fun ...arg`, objects `{...a}` arrays `[...a]` and numbers `0...3`.
 
 ```
-int[2] arr = [1, 2]
-obj obj = {foo = 1}
+int arr[2] = [1, 2]
+obj foo = {foo = 1}
 
-{...obj, bar = 2} === {foo = 1, bar = 2}
+{...foo, bar = 2} === {foo = 1, bar = 2}
 
 [0, ...arr] === [0, 1, 2]
 
@@ -586,7 +533,7 @@ Arrays are immutable(size), Array literals are delimited with brackets `[`, `]` 
 
 ```
 // create
-num[] arr = [0, 2, 3, 4...6]
+int arr[] = [0, 2, 3, 4...6]
 
 // assigment
 arr[0] = 1
@@ -594,7 +541,7 @@ arr[0] = 1
 // deep compare
 arr === [1, 2, 3, 4, 5, 6]
 
-// noop push
+// exception
 arr[7] = 10
 arr[7] == null
 sizeof arr == 6
@@ -605,6 +552,8 @@ sizeof arr == 6
 ### JSON
 
 ```
+import JSON as JSON
+
 JSON.parse(str target) obj
 JSON.stringify(obj target) str
 ```
@@ -612,40 +561,34 @@ JSON.stringify(obj target) str
 ## System
 
 ```
-System.assert(bit value)
-System.write(...arguments)
-System.print(...arguments)
-```
+import console as {assert, write, print}
 
-### RegExp
-
+assert(bit value)
+write(...arguments)
+print(...arguments)
 ```
-RegExp(str value, str flags) obj[RegExp]
-RegExp('value', 'g') === \value\g
-```
-
 
 ### Math
 
 ```
-Math.random() num
-Math.abs(num target) num
-Math.ceil(num target) num
-Math.exp(num target) num
-Math.floor(num target) num
-Math.round(num target) num
-Math.sign(num target) num
-Math.trunc(num target) num
-Math.sqrt(num target) num
-Math.cbrt(num target) num
-Math.imul(num x, num y) num
-Math.log(num target) num
-Math.cos(num target) num
-Math.cosh(num target) num
-Math.sin(num target) num
-Math.tan(num target) num
-Math.max(...arguments) num
-Math.min(...arguments) num
-Math.hypot(...arguments) num
-```
+import Math as Math
 
+Math.random() num
+Math.abs(int target) int
+Math.ceil(int target) int
+Math.exp(int target) int
+Math.floor(int target) int
+Math.round(int target) int
+Math.sign(int target) int
+Math.trunc(flt target) int
+Math.sqrt(int target) int
+Math.cbrt(int target) int
+Math.log(int target) int
+Math.cos(int target) int
+Math.cosh(int target) int
+Math.sin(int target) int
+Math.tan(int target) int
+Math.max(...arguments) int
+Math.min(...arguments) int
+Math.hypot(...arguments) int
+```

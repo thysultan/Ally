@@ -1,33 +1,33 @@
-import {scan, read, move, look, hash, word, numb, sign, caret} from './Scanner.js'
+import {scan_char, scan_read, scan_move, scan_look, scan_hash, scan_word, scan_numb, scan_sign, scan_addr} from './Scanner.js'
 
 /**
  * @param {number} value
  * @return {number}
  */
-export function string (value) {
-	while (scan(0)) {
-		if (read() == value) {
-			return move(caret() + 1)
+export function lexer_string (value) {
+	while (scan_char(0)) {
+		if (scan_read() == value) {
+			return scan_move(scan_addr() + 1)
 		} else {
 			move(0)
 		}
 	}
 
-	return caret()
+	return scan_addr()
 }
 
 /**
  * @param {number} value
  * @return {number}
  */
-export function operator (value) {
-	while (scan(0)) {
-		if (sign(read())) {
-			move(value *= read())
+export function lexer_operator (value, index) {
+	do {
+		if (scan_sign(scan_read())) {
+			scan_move(value = scan_hash(value, scan_addr() - index))
 		} else {
 			break
 		}
-	}
+	} while (scan_char(0))
 
 	return value
 }
@@ -37,14 +37,14 @@ export function operator (value) {
  * @param {number} index
  * @return {number}
  */
-export function identifier (value, index) {
+export function lexer_identifier (value, index) {
 	do {
-		if (word(read())) {
-			move(value = hash(value, caret() - index))
+		if (scan_word(scan_read())) {
+			scan_move(value = scan_hash(value, scan_addr() - index))
 		} else {
 			break
 		}
-	} while (scan(0))
+	} while (scan_char(0))
 
 	return value
 }
@@ -53,12 +53,12 @@ export function identifier (value, index) {
  * @param {number} value
  * @return {number}
  */
-export function whitespace (value) {
-	while (scan(0)) {
-		if (read() > value) {
+export function lexer_whitespace (value) {
+	while (scan_char(0)) {
+		if (scan_read() > value) {
 			break
 		} else {
-			move(0)
+			scan_move(0)
 		}
 	}
 
@@ -69,13 +69,13 @@ export function whitespace (value) {
  * @param {number} value
  * @return {number}
  */
-export function number (value) {
-	if (read() != 48) {
-		return number_decimal(0, 0)
-	} else if (scan(1) == 120) {
-		return number_hexadecimal(move(move(0)))
-	} else if (numb(read())) {
-		return number_octal(move(0))
+export function lexer_number (value) {
+	if (scan_read() != 48) {
+		return lexer_number_decimal(0, 0)
+	} else if (scan_char(1) == 120) {
+		return lexer_number_hexadecimal(scan_move(scan_move(0)))
+	} else if (scan_numb(scan_read())) {
+		return lexer_number_octal(move(0))
 	}
 
 	return value
@@ -86,33 +86,33 @@ export function number (value) {
  * @param {number} count
  * @return {number}
  */
-export function number_decimal (value, count) {
+export function lexer_number_decimal (value, count) {
 	do {
-		if (numb(read())) {
-			value = move(value * 10 + read() - 48)
-		} else if (read() == 46 && look(1) != 46) {
-			count = move(caret() + 1)
-		} else if (word(read())) {
-			switch (move(read())) {
-				case 98: return number_binary(0, 1)
-				case 101: return number_exponent(number_exponent(value, count ? count - caret() : 0), (numb(scan(0)) || move((read() != 45) * scan(1)) ? 1 : -1) * number(0))
+		if (scan_numb(scan_read())) {
+			value = scan_move(value * 10 + scan_read() - 48)
+		} else if (scan_read() == 46 && scan_look(1) != 46) {
+			count = scan_move(scan_addr() + 1)
+		} else if (scan_word(scan_read())) {
+			switch (scan_move(scan_read())) {
+				case 98: return lexer_number_binary(0, 1)
+				case 101: return lexer_number_exponent(lexer_number_exponent(value, count ? count - scan_addr() : 0), (scan_numb(scan_char(0)) || scan_move((scan_read() != 45) * scan_char(1)) ? 1 : -1) * lexer_number(0))
 			}
 		} else {
 			break
 		}
-	} while (scan(0))
+	} while (scan_char(0))
 
-	return count ? number_exponent(value, count - caret()) : value
+	return count ? lexer_number_exponent(value, count - scan_addr()) : value
 }
 
 /**
  * @param {number} value
  * @return {number}
  */
-export function number_hexadecimal (value) {
-	while (scan(0)) {
-		if (numb(read()) || word(read())) {
-			value = move(value * 16 + (read() & 15) + (token > 65 ? 9 : 0))
+export function lexer_number_hexadecimal (value) {
+	while (scan_char(0)) {
+		if (scan_numb(scan_read()) || scan_word(scan_read())) {
+			value = scan_move(value * 16 + (scan_read() & 15) + (token > 65 ? 9 : 0))
 		} else {
 			break
 		}
@@ -125,16 +125,16 @@ export function number_hexadecimal (value) {
  * @param {number} value
  * @return {number}
  */
-export function number_octal (value) {
+export function lexer_number_octal (value) {
 	do {
-		if (numb(read())) {
-			value = move(value * 8 + read() - 48)
-		} else if (word(read())) {
-			move(0)
+		if (scan_numb(scan_read())) {
+			value = scan_move(value * 8 + scan_read() - 48)
+		} else if (scan_word(scan_read())) {
+			scan_move(0)
 		} else {
 			break
 		}
-	} while (scan(0))
+	} while (scan_char(0))
 
 	return value
 }
@@ -144,13 +144,13 @@ export function number_octal (value) {
  * @param {number} count
  * @return {number}
  */
-export function number_binary (value, count) {
-  while (scan(0)) {
-  	if (numb(read())) {
-  		value += move(read() == 49 ? count : 0)
+export function lexer_number_binary (value, count) {
+  while (scan_char(0)) {
+  	if (scan_numb(scan_read())) {
+  		value += scan_move(scan_read() == 49 ? count : 0)
   		count *= 2
-  	} else if (word(read())) {
-  		move(0)
+  	} else if (scan_word(scan_read())) {
+  		scan_move(0)
   	} else {
   		break
   	}
@@ -164,7 +164,7 @@ export function number_binary (value, count) {
  * @param {number} count
  * @return {number}
  */
-export function number_exponent (value, count) {
+export function lexer_number_exponent (value, count) {
 	while (count > 0) {
 		value *= 10, count -= 1
 	}
@@ -179,12 +179,12 @@ export function number_exponent (value, count) {
  * @param {number} value
  * @return {number}
  */
-export function comment (value) {
+export function lexer_comment (value) {
 	switch (value) {
 		// //
-		case 47: return line(move(move(10)))
+		case 47: return lexer_line(scan_move(scan_move(10)))
 		// /*
-		case 42: return block(move(move(42)))
+		case 42: return lexer_block(scan_move(scan_move(42)))
 	}
 
 	return 0
@@ -194,9 +194,9 @@ export function comment (value) {
  * @param {number} value
  * @return {number}
  */
-export function comment_line (value) {
-	while (scan(0)) {
-		if (move(read()) == value) {
+export function lexer_comment_line (value) {
+	while (scan_char(0)) {
+		if (scan_move(scan_read()) == value) {
 			break
 		}
 	}
@@ -208,14 +208,14 @@ export function comment_line (value) {
  * @param {number} value
  * @return {number}
  */
-export function comment_block (value) {
-	while (scan(0)) {
-		if (move(read()) == value) {
-			if (scan(0) == 47) {
-				return move(1)
+export function lexer_comment_block (value) {
+	while (scan_char(0)) {
+		if (scan_move(scan_read()) == value) {
+			if (scan_char(0) == 47) {
+				return scan_move(1)
 			}
 		} else {
-			move(0)
+			scan_move(0)
 		}
 	}
 
