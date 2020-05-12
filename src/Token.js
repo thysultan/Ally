@@ -2,8 +2,8 @@ export var token = {
 	offset: 2166136261,
 	// nodes
 	program: 1, typing: 2, literal: 3, keyword: 4, operator: 5, statement: 6, identifier: 7, procedure: 123, expression: 40, membership: 91, declaration: 61,
-	// types(nil, chr, int, flt, str, obj, def, fun, var)
-	boolean: -969111059, character: -1060053207, integer: -1010090581, float: -1035006294, string: -927081939, object: -961308749, definition: -1051988511, function: -1034415909, variable: -903543805,
+	// types(chr, int, flt, str, obj, def, fun, var)
+	character: -1060053207, integer: -1010090581, float: -1035006294, string: -927081939, object: -961308749, definition: -1051988511, function: -1034415909, variable: -903543805,
 	// literals
 	null: -2806273074, true: 1853055989, false: -1072102688,
 	// keywords

@@ -39,7 +39,7 @@ export function scan_addr () {
  * @return {object}
  */
 export function scan_load (value) {
-	return (scan_input = value) & scan_flag(scan_chars = 1)
+	return (scan_input = value) & (scan_chars = 1)
 }
 
 /**

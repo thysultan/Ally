@@ -561,9 +561,9 @@ JSON.stringify(obj target) str
 ## System
 
 ```
-import console as {assert, write, print}
+import System as {assert, write, print}
 
-assert(bit value)
+assert(value)
 write(...arguments)
 print(...arguments)
 ```
@@ -573,7 +573,7 @@ print(...arguments)
 ```
 import Math as Math
 
-Math.random() num
+Math.random() flt
 Math.abs(int target) int
 Math.ceil(int target) int
 Math.exp(int target) int
