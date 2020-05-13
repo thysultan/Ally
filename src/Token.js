@@ -98,45 +98,48 @@ export function token_precedence (value) {
 		// ??
 		case token.nullish:
 			return 6
-		// |
-		case token.bitwise_or:
-			return 7
-		// ^
-		case token.bitwise_xor:
-			return 8
-		// &
-		case token.bitwise_and:
-			return 9
 		// == != === !==
 		case token.compare: case token.uncompare: case token.deep_compare: case token.deep_uncompare:
+			return 7
+		// < <= > >=
+		case token.less_than: case token.less_than_equal: case token.greater_than: case token.greater_than_equal:
+			return 8
+		// in of instanceof
+		case token.in: case token.of: case token.pick: case token.instanceof:
+			return 9
+		// |
+		case token.bitwise_or:
 			return 10
-		// < <= > >= in of instanceof
-		case token.less_than: case token.less_than_equal: case token.greater_than: case token.greater_than_equal: case token.in: case token.of: case token.pick: case token.instanceof:
+		// ^
+		case token.bitwise_xor:
 			return 11
+		// &
+		case token.bitwise_and:
+			return 12
 		// << >> <<< >>>
 		case token.shift_left: case token.shift_right: case token.shift_left_unsigned: case token.shift_right_unsigned:
-			return 12
+			return 13
 		// + -
 		case token.add: case token.subtract:
-			return 13
+			return 14
 		// % / *
 		case token.modulo: case token.divide: case token.multiply:
-			return 14
+			return 15
 		// **
 		case token.exponent:
-			return 15
+			return 16
 		// await delete keyof typeof
 		case token.await: case token.delete: case token.keyof: case token.typeof:
-			return 16
+			return 17
 		// ! ~ ++ --
 		case token.logical_not: case token.bitwise_not: case token.increment: case token.decrement:
-			return 17
+			return 18
 		// . ?. [
 		case token.membership_access: case token.optional_chaining: case token.membership:
-			return 18
+			return 19
 		// (
 		case token.expression:
-			return 19
+			return 20
 	}
 
 	return 0

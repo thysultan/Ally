@@ -119,15 +119,20 @@ export function parse_binary (value, child) {
 export function parse_typing (value, child) {
 	switch (value.value) {
 		case token.function:
-			break
 		case token.definition:
+			switch (child?.value) {
+				case token.procedure: return parse_statement(value.value, [child])
+					break
+				case token.expression: return parse_statement(value.value, [child, parse_token(0, parse_next())])
+					break
+			}
 			break
 	}
 
 	switch (child?.value) {
-		case token.expression: child.types = -value
+		case token.expression: child.types = -value.types
 			break
-		case token.identifier: child.types = value
+		case token.identifier: child.types = value.types
 			break
 		default: parse_exception(token.typing)
 	}

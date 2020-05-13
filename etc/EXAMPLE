@@ -34,3 +34,9 @@ fun dot obj a[vec], obj b[vec] {
 }
 
 dot(vec(1, 2, 3), vec(4, 5, 6))
+
+fun gen {
+	asm mov(rax, 3)
+	asm mov(rbx, 4)
+	asm add(rax, rbx, rcx)
+}

@@ -385,20 +385,6 @@ def Student extends Person {
 }
 
 obj student = Student()
-
-print(typeof student.getter) // function
-```
-
-## Generics
-
-Given that functions can accept type defintions as arguments. The following is a definition that accepts defintions as an argument, and sets the type of the the 'value' to any type passed as a definition.
-
-```
-def Generic def type {
-	var[type] value
-}
-
-obj generic = Generic(Generic)
 ```
 
 ## Object
@@ -437,7 +423,7 @@ obj dictionary = {
 
 ## In
 
-The `in` operator returns wether a given key is present in an `object`.
+The `in` operator returns wether a given key is present in a `object`.
 
 ```
 'foo' in {foo = 1} == true
@@ -451,18 +437,8 @@ The `sizeof` operator returns the size of a given array/object/string and `nan` 
 print(sizeof [1, 2, 3])       // 3
 print(sizeof {a: 1, b: 2})    // 2
 print(sizeof 'Hello')         // 5
-print(sizeof 2)               // 64
-print(sizeof null)            // nan
 print(sizeof fun a, b {})     // 2
-print(sizeof true)            // 1
 print(sizeof {[1, '1']})      // 1
-```
-
-The `sizeof` operators on primitive types
-
-```
-print(sizeof int)             // 64
-print(sizeof flt)             // 64
 ```
 
 ## Typeof
@@ -470,15 +446,28 @@ print(sizeof flt)             // 64
 The `typeof` operator returns the type of a given value in string form.
 
 ```
-print(typeof int)             // 'definition'
 print(typeof [1, 2, 3])       // 'array'
 print(typeof {a: 1, b: 2})    // 'object'
 print(typeof "Hello")         // 'string'
 print(typeof 2)               // 'number'
-print(typeof null)            // 'nil'
 print(typeof fun {})          // 'function'
 print(typeof true)            // 'boolean'
 print(typeof {[1, '1']})      // 'object'
+
+print(switch typeof 100 {
+	case 'object' => 'object'
+	case 'number' => 'number'
+})
+```
+
+The typeof operator can be overloaded in the use of generics.
+
+```
+def table type {
+	obj value[typeof type]
+}
+
+var hash = table(0)
 ```
 
 ## Instanceof
@@ -489,9 +478,9 @@ The `instanceof` operator returns the class that value is an instance of.
 def Person {}
 def Student extends Person {}
 
-instanceof student === Student
-instanceof student !== Person
-instanceof persons === Person
+student instanceof Student === true
+student instanceof Person !== true
+persons instanceof Person == true
 ```
 
 ## Pick
@@ -499,7 +488,6 @@ instanceof persons === Person
 The `pick` operator retrieves the corresponding value(s) from an `object`.
 
 ```
-{foo: 1} pick 'foo' === 1
 {foo: 1, bar: 2} pick {foo, bar} === {foo: 1, bar: 2}
 [2, 3, 5, 7, 11, 13] pick [1...4] === [3, 5, 7, 11]
 [2, 3, 5, 7, 11, 13] pick [1, 2, 3, 4] === [3, 5, 7, 11]
@@ -522,7 +510,7 @@ obj foo = {foo = 1}
 
 [1...3] === [1, 2, 3]
 
-fun ...args {
+fun name ...args {
 	print(typeof args === 'array')
 }
 ```
