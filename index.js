@@ -8,6 +8,18 @@ export function main (value) {
 	return parse_program(value)
 }
 
-// console.log(main('fn(1,2)'))
-// console.log(main('"100" var abc 123_000 111km 10e4'))
-console.log(parse_program('1 + ((2 * 3))')) // (1, (typeof 2)) => 1
+// fun fn a {}
+// fun fn a, b {}
+// fun fn (a, b) {}
+
+// types
+// console.log(parse_program('int a'))
+
+// operators
+// console.log(parse_program('1 + 2 * 3'))
+
+// functors
+// console.log(parse_program('a {}'))
+// console.log(parse_program('a, b {}'))
+// console.log(parse_program('(a, b) {}'))
+console.log(parse_program('fun name a {}'))

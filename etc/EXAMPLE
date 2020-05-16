@@ -1,6 +1,6 @@
-import 'stdio' as stdio
-import 'libuv' as {set, get}
-import 'https://example.com' as {print} // urls as modules?
+import sys as sys
+import net as {set, get}
+import 'https://example.com' as {print} // fetch network bound module?
 
 int number = 64_000
 flt number = 64.000
@@ -8,7 +8,7 @@ flt number = 64.000
 big number = 128_000
 dec number = 128.000
 
-var number = int(64.0)
+var number = 64.0km
 
 str string = 'hello'
 obj object = {int a = 0, str b = ''}
@@ -39,4 +39,11 @@ fun gen {
 	asm mov(rax, 3)
 	asm mov(rbx, 4)
 	asm add(rax, rbx, rcx)
+}
+
+// threads?
+while i < 10 {
+	await a = yield vec(1, 2, 3)), b = yield vec(1, 2, 3) {
+		print(a, b)
+	}
 }

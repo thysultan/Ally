@@ -94,8 +94,10 @@ export function lexer_number_decimal (value, count) {
 			count = scan_move(scan_addr() + 1)
 		} else if (scan_word(scan_read())) {
 			switch (scan_move(scan_read())) {
-				case 98: return lexer_number_binary(0, 1)
-				case 101: return lexer_number_exponent(lexer_number_exponent(value, count ? count - scan_addr() : 0), (scan_numb(scan_char(0)) || scan_move((scan_read() != 45) * scan_char(1)) ? 1 : -1) * lexer_number(0))
+				case 98:
+					return lexer_number_binary(0, 1)
+				case 101:
+					return lexer_number_exponent(lexer_number_exponent(value, count ? count - scan_addr() : 0), (scan_numb(scan_char(0)) || scan_move((scan_read() != 45) * scan_char(1)) ? 1 : -1) * lexer_number(0))
 			}
 		} else {
 			break
@@ -166,10 +168,13 @@ export function lexer_number_binary (value, count) {
  */
 export function lexer_number_exponent (value, count) {
 	while (count > 0) {
-		value *= 10, count -= 1
+		value *= 10
+		count -= 1
 	}
+
 	while (count < 0) {
-		value /= 10, count += 1
+		value /= 10
+		count += 1
 	}
 
 	return value
@@ -182,9 +187,11 @@ export function lexer_number_exponent (value, count) {
 export function lexer_comment (value) {
 	switch (value) {
 		// //
-		case 47: return lexer_line(scan_move(scan_move(10)))
+		case 47:
+			return lexer_line(scan_move(scan_move(10)))
 		// /*
-		case 42: return lexer_block(scan_move(scan_move(42)))
+		case 42:
+			return lexer_block(scan_move(scan_move(42)))
 	}
 
 	return 0

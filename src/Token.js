@@ -7,15 +7,15 @@ export var token = {
 	// literals
 	null: -2806273074, true: 1853055989, false: -1072102688,
 	// keywords
-	if: 1678321027, for: -1034809499, try: -918951625, else: 2979449664, case: 1327398711, catch: -130785800, while: 2264520430, switch: 3028315292, extends: -6732737417, finally: 2779395649,
+	if: 1678321027, for: -1034809499, try: -918951625, else: 2979449664, await: 1721527123, case: 1327398711, catch: -130785800, while: 2264520430, switch: 3028315292, extends: -6732737417, finally: 2779395649,
 	throw: -1079622077, break: -1009323364, return: 3624757432, continue: -1763732208,
-	import: 1926321549, as: 1677796248, export: 4383565212,
+	import: 1926321549, as: 1677796248,
 	// operators(keywords)
 	in: 1678321035, of: 1678714621,
-	pick: -1344827128, await: 1721527123, delete: 629840307,
+	pick: -1344827128, yield: NaN, delete: 629840307,
 	keyof: -734729869, typeof: 2430491513, sizeof: 221262240, instanceof: -4091102314,
 	// operators(symbols)
-	sequence: -2620402777, direction: 1675434631,
+	sequence: -2620402777, returns: 1675434631,
 	add_equal: 1674253848, subtract_equal: 1674385046, divide_equal: 1674516244, modulo_equal: 1673860254, bitwise_and_equal: 1673925853, bitwise_xor_equal: 1677599397, bitwise_or_equal: 1679567367,
 	multiply_equal: 1674188249, exponent_equal: -1535026183,
 	shift_left_equal: -1385138311, shift_right_equal: -1368484103, shift_left_unsigned_equal: 4934952648, shift_right_unsigned_equal: -2077153338,
@@ -39,19 +39,19 @@ export var token = {
 export function token_identify (value) {
 	switch (value) {
 		// types
-		case token.boolean: case token.character: case token.integer: case token.float: case token.string: case token.object: case token.definition: case token.function: case token.variable:
+		case token.character: case token.integer: case token.float: case token.string: case token.object: case token.definition: case token.function: case token.variable:
 			return token.typing
 		// literals
 		case token.true: case token.false:
 			return token.literal
 		// keywords
-		case token.if: case token.for: case token.try: case token.else: case token.case: case token.catch: case token.while: case token.switch: case token.extends: case token.finally:
+		case token.if: case token.for: case token.try: case token.else: case token.case: case token.await: case token.catch: case token.while: case token.switch: case token.extends: case token.finally:
 		case token.throw: case token.break: case token.return: case token.continue:
 		case token.import: case token.as:
 			return token.keyword
 		// operators
 		case token.in: case token.of:
-		case token.pick: case token.await: case token.delete:
+		case token.pick: case token.delete:
 		case token.keyof: case token.typeof: case token.sizeof: case token.instanceof:
 			return token.operator
 		// identifiers
@@ -62,8 +62,8 @@ export function token_identify (value) {
 
 export function token_unary (value) {
 	switch (value) {
-		// await delete keyof typeof
-		case token.await: case token.delete: case token.keyof: case token.typeof:
+		// yield delete keyof typeof
+		case token.yield: case token.delete: case token.keyof: case token.typeof:
 		// ! ~ ++ --
 		case token.logical_not: case token.bitwise_not: case token.increment: case token.decrement:
 			return 1
@@ -75,7 +75,7 @@ export function token_unary (value) {
 export function token_precedence (value) {
 	switch (value) {
 		// , =>
-		case token.sequence: case token.direction:
+		case token.sequence: case token.returns:
 			return 1
 		// =
 		case token.declaration:

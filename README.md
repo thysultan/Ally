@@ -187,7 +187,7 @@ fun name var a pick {ref, age = 1}, var b {
 
 fun name
 	obj a pick {str type, age = 1},
-	num b {
+	int b {
 }
 ```
 
@@ -196,31 +196,29 @@ fun name
 Lambdas are identical to functions and share the same type of `function`. The expression immediatly after '=>' is the return value of a lambda function.
 
 ```
-fun name => 'return'
+a => 'return'
 
-fun name var a => 'return'
+a, b => 'return'
 
-fun name var a, var b => 'return'
+() => 'return'
 
-fun name => 'return'
+...args => 'return'
 
-fun name ...args => 'return'
+...args, a => 'return'
 
-fun name ...args, var a => 'return'
+a, ...args => 'return'
 
-fun name var a, ...args => 'return'
+a pick {ref, age} => 'return'
 
-fun name var a pick {ref, age} => 'return'
+a pick {ref, age = 1} => 'return'
 
-fun name var a pick {ref, age = 1} => 'return'
+a = 1 => 'return'
 
-fun name var a = 1 => 'return'
+a = 1, b = 2 => 'return'
 
-fun name var a = 1, var b = 2 => 'return'
+a pick {ref, age = 1}, int b => 'return'
 
-fun name var a pick {ref, age = 1}, var b => 'return'
-
-fun name obj a pick {str type, age = 1}, int b => 'return'
+a pick {str type, age = 1}, int b => 'return'
 ```
 
 ## Invocations
@@ -535,48 +533,45 @@ arr[7] == null
 sizeof arr == 6
 ```
 
-## Standard Library?
+## Standard Library
 
-### JSON
+### Network
 
 ```
-import JSON as JSON
+import net as {stringify}
 
-JSON.parse(str target) obj
-JSON.stringify(obj target) str
+stringify(obj target) str
 ```
 
 ## System
 
 ```
-import System as {assert, write, print}
+import sys as {write, print}
 
-assert(value)
-write(...arguments)
-print(...arguments)
+write(...arguments) int
+print(...arguments) int
 ```
 
 ### Math
 
 ```
-import Math as Math
+import math as math
 
-Math.random() flt
-Math.abs(int target) int
-Math.ceil(int target) int
-Math.exp(int target) int
-Math.floor(int target) int
-Math.round(int target) int
-Math.sign(int target) int
-Math.trunc(flt target) int
-Math.sqrt(int target) int
-Math.cbrt(int target) int
-Math.log(int target) int
-Math.cos(int target) int
-Math.cosh(int target) int
-Math.sin(int target) int
-Math.tan(int target) int
-Math.max(...arguments) int
-Math.min(...arguments) int
-Math.hypot(...arguments) int
+math.random() flt
+math.abs(flt target) flt
+math.ceil(flt target) flt
+math.floor(flt target) flt
+math.round(flt target) flt
+math.sign(flt target) flt
+math.trunc(flt target) flt
+math.sqrt(flt target) flt
+math.cbrt(flt target) flt
+math.log(flt target) flt
+math.cos(flt target) flt
+math.cosh(flt target) flt
+math.sin(flt target) flt
+math.tan(flt target) flt
+math.max(flt ...arguments) flt
+math.min(flt ...arguments) flt
+math.hypot(flt ...arguments) flt
 ```

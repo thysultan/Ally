@@ -45,7 +45,7 @@ export function parse_lexer () {
 	}
 
 	if (scan_numb(scan_read())) {
-		return scan_node(token.literal, token.float, lexer_number(0), [])
+		return scan_node(token.literal, token.integer, lexer_number(0), [])
 	} else if (scan_word(scan_read())) {
 		return scan_node(token_identify(scan_flag(lexer_identifier(token.offset, scan_addr()))), 0, scan_flag(), [])
 	} else {
@@ -62,187 +62,126 @@ export function parse_children (value, child, index) {
 		child[index++] = parse_maybe(0, scan_root())
 	}
 
-	return scan_node(value, 0, index, child)
+	return value * index == 40 ? child[0] : scan_node(value, index, 0, child)
 }
 
 export function parse_maybe (value, child) {
-	return parse_operator(parse_token(value, child), parse_peek(), value)
+	return parse_operator(value, parse_token(value, child), parse_peek())
 }
 
 export function parse_token (value, child) {
 	switch (child.value) {
-		case token.typing: return parse_typing(child.props, parse_peek())
-			break
-		case token.literal: return parse_literal(child.types, child)
-			break
-		case token.keyword: return parse_keyword(child.props, [child])
-			break
-		case token.operator: return parse_operator(child, child, value)
-			break
-		case token.procedure: return parse_procedure(value, child)
-			break
-		case token.membership: return parse_membership(value, child)
-			break
-		case token.identifier: return parse_identifier(child, parse_peek())
-			break
+		case token.typing:
+			return parse_typing(child, parse_token(value, parse_next()))
+		case token.literal:
+			return parse_literal(child)
+		case token.keyword:
+			return parse_keyword(child.props, child)
+		case token.operator:
+			return parse_operator(value, child, child)
+		case token.procedure:
+			return parse_expression(value, child.value, child)
+		case token.identifier: case token.membership: case token.expression:
+			if (value != token.sequence) {
+				return parse_identifier(child, parse_peek())
+			}
+	}
+
+	return child
+}
+
+export function parse_operator (value, child, right) {
+	switch (right?.value) {
+		case token.operator:
+			if (child == right) {
+				return parse_maybe(value, parse_expression(0, right.props, [child, parse_token(right.props, parse_next())]))
+			} else if (token_unary(right.props)) {
+				return parse_maybe(value, parse_expression(0, right.props, [child, parse_token(right.props, parse_next())]))
+			} else if (token_precedence(right.props) > token_precedence(value)) {
+				return parse_maybe(value, parse_expression(0, right.props, [child, parse_next(), parse_maybe(right.props, parse_next())]))
+			}
+	}
+
+	return child
+}
+
+export function parse_types (value, child) {
+	switch (child?.value) {
+		case token.identifier:
+			return parse_expression(value.props, token.declaration, [value, child])
 		case token.expression:
-			break
+			return parse_expression(value.props, token.typing, [value, child])
 	}
 
-	return child
-}
-
-export function parse_operator (value, child, index) {
-	switch (child?.value) {
-		case token.operator:
-			if (value == child) {
-				return parse_maybe(index, parse_expression(child.props, [scan_node(token.literal, child.types, 0, []), value, parse_token(child.props, parse_next())]))
-			} else if (token_unary(child.props)) {
-				return parse_maybe(index, parse_expression(child.props, [value, parse_token(child.props, parse_next())]))
-			} else if (token_precedence(child.props) > token_precedence(index)) {
-				return parse_maybe(index, parse_expression(child.props, [value, parse_next(), parse_binary(child.props, parse_maybe(child.props, parse_next()))]))
-			}
-	}
-
-	return value
-}
-
-export function parse_binary (value, child) {
-	switch (child?.value) {
-		case token.operator:
-			return parse_exception(value)
-	}
-
-	return child
-}
-
-export function parse_typing (value, child) {
-	switch (value.value) {
-		case token.function:
-		case token.definition:
-			switch (child?.value) {
-				case token.procedure: return parse_statement(value.value, [child])
-					break
-				case token.expression: return parse_statement(value.value, [child, parse_token(0, parse_next())])
-					break
-			}
-			break
-	}
-
-	switch (child?.value) {
-		case token.expression: child.types = -value.types
-			break
-		case token.identifier: child.types = value.types
-			break
-		default: parse_exception(token.typing)
-	}
-
-	return child
+	return parse_exception(token.typing, child.value, [value, child])
 }
 
 export function parse_literal (value, child) {
 	switch (child.types) {
-		case token.float: child.types = child.props % 1 ? token.float : token.integer
-			break
 		case token.string:
-			break
+			return parse_expression(child.types, child.value, [child])
+		case token.integer:
+			return parse_expression(child.types = child.props % 1 ? token.float : token.integer, child.value, [child])
 	}
 
-	return child
-}
-
-export function parse_keyword (value, child) {
-	switch (value) {
-		case token.if:
-		case token.for:
-		case token.try:
-		case token.else:
-		case token.case:
-		case token.catch:
-		case token.while:
-		case token.switch:
-		case token.extends:
-		case token.finally: child = [parse_maybe(value, parse_next())]
-			switch (child[0].value) {
-				case token.procedure:
-					return parse_statement(value, child)
-				case token.expression:
-					switch (child = [child[0], parse_maybe(value, parse_next())], child[1]) {
-						case token.procedure:
-						case token.statement:
-						case token.expression:
-							return parse_statement(value, child)
-					}
-			}
-			break
-		case token.throw:
-		case token.break:
-		case token.return:
-		case token.continue: child = [parse_maybe(value, parse_peek())]
-			switch (child[0].value) {
-				case token.literal:
-				case token.procedure:
-				case token.membership:
-				case token.expression:
-				case token.identifier:
-					return parse_statement(value, [child[0], parse_maybe(value, parse_next())])
-				default:
-					return parse_statement(value, [])
-			}
-			break
-		case token.import: child = [parse_maybe(value, parse_next())]
-			switch (child[0].value) {
-				case token.literal:
-				case token.identifier: child = [child[0], parse_maybe(value, parse_next())]
-					switch (child[1]) {
-						case token.statement:
-						case token.identifier:
-							return parse_statement(value, child)
-					}
-			}
-			break
-		case token.as: child = [parse_maybe(value, parse_next())]
-			switch (child[0].value) {
-				case token.procedure:
-				case token.identifier:
-					return parse_statement(value, child)
-			}
-			break
-		case token.true:
-		case token.false:
-			return parse_literal(child.types = token.character, child)
-	}
-
-	parse_exception(value)
-}
-
-export function parse_statement (value, child) {
-	return scan_node(token.statement, value, value, child)
-}
-
-export function parse_procedure (value, child) {
-	return child
-}
-
-export function parse_expression (value, child) {
-	return scan_node(token.expression, value, value, child)
-}
-
-export function parse_membership (value, child) {
-	return child
+	return parse_expression(child.types, child.props, [child])
 }
 
 export function parse_identifier (value, child) {
 	switch (child?.value) {
-		case token.expression:
-			return parse_token(0, scan_node(token.identifier, 0, token.expression, [value, parse_next()]))
+		case token.procedure:
+			return parse_statement(0, token.function, [value, parse_next()])
 		case token.membership:
-			return parse_token(0, scan_node(token.membership, 0, token.membership, [value, parse_next()]))
+			return parse_identifier(parse_expression(0, -token.membership, [value, parse_next()]), parse_peek())
+		case token.expression:
+			return parse_identifier(parse_expression(0, -token.expression, [value, parse_next()]), parse_peek())
+		case token.operator:
+			if (child.props == token.returns) {
+				return parse_statement(0, token.function, [value, parse_expression(0, child.props, parse_maybe(0, parse_next()))])
+			}
 	}
 
-	return value
+	return value.value == token.expression ? value : parse_expression(0, value.props, [value])
 }
 
-export function parse_exception (value) {
-	throw value
+export function parse_keyword (value, child) {
+	switch (value) {
+		case token.if: case token.for: case token.try: case token.else: case token.case: case token.await: case token.catch: case token.while: case token.switch: case token.extends: case token.finally:
+		case token.break: case token.throw: case token.return: case token.continue:
+			switch ((child = parse_maybe(0, parse_next())).value) {
+				case token.statement:
+				case token.expression:
+					return parse_statement(0, value, [child])
+			}
+			break
+		case token.import:
+			switch ((child = parse_maybe(0, parse_next())).value) {
+				case token.expression:
+					return parse_statement(0, value, [child, parse_maybe(0, parse_next())])
+			}
+			break
+		case token.as:
+			switch ((child = parse_maybe(0, parse_next())).value) {
+				case token.expression:
+					return parse_statement(0, value, [child])
+			}
+			break
+		case token.true:
+		case token.false:
+			return parse_literal(child)
+	}
+
+	return parse_exception(token.statement, value, [child])
+}
+
+export function parse_statement (types, props, child) {
+	return scan_node(token.statement, types, props, child)
+}
+
+export function parse_expression (types, props, child) {
+	return scan_node(token.expression, types, props, child)
+}
+
+export function parse_exception (types, props, child) {
+	throw types
 }
