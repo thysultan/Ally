@@ -1,11 +1,14 @@
-import {parse_program} from './src/Parser.js'
+import {Parser} from './src/Parser.js'
 
 /**
  * @param {string} value
  * @return {object}
  */
 export function main (value) {
-	return parse_program(value)
+	var parser = new Parser(value)
+	var program = parser.parse_program()
+
+	return program
 }
 
 // fun fn a {}
@@ -22,4 +25,4 @@ export function main (value) {
 // console.log(parse_program('a {}'))
 // console.log(parse_program('a, b {}'))
 // console.log(parse_program('(a, b) {}'))
-console.log(parse_program('fun name a {}'))
+console.log(main('fun name a {}'))

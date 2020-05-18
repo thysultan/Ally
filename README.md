@@ -318,17 +318,11 @@ def Person a pick {key}, b = 1, obj c {
 Fields are created statitically or through referenced named parameters.
 
 ```
-def Person age, year, document pick {name} {
+def Person age, year, data pick {name} {
 	int x = 0
 	int y = 0
-
-	fun write {
-		print('Hello' + 'World' + '!')
-	}
-
-	fun assign key, value {
-		super.key = value
-	}
+	fun print => print('Hello' + 'World' + '!')
+	fun write => x = value
 }
 
 obj person = Person('23', '1989', {name: 'Sultan'})
@@ -346,10 +340,10 @@ All named arguments in the class are assigned to a corrosponding field.
 
 ```
 def Element type, props pick {ref, key, xmlns}, children {
-  fun handleEvent obj[Event] event {
-    super.dispatchEvent(event, => print('dispatchEvent'))
+  fun handleEvent obj event[Event] {
+    dispatchEvent(event, => print('dispatchEvent'))
   }
-  fun dispatchEvent obj[Event] event, fun callback {
+  fun dispatchEvent obj event[Event], fun callback {
     try {
       callback(event)
     } catch e {

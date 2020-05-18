@@ -26,7 +26,7 @@ fun fib int n {
 
 def vec flt x, flt y, flt z {
 	obj memory[1024] = []
-	fun execute (....args) => super.exec(args)
+	fun execute (....args) => memory[1024] * 4
 }
 
 fun dot obj a[vec], obj b[vec] {
