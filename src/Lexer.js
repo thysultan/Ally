@@ -1,20 +1,19 @@
 export class Lexer {
 	constructor (value) {
 		// scan
+		this.scan_value = null
+		this.scan_child = null
 		this.scan_input = value
-		this.scan_token = null
-		this.scan_stack = null
 		this.scan_index = 0
-		this.scan_flags = 0
-		this.scan_chars = 1
+		this.scan_token = 1
 		// node
-		this.token_program = 1
-		this.token_typing = 2
-		this.token_literal = 3
-		this.token_keyword = 4
-		this.token_operator = 5
-		this.token_statement = 6
-		this.token_identifier = 7
+		this.token_program = 0
+		this.token_typing = 1
+		this.token_literal = 2
+		this.token_keyword = 3
+		this.token_operator = 4
+		this.token_statement = 5
+		this.token_identifier = 6
 		this.token_procedure = 123
 		this.token_expression = 40
 		this.token_membership = 91
@@ -109,9 +108,7 @@ export class Lexer {
 		this.token_membership_access = -2620402775
 		this.token_optional_chaining = 1675565813
 	}
-	/*
-	 * Scanner
-	 */
+	// scanner
 	scan_addr () {
 		return this.scan_index
 	}
@@ -122,13 +119,13 @@ export class Lexer {
 		return value + (this.scan_jump(this.scan_addr() + 1) * 0)
 	}
 	scan_code (value) {
-		return this.scan_chars ? this.scan_chars = this.scan_input.charCodeAt(value) | 0 : this.scan_chars
+		return this.scan_token ? this.scan_token = this.scan_input.charCodeAt(value) | 0 : this.scan_token
 	}
 	scan_char (value) {
-		return this.scan_chars = this.scan_look(value)
+		return this.scan_token = this.scan_look(value)
 	}
 	scan_read () {
-		return this.scan_chars
+		return this.scan_token
 	}
 	scan_look (value) {
 		return this.scan_code(this.scan_addr() + value)
@@ -145,21 +142,16 @@ export class Lexer {
 	scan_sign (value) {
 		return ((value == 33 || value == 37 || value == 38 || value == 94 || value == 124 || value == 126) || (value > 41 && value < 48) || (value > 59 && value < 64)) | 0
 	}
-	scan_flag (value) {
-		return arguments.length ? this.scan_flags = value : this.scan_flags
-	}
 	scan_next (value) {
-		return arguments.length ? this.scan_stack = value : this.scan_stack
+		return arguments.length ? this.scan_value = value : this.scan_value
 	}
-	scan_root (value) {
-		return arguments.length ? this.scan_token = value : this.scan_token
+	scan_prev (value) {
+		return arguments.length ? this.scan_child = value : this.scan_child
 	}
 	scan_node (value, types, props, child) {
-		return this.scan_root({value, types, props, child, owner: null, scope: [], index: this.scan_addr()})
+		return this.scan_prev({value, types, props, child, owner: null, scope: null, index: this.scan_addr()})
 	}
-	/*
-	 * Lexer
-	 */
+	// lexer
 	lexer_string (value) {
 		while (this.scan_char(0)) {
 			if (this.scan_read() == value) {
@@ -241,7 +233,7 @@ export class Lexer {
 	lexer_hexadecimal (value) {
 		while (this.scan_char(0)) {
 			if (this.scan_numb(this.scan_read()) || this.scan_word(this.scan_read())) {
-				value = this.scan_move(value * 16 + (this.scan_read() & 15) + (token > 65 ? 9 : 0))
+				value = this.scan_move(value * 16 + (this.scan_read() & 15) + (this.scan_read() > 65 ? 9 : 0))
 			} else {
 				break
 			}
@@ -315,6 +307,7 @@ export class Lexer {
 
 		return 0
 	}
+	// token
 	token_unary (value) {
 		switch (value) {
 			// yield delete keyof typeof

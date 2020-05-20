@@ -3,3 +3,12 @@
 // defaut is to allow none(for network based imports/installs), that can be re-configured to custom defaults.
 > ally https://example.com
 // if example.com tries to use net/sys/asm compiler error.
+
+flt : double
+int : long long int / ll
+character : unsigned char
+array : struct {int size, int type, vector<type> data}
+string : struct {int size, int type, vector<char> data}
+object : struct {int size, ...type prop}
+class : struct {int size, ...type prop}
+closure : structure {int size, ...type captured_variables, type (self, ...args) {}}

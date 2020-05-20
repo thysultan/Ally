@@ -7,7 +7,7 @@ import {Parser} from './src/Parser.js'
 export function main (value) {
 	var parser = new Parser(value)
 	var program = parser.parse_program()
-
+	console.log(value)
 	return program
 }
 
@@ -16,13 +16,13 @@ export function main (value) {
 // fun fn (a, b) {}
 
 // types
-// console.log(parse_program('int a'))
+// console.log(main('int a'))
 
 // operators
-// console.log(parse_program('1 + 2 * 3'))
+// console.log(main('1 + 3 * 4'))
 
 // functors
-// console.log(parse_program('a {}'))
-// console.log(parse_program('a, b {}'))
-// console.log(parse_program('(a, b) {}'))
-console.log(main('fun name a {}'))
+// console.log(main('a {}'))
+// console.log(main('a, b {}'))
+// console.log(main('(a, b) {}'))
+console.log(main(`fun print var a, var b { return a + b + 1 }`))

@@ -5,7 +5,6 @@ import 'https://example.com' as {print} // fetch network bound module?
 int number = 64_000
 flt number = 64.000
 
-big number = 128_000
 dec number = 128.000
 
 var number = 64.0km
