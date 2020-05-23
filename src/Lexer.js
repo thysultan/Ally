@@ -17,7 +17,6 @@ export class Lexer {
 		this.token_procedure = 123
 		this.token_expression = 40
 		this.token_membership = 91
-		this.token_declaration = 61
 		// typing(chr, int, flt, str, obj, def, fun, var)
 		this.token_character = -1060053207
 		this.token_integer = -1010090581
@@ -62,6 +61,7 @@ export class Lexer {
 		// symbol(operators)
 		this.token_sequence = -2620402777
 		this.token_returns = 1675434631
+		this.token_declaration = -2620402760
 		this.token_add_equal = 1674253848
 		this.token_subtract_equal = 1674385046
 		this.token_divide_equal = 1674516244
@@ -370,10 +370,9 @@ export class Lexer {
 			case this.token_sizeof:
 			case this.token_instanceof:
 				return this.token_operator
-			// identifiers
-			default:
-				return this.token_identifier
 		}
+
+		return this.token_identifier
 	}
 	token_precedence (value) {
 		switch (value) {

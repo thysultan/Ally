@@ -10,18 +10,8 @@ export function main (value) {
 	return parser.parse_program()
 }
 
-// fun fn a {}
-// fun fn a, b {}
-// fun fn (a, b) {}
-
-// types
-// console.log(main('int a'))
-
-// operators
-// console.log(main('1 + 3 * 4'))
-
-// functors
-// console.log(main('a {}'))
-// console.log(main('a, b {}'))
-// console.log(main('(a, b) {}'))
-console.log(main(`fun print var a, var b { return a + b + 1 }`))
+console.log(main(`
+	fun print var a, var b { return a + b + 1 }
+	def state var a, var b {}
+	var value = state()
+`))
