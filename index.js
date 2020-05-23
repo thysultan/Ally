@@ -6,9 +6,8 @@ import {Parser} from './src/Parser.js'
  */
 export function main (value) {
 	var parser = new Parser(value)
-	var program = parser.parse_program()
 	console.log(value)
-	return program
+	return parser.parse_program()
 }
 
 // fun fn a {}

@@ -6,9 +6,7 @@
 
 flt : double
 int : long long int / ll
-character : unsigned char
-array : struct {int size, int type, vector<type> data}
-string : struct {int size, int type, vector<char> data}
-object : struct {int size, ...type prop}
-class : struct {int size, ...type prop}
-closure : structure {int size, ...type captured_variables, type (self, ...args) {}}
+
+void* arrays : [size, hash, [...data]]
+void* object : [size, hash, [...data]]
+void* string : [size, hash, [...char]]

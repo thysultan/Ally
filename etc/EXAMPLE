@@ -4,19 +4,13 @@ import 'https://example.com' as {print} // fetch network bound module?
 
 int number = 64_000
 flt number = 64.000
-
-dec number = 128.000
-
 var number = 64.0km
 
 str string = 'hello'
 obj object = {int a = 0, str b = ''}
 
-chr array[] = ['a', 'b', 'c', 'd']
-
-str array[] = ['a']
-str array[][] = [['a']]
-
+str array[] = ['abc']
+str array[][] = [['abc']]
 obj memory[1024] = []
 
 fun fib int n {
@@ -42,7 +36,34 @@ fun gen {
 
 // threads?
 while i < 10 {
-	await a = yield vec(1, 2, 3)), b = yield vec(1, 2, 3) {
+	await(var a = yield vec(1, 2, 3)), var b = yield vec(1, 2, 3)) {
 		print(a, b)
+	}
+}
+
+
+var fn = a, b {}
+var fn = a {}
+
+var props = {
+	var a = 1
+	var b = 2
+	var c = 3
+	var d = a => print(1 * 4)
+}
+
+var value = switch type {
+	case 0 => 0
+	case 2 => sys.print(2)
+	case 3, 5
+		sys.print(3)
+	case 4 {
+		sys.print(4)
+	}
+}
+
+var value = while i > 0 {
+	if --i == 0 {
+		break 20
 	}
 }
