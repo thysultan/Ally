@@ -105,7 +105,7 @@ export class Lexer {
 		this.token_bitwise_not = -2620402695
 		this.token_increment = 1674253830
 		this.token_decrement = 1674385030
-		this.token_membership_access = -2620402775
+		this.token_property = -2620402775
 		this.token_optional_chaining = 1675565813
 	}
 	// scanner
@@ -472,7 +472,7 @@ export class Lexer {
 				return 18
 			// ?. . [
 			case this.token_optional_chaining:
-			case this.token_membership_access:
+			case this.token_property:
 			case this.token_membership:
 				return 19
 			// (

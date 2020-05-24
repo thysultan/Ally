@@ -5,12 +5,16 @@ export class Parser extends Lexer {
 		return this.parse_validate(this.token_program, this.parse_root(this.token_program, [], 0), null, [], [])
 	}
 	parse_validate (value, child, owner, scope, stack) {
+		child.scope = scope
+
 		for (var entry of child.child) {
 			switch (entry.value) {
 				case this.token_statement:
 					switch (entry.types) {
 						case this.token_procedure: stack.push(entry)
 							continue
+						case this.token_return: // find nearest function(else error), push values to functions returns array
+							break
 					}
 					break
 				case this.token_expression:
@@ -19,11 +23,23 @@ export class Parser extends Lexer {
 							continue
 						case this.token_identifier: this.parse_link(entry.props, entry, child, scope)
 							break
+						case this.token_expression: // function call, push operands to invoceted with array
+							break
+						case this.token_membership: // array body / membershop access
+							break
+						case this.token_operator:
+							switch (entry.props) {
+								case this.token_declaration: // push valus on right into a assigment array linked to the value on the left hand side
+									break
+								case this.token_property: // property access, use operand to determine index of property
+									break
+							}
 					}
+
 					break
 			}
 
-			this.parse_validate(value, entry, entry.owner = owner, entry.scope = scope, stack)
+			this.parse_validate(value, entry, entry.owner = owner, scope, stack)
 		}
 
 		for (var entry of stack) {

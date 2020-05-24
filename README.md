@@ -167,10 +167,10 @@ fun name {
 fun name var a, var b {
 }
 
-fun name ...args {
+fun name var ...args {
 }
 
-fun name ...args, var a {
+fun name var ...args, var a {
 }
 
 fun name var a, ...args {
@@ -182,7 +182,7 @@ fun name var a = 1 {
 fun name var a = 1, var b = 2 {
 }
 
-fun name var a pick {ref, age = 1}, var b {
+fun name var a pick {var ref, var age = 1}, var b {
 }
 
 fun name
@@ -196,29 +196,29 @@ fun name
 Lambdas are identical to functions and share the same type of `function`. The expression immediatly after '=>' is the return value of a lambda function.
 
 ```
-a => 'return'
+var a => 'return'
 
-a, b => 'return'
+var a, var b => 'return'
 
 () => 'return'
 
-...args => 'return'
+var ...args => 'return'
 
-...args, a => 'return'
+var ...args, var a => 'return'
 
-a, ...args => 'return'
+var a, var ...args => 'return'
 
-a pick {ref, age} => 'return'
+var a pick {var ref, var age} => 'return'
 
-a pick {ref, age = 1} => 'return'
+var a pick {var ref, var age = 1} => 'return'
 
-a = 1 => 'return'
+var a = 1 => 'return'
 
-a = 1, b = 2 => 'return'
+var a = 1, var b = 2 => 'return'
 
-a pick {ref, age = 1}, int b => 'return'
+var a pick {var ref, var age = 1}, int b => 'return'
 
-a pick {str type, age = 1}, int b => 'return'
+var a pick {str type, var age = 1}, int b => 'return'
 ```
 
 ## Invocations
@@ -254,7 +254,7 @@ definition - types, denoted as 'def'
 
 function - functions, denoted as 'fun'
 object - objects, denoted as 'obj'
-array - arrays, denoted as 'type identifier[?]' where '?' is either 'empty' or a number or 'type' is any of the above listed types
+array - arrays, also denoted as 'obj'
 ```
 
 In the form of examples this includes.
@@ -264,18 +264,16 @@ chr number = 8_000
 
 int number = 64_000
 flt number = 64.000
-
-big number = 128_000
 dec number = 128.000
 
 obj object = {int len = 0, str str = ''}
 str string = 'hello'
 
-str array[1] = ['hello']
-str array[2] = ['hello', 'world']
+obj array = ['hello']
+obj array = ['hello', 'world']
 
-str array[2][] = [['hello'], ['world']]
-obj array[2][vec] = [[vec()], [vec()]]
+obj array = [['hello'], ['world']]
+obj array = [[vec()], [vec()]]
 ```
 
 The use of types follow the pattern `type binding`.
@@ -283,11 +281,11 @@ The use of types follow the pattern `type binding`.
 ```
 int age = 1
 
-fun name int age, str subjects[], obj person[Person] {
+fun name int age, obj subjects, obj person {
 	return 'return'
 }
 
-fun name int age, str subjects[], obj person[Person] => 'return'
+fun name int age, obj subjects, obj person => 'return'
 ```
 
 ## Class
@@ -298,7 +296,9 @@ Classes are created using the def keyword that follow the pattern `def Name ...a
 def Person {
 	obj object = {}
 	obj dictionary = {['key', 'value']}
-	var memory[1024] = []
+	var variable = var(1024)
+	var integer = int(1024)
+	var object = obj(1024)
 
 	fun create var name, var age {}
 	fun assign var key, var value {}
@@ -310,7 +310,7 @@ def Person {
 Class optional parameters resemble function parameters.
 
 ```
-def Person a pick {key}, b = 1, obj c {
+def Person var a pick {var key}, var b = 1, obj c {
 	int age = key
 }
 ```
@@ -318,7 +318,7 @@ def Person a pick {key}, b = 1, obj c {
 Fields are created statitically or through referenced named parameters.
 
 ```
-def Person age, year, data pick {name} {
+def Person var age, var year, var data pick {name} {
 	int x = 0
 	int y = 0
 	fun print => print('Hello' + 'World' + '!')
@@ -333,17 +333,17 @@ print('Name: ' + person.name 'Age: ' + person.age + ', Born In: ' + person.year)
 Class instances are created when invoked. Parameters are passed to classes like functions.
 
 ```
-obj person = Person(10, 1989)
+obj person = Person(10, 1989, {name: 'Sultan'})
 ```
 
 All named arguments in the class are assigned to a corrosponding field.
 
 ```
-def Element type, props pick {ref, key, xmlns}, children {
-  fun handleEvent obj event[Event] {
+def Element var type, var props pick {var ref, var key}, children {
+  fun handleEvent obj event {
     dispatchEvent(event, => print('dispatchEvent'))
   }
-  fun dispatchEvent obj event[Event], fun callback {
+  fun dispatchEvent obj event, fun callback {
     try {
       callback(event)
     } catch e {
@@ -352,7 +352,7 @@ def Element type, props pick {ref, key, xmlns}, children {
   }
 }
 
-fun createElement var[str, fun] type, obj props, ...children {
+fun createElement var type, obj props, var ...children {
   return Element(type, props, children)
 }
 
@@ -365,14 +365,14 @@ Classes can extend other class.
 
 ```
 def Person {
-	fun getter key {
+	fun getter var key {
 		return super[key]
 	}
 }
 
 def Student extends Person {
-	fun get key {
-		def.getter(key)
+	fun get var key {
+		super.getter(key)
 	}
 }
 
@@ -385,10 +385,10 @@ Plain objects are created using the `{}` (curly braces). Objects are immutable(s
 
 ```
 obj plain = {
-	int age = 27,
-	int year = 1989,
-	fun name value => print(value),
-	fun name key, value {
+	int age = 27
+	int year = 1989
+	fun name var value => print(value)
+	fun name var key, var value {
 		return super[key] = value
 	}
 }
@@ -403,8 +403,8 @@ While Dictionary objects can hold any key including objects plain objects can on
 
 ```
 obj plain = {
-	age = 27,
-	year = 1989
+	var age = 27,
+	var year = 1989
 }
 
 obj dictionary = {
@@ -415,10 +415,10 @@ obj dictionary = {
 
 ## In
 
-The `in` operator returns wether a given key is present in a `object`.
+The `in` operator returns whether a given key is present in an `object`.
 
 ```
-'foo' in {foo = 1} == true
+'foo' in {var foo = 1} == true
 ```
 
 ## Sizeof
@@ -429,7 +429,7 @@ The `sizeof` operator returns the size of a given array/object/string and `nan` 
 print(sizeof [1, 2, 3])       // 3
 print(sizeof {a: 1, b: 2})    // 2
 print(sizeof 'Hello')         // 5
-print(sizeof fun a, b {})     // 2
+print(sizeof fun var a, var b {})     // 2
 print(sizeof {[1, '1']})      // 1
 ```
 
@@ -452,16 +452,6 @@ print(switch typeof 100 {
 })
 ```
 
-The typeof operator can be overloaded in the use of generics.
-
-```
-def table type {
-	obj value[typeof type]
-}
-
-var hash = table(0)
-```
-
 ## Instanceof
 
 The `instanceof` operator returns the class that value is an instance of.
@@ -470,9 +460,12 @@ The `instanceof` operator returns the class that value is an instance of.
 def Person {}
 def Student extends Person {}
 
+var persons = Person()
+var student = Student()
+
+persons instanceof Person == true
 student instanceof Student === true
 student instanceof Person !== true
-persons instanceof Person == true
 ```
 
 ## Pick
@@ -480,7 +473,7 @@ persons instanceof Person == true
 The `pick` operator retrieves the corresponding value(s) from an `object`.
 
 ```
-{foo: 1, bar: 2} pick {foo, bar} === {foo: 1, bar: 2}
+{var foo: 1, var bar: 2} pick {var foo, var bar} === {var foo: 1, var bar: 2}
 [2, 3, 5, 7, 11, 13] pick [1...4] === [3, 5, 7, 11]
 [2, 3, 5, 7, 11, 13] pick [1, 2, 3, 4] === [3, 5, 7, 11]
 ```
@@ -493,16 +486,16 @@ In some respects the `pick` operator is much like the subscript `[]` operator. P
 The `...` operator is a generic operator that spreads it's contents onto the context of its binding. The different contexts include function arguments `fun ...arg`, objects `{...a}` arrays `[...a]` and numbers `0...3`.
 
 ```
-int arr[2] = [1, 2]
-obj foo = {foo = 1}
+int arr = [1, 2]
+obj foo = {var foo = 1}
 
-{...foo, bar = 2} === {foo = 1, bar = 2}
+{...foo, var bar = 2} === {var foo = 1, var bar = 2}
 
 [0, ...arr] === [0, 1, 2]
 
 [1...3] === [1, 2, 3]
 
-fun name ...args {
+fun name var ...args {
 	print(typeof args === 'array')
 }
 ```
@@ -521,7 +514,7 @@ arr[0] = 1
 // deep compare
 arr === [1, 2, 3, 4, 5, 6]
 
-// exception
+// noop
 arr[7] = 10
 arr[7] == null
 sizeof arr == 6

@@ -7,6 +7,8 @@
 flt : double
 int : long long int / ll
 
+void* string : [size, hash, [...char]]
 void* arrays : [size, hash, [...data]]
 void* object : [size, hash, [...data]]
-void* string : [size, hash, [...char]]
+
+object: indexable(arrays) / non-indexable
