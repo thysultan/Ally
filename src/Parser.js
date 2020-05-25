@@ -4,6 +4,8 @@ export class Parser extends Lexer {
 	parse_program () {
 		return this.parse_validate(this.token_program, this.parse_root(this.token_program, [], 0), null, [], [])
 	}
+	// when done, validating/symbol-table-building/infering-operations
+	// next: use this infer op data to resolve types in a second pass.
 	parse_validate (value, child, owner, scope, stack) {
 		child.scope = scope
 
@@ -13,7 +15,7 @@ export class Parser extends Lexer {
 					switch (entry.types) {
 						case this.token_procedure: stack.push(entry)
 							continue
-						case this.token_return: // find nearest function(else error), push values to functions returns array
+						case this.token_return: // find nearest function(else error), push into functions 'infer' array returns values
 							break
 					}
 					break
@@ -23,15 +25,15 @@ export class Parser extends Lexer {
 							continue
 						case this.token_identifier: this.parse_link(entry.props, entry, child, scope)
 							break
-						case this.token_expression: // function call, push operands to invoceted with array
+						case this.token_expression: // function call, push arguments to 'infer' array of function nodes parameters.
 							break
 						case this.token_membership: // array body / membershop access
 							break
 						case this.token_operator:
 							switch (entry.props) {
-								case this.token_declaration: // push valus on right into a assigment array linked to the value on the left hand side
+								case this.token_declaration: // push assigned value on right hand-side into left hand-sides 'infer' array.
 									break
-								case this.token_property: // property access, use operand to determine index of property
+								case this.token_property: // push property access identifier onto left handsides 'infer' array.
 									break
 							}
 					}
