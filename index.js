@@ -1,17 +1,23 @@
-import {Parser} from './src/Parser.js'
+import {Compiler} from './src/Compiler.js'
 
 /**
  * @param {string} value
  * @return {object}
  */
 export function main (value) {
-	var parser = new Parser(value)
-	console.log(value)
-	return parser.parse_program()
+	var compiler = new Compiler(value)
+	var parser = compiler.parse_program()
+
+	console.log(compiler.compile_program(0, parser, compiler.head))
+
+	return compiler
 }
 
 console.log(main(`
-	fun print var a, var b { return a + b + 1 }
-	def state var a, var b {}
-	var value = state()
+	int a = 1
 `))
+
+// console.log(main(`
+// 	fun print var a, var b { return a + b + 1 }
+// 	print(1, 2)
+// `))

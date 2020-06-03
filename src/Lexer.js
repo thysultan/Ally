@@ -5,6 +5,7 @@ export class Lexer {
 		this.scan_child = null
 		this.scan_input = value
 		this.scan_index = 0
+		this.scan_state = 0
 		this.scan_token = 1
 		// node
 		this.token_program = 0
@@ -31,11 +32,11 @@ export class Lexer {
 		this.token_true = 1853055989
 		this.token_false = -1072102688
 		// keyword
+		this.token_do = 1677993041,
 		this.token_if = 1678321027
 		this.token_for = -1034809499
 		this.token_try = -918951625
 		this.token_else = 2979449664
-		this.token_await = 1721527123
 		this.token_case = 1327398711
 		this.token_catch = -130785800
 		this.token_while = 2264520430
@@ -53,6 +54,7 @@ export class Lexer {
 		this.token_of = 1678714621
 		this.token_pick = -1344827128
 		this.token_yield = NaN
+		this.token_await = 1721527123
 		this.token_delete = 629840307
 		this.token_keyof = -734729869
 		this.token_typeof = 2430491513
@@ -61,7 +63,7 @@ export class Lexer {
 		// symbol(operators)
 		this.token_sequence = -2620402777
 		this.token_returns = 1675434631
-		this.token_declaration = -2620402760
+		this.token_assignment = -2620402760
 		this.token_add_equal = 1674253848
 		this.token_subtract_equal = 1674385046
 		this.token_divide_equal = 1674516244
@@ -108,7 +110,9 @@ export class Lexer {
 		this.token_property = -2620402775
 		this.token_optional_chaining = 1675565813
 	}
-	// scanner
+	/*
+	 * scanner
+	 */
 	scan_addr () {
 		return this.scan_index
 	}
@@ -142,6 +146,9 @@ export class Lexer {
 	scan_sign (value) {
 		return ((value == 33 || value == 37 || value == 38 || value == 94 || value == 124 || value == 126) || (value > 41 && value < 48) || (value > 59 && value < 64)) | 0
 	}
+	scan_flag (value) {
+		return arguments.length ? this.scan_state = value : this.scan_state
+	}
 	scan_next (value) {
 		return arguments.length ? this.scan_value = value : this.scan_value
 	}
@@ -149,9 +156,11 @@ export class Lexer {
 		return arguments.length ? this.scan_child = value : this.scan_child
 	}
 	scan_node (value, types, props, child) {
-		return this.scan_prev({value, types, props, child, infer: [], owner: null, scope: null, index: this.scan_addr()})
+		return this.scan_prev({value, types, props, child, ident: '', owner: null, scope: null, index: this.scan_addr()})
 	}
-	// lexer
+	/*
+	 * lexer
+	 */
 	lexer_string (value) {
 		while (this.scan_char(0)) {
 			if (this.scan_read() == value) {
@@ -203,9 +212,9 @@ export class Lexer {
 			return this.lexer_hexadecimal(this.scan_move(this.scan_move(0)))
 		} else if (this.scan_numb(this.scan_read())) {
 			return this.lexer_octal(this.scan_move(0))
+		} else {
+			return this.scan_move(value)
 		}
-
-		return value
 	}
 	lexer_decimal (value, count) {
 		do {
@@ -307,7 +316,9 @@ export class Lexer {
 
 		return 0
 	}
-	// token
+	/*
+	 * token
+	 */
 	token_unary (value) {
 		switch (value) {
 			// yield delete keyof typeof
@@ -315,9 +326,11 @@ export class Lexer {
 			case this.token_delete:
 			case this.token_keyof:
 			case this.token_typeof:
-			// ! ~ ++ --
+			case this.token_sizeof:
+			// ! ~
 			case this.token_logical_not:
 			case this.token_bitwise_not:
+			// ++ --
 			case this.token_increment:
 			case this.token_decrement:
 				return 1
@@ -342,12 +355,12 @@ export class Lexer {
 			case this.literal_false:
 				return this.token_literal
 			// keywords
+			case this.token_do:
 			case this.token_if:
 			case this.token_for:
 			case this.token_try:
 			case this.token_else:
 			case this.token_case:
-			case this.token_await:
 			case this.token_catch:
 			case this.token_while:
 			case this.token_switch:
@@ -364,6 +377,7 @@ export class Lexer {
 			case this.token_in:
 			case this.token_of:
 			case this.token_pick:
+			case this.token_await:
 			case this.token_delete:
 			case this.token_keyof:
 			case this.token_typeof:
@@ -381,7 +395,7 @@ export class Lexer {
 			case this.token_returns:
 				return 1
 			// =
-			case this.token_declaration:
+			case this.token_assignment:
 			// += -= /= %=
 			case this.token_add_equal:
 			case this.token_subtract_equal:
@@ -458,11 +472,12 @@ export class Lexer {
 			// **
 			case this.token_exponent:
 				return 16
-			// await delete keyof typeof
+			// await delete keyof typeof sizeof
 			case this.token_await:
 			case this.token_delete:
 			case this.token_keyof:
 			case this.token_typeof:
+			case this.token_sizeof:
 				return 17
 			// ! ~ ++ --
 			case this.token_logical_not:

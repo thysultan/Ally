@@ -11,4 +11,6 @@ void* string : [size, hash, [...char]]
 void* arrays : [size, hash, [...data]]
 void* object : [size, hash, [...data]]
 
+void* entry : (id, key, value)
+
 object: indexable(arrays) / non-indexable

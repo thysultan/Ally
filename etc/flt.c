@@ -36,7 +36,7 @@ static f64 fibbonacci(f64 n) {
 }
 
 int main() {
-	f64 n = 30LL;
+	f64 n = 35LL;
 	printf("Factorial of %f: \n%f\n" , n , factorial(n));
 	printf("Fibbonacci of %f: " , n);
 	for(f64 i = 0LL; (isnan(i) || isnan(n)) ? i > n : i < n; isnan(i) ? i-- : i++) {printf("\n%f",fibbonacci(i));}
