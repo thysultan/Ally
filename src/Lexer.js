@@ -156,7 +156,7 @@ export class Lexer {
 		return arguments.length ? this.scan_child = value : this.scan_child
 	}
 	scan_node (value, types, props, child) {
-		return this.scan_prev({value, types, props, child, ident: '', owner: null, scope: null, index: this.scan_addr()})
+		return this.scan_prev({value, types, props, child, index: 0, ident: '', owner: null, scope: null, caret: this.scan_addr()})
 	}
 	/*
 	 * lexer

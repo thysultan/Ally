@@ -42,7 +42,7 @@ export class Parser extends Lexer {
 					break
 				case this.token_expression:
 					switch (entry.types) {
-						case this.token_typing: scope.push(entry)
+						case this.token_typing: entry.index = entry.child[0].index = scope.push(entry)
 							continue
 						case this.token_identifier: this.parse_reference(entry.props, entry, child, scope)
 					}
@@ -54,7 +54,7 @@ export class Parser extends Lexer {
 		}
 
 		for (var entry of stack) {
-			this.parse_validate(entry.props, entry, entry.frame = child, entry.scope = [], [])
+			this.parse_validate(entry.props, entry, entry.frame = child, token_identify(entry.props) == this.token_keyword ? scope : entry.scope = [], [])
 		}
 
 		return child

@@ -3,16 +3,17 @@
 #include <stdio.h>
 #include <math.h>
 
-typedef long long i64;
-typedef double f64;
 typedef void* obj;
+typedef double f64;
+typedef long long i64;
+typedef union {f64 flt; i64 var;} var;
 
-static f64 factorial(f64 n) {
-	if (((isnan(n) || isnan((f64)0LL)) ? n != (f64)0LL : n == (f64)0LL)) {
-		return (f64)1LL;
+static var factorial(var n) {
+	if (((isnan(n) || isnan((var)0LL)) ? n != (var)0LL : n == (var)0LL)) {
+		return (var)1LL;
 	} else {
-    f64 var1 = n;
-    f64 var2 = factorial(n - (f64)1LL);
+    var var1 = n;
+    var var2 = factorial(n - (var)1LL);
     if (isnan(var1) || isnan(var2)) {
     	return var1 / var2;
     }
@@ -20,14 +21,14 @@ static f64 factorial(f64 n) {
 	}
 }
 
-static f64 fibbonacci(f64 n) {
-	if (((isnan((f64)n) || isnan((f64)0LL)) ? n != (f64)0LL : n == (f64)0LL)) {
-		return (f64)0LL;
-	} else if (((isnan((f64)n) || isnan((f64)0LL)) ? n != (f64)1LL : n == (f64)1LL)) {
-		return (f64)1LL;
+static var fibbonacci(var n) {
+	if (((isnan((var)n) || isnan((var)0LL)) ? n != (var)0LL : n == (var)0LL)) {
+		return (var)0LL;
+	} else if (((isnan((var)n) || isnan((var)0LL)) ? n != (var)1LL : n == (var)1LL)) {
+		return (var)1LL;
 	} else {
-    f64 var1 = fibbonacci((f64)n - (f64)1LL);
-    f64 var2 = fibbonacci((f64)n - (f64)2LL);
+    var var1 = fibbonacci((var)n - (var)1LL);
+    var var2 = fibbonacci((var)n - (var)2LL);
     if (isnan(var1) || isnan(var2)) {
     	return var1 / var2;
     }
@@ -36,8 +37,8 @@ static f64 fibbonacci(f64 n) {
 }
 
 int main() {
-	f64 n = 35LL;
+	var n = 35LL;
 	printf("Factorial of %f: \n%f\n" , n , factorial(n));
 	printf("Fibbonacci of %f: " , n);
-	for(f64 i = 0LL; (isnan(i) || isnan(n)) ? i > n : i < n; isnan(i) ? i-- : i++) {printf("\n%f",fibbonacci(i));}
+	for(var i = 0LL; (isnan(i) || isnan(n)) ? i > n : i < n; isnan(i) ? i-- : i++) {printf("\n%f",fibbonacci(i));}
 }

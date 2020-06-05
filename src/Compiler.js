@@ -1,9 +1,10 @@
 import {Parser} from './Parser.js'
 
+const op = ['#define op2620402760(a,b)a=b\n']
 
 export class Compiler extends Parser {
 	compile_program (value, child) {
-		return this.compile_procedure(0, child)
+		return op.join('') + this.compile_procedure(0, child, [])
 	}
 	compile_register (value, child) {
 		return value + '=' + child + ';'
@@ -12,7 +13,7 @@ export class Compiler extends Parser {
 		return value > 0 ? value : -value
 	}
 	compile_identifier (value, child) {
-		return child.value == this.token_identifier ? this.compile_register('rax', '&' + child.ident) : this.compile_identifier(value, child.child[0])
+		return child.ident = 'id' + child.index
 	}
 	compile_literal (value, child) {
 		switch (child.types) {
@@ -25,6 +26,9 @@ export class Compiler extends Parser {
 				return this.compile_literal(value, child.child[0])
 		}
 	}
+	compile_operation (value, child, right) {
+		return '{' + right + this.compile_register('rax', 'op' + this.compile_identify(value) + '(' + (child.index ? child.ident : 'rdx') + ',rax)') + '}'
+	}
 	compile_operator (value, child, right) {
 		switch (value) {
 			case this.token_throw:
@@ -32,12 +36,8 @@ export class Compiler extends Parser {
 			case this.token_return:
 			case this.token_continue:
 				return child.child.length ? '{' + this.compile_expression(value, child.child[0]) + compile_identify(value) + '(rax);' + '}' : '{' + compile_identify(value) + '(0);' + '}'
-		}
-
-		if (this.token_unary(value)) {
-			return '{' + this.compile_expression(value, right) + this.compile_register('rax', 'op' + this.compile_identify(value) + '(' + (right.value - this.token_operator) + ',rax)') + '}'
-		} else {
-			return '{' + this.compile_expression(value, child) + this.compile_register('var rdx', 'rax') + this.compile_expression(value, right) + this.compile_register('rax', 'op' + this.compile_identify(value) + '(rdx,rax)') + '}'
+			default:
+				return this.compile_operation(value, child, this.compile_expression(value, child) + this.compile_register('var rdx', 'rax') + this.compile_expression(value, right))
 		}
 	}
 	compile_expression (value, child) {
@@ -46,11 +46,11 @@ export class Compiler extends Parser {
 				return this.compile_operator(child.props, child.child[0], child.child[1])
 			case this.token_literal:
 				return this.compile_literal(value, child)
-			case this.token_typing:
-				return value ? this.compile_identifier(value, child.child[0]) : ''
 			case this.token_identifier:
-				return this.compile_register('rax', this.compile_identifier(value, child.child[0]))
+				return this.compile_register('rax', child.ident)
 		}
+
+		return ''
 	}
 	compile_statement (value, child) {
 		switch (value) {
@@ -69,14 +69,9 @@ export class Compiler extends Parser {
 			case this.token_finally: return this.compile_finally(value, child)
 		}
 	}
-	compile_procedure (value, child, scope = [], frame = []) {
-		if (child.scope) {
-			for (var entry of child.scope) {
-				switch ((entry = entry.child[0]).value) {
-					case this.token_expression: scope[scope.length] = 'var ' + (entry.child[0].ident = 'id' + this.compile_identify(entry.props)) + ';'
-						break
-				}
-			}
+	compile_procedure (value, child, frame) {
+		for (var entry of child.scope) {
+			frame.push(this.compile_register('var ' + this.compile_identifier(value, entry), 0))
 		}
 
 		for (var entry of child.child) {
@@ -88,7 +83,7 @@ export class Compiler extends Parser {
 			}
 		}
 
-		return scope.join('') + frame.join('')
+		return frame.join('')
 	}
 	compile_try (child) {
 		throw 'TODO: try'
@@ -105,13 +100,13 @@ export class Compiler extends Parser {
 	compile_for (child) {
 		switch (child.value) {
 			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'for(rax)' + '{' + this.compile_procedure(value, child.child[1]) + '}'
+				return this.compile_expression(value, child.child[0]) + 'for(rax)' + '{' + this.compile_procedure(value, child.child[1], []) + '}'
 		}
 	}
 	compile_switch (value, child) {
 		switch (child.value) {
 			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'switch(rax)' + '{default:' + this.compile_procedure(value, child.child[1]) + '}'
+				return this.compile_expression(value, child.child[0]) + 'switch(rax)' + '{default:' + this.compile_procedure(value, child.child[1], []) + '}'
 		}
 	}
 	compile_case (value, child) {
@@ -125,7 +120,7 @@ export class Compiler extends Parser {
 			case this.token_expression:
 				return 'do{' + this.compile_expression(value, child) + '}'
 			default:
-				return 'do{' + this.compile_procedure(value, child.child[0]) + '}'
+				return 'do{' + this.compile_procedure(value, child.child[0], []) + '}'
 		}
 	}
 	compile_else (value, child) {
@@ -133,7 +128,7 @@ export class Compiler extends Parser {
 			case this.token_expression:
 				return 'else{' + this.compile_expression(value, child) + '}'
 			case this.token_statement:
-				return 'else{' + this.compile_procedure(value, child.child[0]) + '}'
+				return 'else{' + this.compile_procedure(value, child.child[0], []) + '}'
 		}
 	}
 	compile_if (value, child) {
@@ -141,7 +136,7 @@ export class Compiler extends Parser {
 			case this.token_expression:
 				return this.compile_expression(value, child) + 'if(rax)'
 			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'if(rax){' + this.compile_procedure(value, child.child[1]) + '}'
+				return this.compile_expression(value, child.child[0]) + 'if(rax){' + this.compile_procedure(value, child.child[1], []) + '}'
 		}
 	}
 	compile_while (value, child) {
@@ -149,7 +144,7 @@ export class Compiler extends Parser {
 			case this.token_expression:
 				return this.compile_expression(value, child) + 'while(rax)'
 			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'while(rax){' + this.compile_procedure(value, child.child[1]) + '}'
+				return this.compile_expression(value, child.child[0]) + 'while(rax){' + this.compile_procedure(value, child.child[1], []) + '}'
 		}
 	}
 	compile_arguments(value, child) {
