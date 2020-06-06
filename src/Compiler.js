@@ -1,6 +1,6 @@
 import {Parser} from './Parser.js'
 
-const op = ['#define op2620402760(a,b)a=b\n']
+const op = ['#define op2620402760(a,b)(bit_to_var(a.bit = b.bit))\n']
 
 export class Compiler extends Parser {
 	compile_program (value, child) {
@@ -17,11 +17,11 @@ export class Compiler extends Parser {
 	}
 	compile_literal (value, child) {
 		switch (child.types) {
+			case this.token_string:
+				return this.compile_register('rax', 'str_to_var(' + child.props + ')')
 			case this.token_float:
 			case this.token_integer:
-				return this.compile_register('rax', child.props + 'LL')
-			case this.token_string:
-				return ''
+				return this.compile_register('rax', 'num_to_var(' + child.props + ')')
 			case this.token_literal:
 				return this.compile_literal(value, child.child[0])
 		}
@@ -71,7 +71,7 @@ export class Compiler extends Parser {
 	}
 	compile_procedure (value, child, frame) {
 		for (var entry of child.scope) {
-			frame.push(this.compile_register('var ' + this.compile_identifier(value, entry), 0))
+			frame.push(this.compile_register('var ' + this.compile_identifier(value, entry), 'val_to_var(0)'))
 		}
 
 		for (var entry of child.child) {
