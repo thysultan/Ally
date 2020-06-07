@@ -3,8 +3,11 @@ import {Parser} from './Parser.js'
 const op = ['#define op2620402760(a,b)(bit_to_var(a.bit = b.bit))\n']
 
 export class Compiler extends Parser {
-	compile_program (value, child) {
-		return op.join('') + this.compile_procedure(0, child, [])
+	compile_program (value, child, frame, stack) {
+		return this.compile_assemble(stack.push('int main(int argc, char** argv){' + this.compile_procedure(0, child, frame, stack) + '}'), child, frame, stack)
+	}
+	compile_assemble (value, child, frame, stack) {
+		return stack.join(';') + ';'
 	}
 	compile_register (value, child) {
 		return value + '=' + child + ';'
@@ -12,157 +15,140 @@ export class Compiler extends Parser {
 	compile_identify (value) {
 		return value > 0 ? value : -value
 	}
-	compile_identifier (value, child) {
-		return child.ident = 'id' + child.index
+	compile_identifier (value, child, frame, stack) {
+		return child.ident = 'id' + child.index + '_' + child.scope
 	}
-	compile_literal (value, child) {
+	compile_literal (value, child, frame, stack) {
 		switch (child.types) {
 			case this.token_string:
-				return this.compile_register('rax', 'str_to_var(' + child.props + ')')
+				return 'str_to_var(' + child.props + ')'
 			case this.token_float:
 			case this.token_integer:
-				return this.compile_register('rax', 'num_to_var(' + child.props + ')')
+				return 'flt_to_var(' + child.props + ')'
 			case this.token_literal:
-				return this.compile_literal(value, child.child[0])
+				return this.compile_literal(value, child.child[0], frame, stack)
 		}
 	}
-	compile_operation (value, child, right) {
-		return '{' + right + this.compile_register('rax', 'op' + this.compile_identify(value) + '(' + (child.index ? child.ident : 'rdx') + ',rax)') + '}'
+	compile_statement (value, child, frame, stack) {
+		switch (value) {
+			case this.token_as: return this.compile_as(value, child, frame, stack)
+			case this.token_do: return this.compile_do(value, child, frame, stack)
+			case this.token_if: return this.compile_if(value, child, frame, stack)
+			case this.token_for: return this.compile_for(value, child, frame, stack)
+			case this.token_try: return this.compile_try(value, child, frame, stack)
+			case this.token_else: return this.compile_else(value, child, frame, stack)
+			case this.token_case: return this.compile_case(value, child, frame, stack)
+			case this.token_catch: return this.compile_catch(value, child, frame, stack)
+			case this.token_while: return this.compile_while(value, child, frame, stack)
+			case this.token_switch: return this.compile_switch(value, child, frame, stack)
+			case this.token_import: return this.compile_import(value, child, frame, stack)
+			case this.token_extends: return this.compile_extends(value, child, frame, stack)
+			case this.token_finally: return this.compile_finally(value, child, frame, stack)
+		}
 	}
-	compile_operator (value, child, right) {
+	compile_procedure (value, child, frame, stack) {
+		for (var entry of child.stack) {
+			frame.push(this.compile_definition(value, entry, frame, stakc))
+		}
+
+		for (var entry of child.child) {
+			switch (entry.value) {
+				case this.token_statement: frame.push(this.compile_statement(entry.types, entry.child[0], frame, stack))
+					break
+				case this.token_expression: frame.push(this.compile_register(this.compile_expression(entry.types, entry, frame, stack)))
+					break
+			}
+		}
+
+		return this.compile_assemble(value, child, frame, frame)
+	}
+	compile_expression (value, child, frame, stack) {
+		switch (child.types) {
+			case this.token_operator:
+				return this.compile_operator(child.props, child.child, frame, stack)
+			case this.token_literal:
+				return this.compile_register('r64', this.compile_literal(value, child, frame, stack))
+			case this.token_typing:
+			case this.token_identifier:
+				return this.compile_register('r64', child.ident)
+			case this.token_operator:
+				return this.compile_register('r64', 'r64')
+			default:
+				return ''
+		}
+	}
+	compile_operator (value, child, frame, stack) {
 		switch (value) {
 			case this.token_throw:
 			case this.token_break:
 			case this.token_return:
 			case this.token_continue:
-				return child.child.length ? '{' + this.compile_expression(value, child.child[0]) + compile_identify(value) + '(rax);' + '}' : '{' + compile_identify(value) + '(0);' + '}'
+				throw 'TODO: keywords'
+			case this.token_sequence:
+				throw 'TODO: sequence'
+			case this.token_argument:
+				throw 'TODO: argument'
 			default:
-				return this.compile_operation(value, child, this.compile_expression(value, child) + this.compile_register('var rdx', 'rax') + this.compile_expression(value, right))
+				return '{' + this.compile_expression(value, child[0]) + this.compile_register('u64 l64', 'r64') + this.compile_expression(value, child[1]) + this.compile_operation(value, child, frame, stack) + '}'
 		}
 	}
-	compile_expression (value, child) {
-		switch (child.types) {
-			case this.token_operator:
-				return this.compile_operator(child.props, child.child[0], child.child[1])
-			case this.token_literal:
-				return this.compile_literal(value, child)
-			case this.token_identifier:
-				return this.compile_register('rax', child.ident)
-		}
-
-		return ''
+	compile_operation (value, child, frame, stack) {
+		return this.compile_register('r64', 'op' + this.compile_identify(value) + '(' + this.compile_operand(0, child[0], frame, stack) + ',' + this.compile_operand(1, child[1], frame, stack) + ')')
 	}
-	compile_statement (value, child) {
-		switch (value) {
-			case this.token_as: return this.compile_as(value, child)
-			case this.token_do: return this.compile_do(value, child)
-			case this.token_if: return this.compile_if(value, child)
-			case this.token_for: return this.compile_for(value, child)
-			case this.token_try: return this.compile_try(value, child)
-			case this.token_else: return this.compile_else(value, child)
-			case this.token_case: return this.compile_case(value, child)
-			case this.token_catch: return this.compile_catch(value, child)
-			case this.token_while: return this.compile_while(value, child)
-			case this.token_switch: return this.compile_switch(value, child)
-			case this.token_import: return this.compile_import(value, child)
-			case this.token_extends: return this.compile_extends(value, child)
-			case this.token_finally: return this.compile_finally(value, child)
-		}
+	compile_operand (value, child, frame, stack) {
+		return child.index ? child.ident : !value ? 'l64' : 'r64'
 	}
-	compile_procedure (value, child, frame) {
-		for (var entry of child.scope) {
-			frame.push(this.compile_register('var ' + this.compile_identifier(value, entry), 'val_to_var(0)'))
-		}
-
-		for (var entry of child.child) {
-			switch (entry.value) {
-				case this.token_statement: frame.push(this.compile_statement(entry.types, entry.child[0]))
-					break
-				case this.token_expression: frame.push(this.compile_expression(entry.types, entry))
-					break
-			}
-		}
-
-		return frame.join('')
+	compile_definition (value, child, frame, stack) {
+		return 'u64 ' + this.compile_identifier(value, entry, frame, stack)
 	}
-	compile_try (child) {
+	compile_try (value, child, frame, stack) {
 		throw 'TODO: try'
 	}
-	compile_catch (value, child) {
+	compile_catch (value, child, frame, stack) {
 		throw 'TODO: catch'
 	}
-	compile_extends (value, child) {
+	compile_extends (value, child, frame, stack) {
 		throw 'TODO: extends'
 	}
-	compile_finally (value, child) {
+	compile_finally (value, child, frame, stack) {
 		throw 'TODO: finally'
 	}
-	compile_for (child) {
-		switch (child.value) {
-			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'for(rax)' + '{' + this.compile_procedure(value, child.child[1], []) + '}'
-		}
+	compile_for (value, child, frame, stack) {
+		throw 'TODO: for'
+		// return 'for(' + this.compile_expression(value, child.child[0], frame, stack) + ')' + '{' + this.compile_procedure(value, child.child[1], [], stack) + '}'
 	}
-	compile_switch (value, child) {
-		switch (child.value) {
-			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'switch(rax)' + '{default:' + this.compile_procedure(value, child.child[1], []) + '}'
-		}
+	compile_do (value, child, frame, stack) {
+		throw 'TODO: do'
+		// return 'do{' + this.compile_procedure(value, child.child[0], [], stack) + '}'
 	}
-	compile_case (value, child) {
-		switch (child.value) {
-			case this.token_statement:
-				return this.compile_if(value, child)
-		}
+	compile_else (value, child, frame, stack) {
+		return 'else{' + this.compile_procedure(value, child.child[0], [], stack) + '}'
 	}
-	compile_do (value, child) {
-		switch (child.value) {
-			case this.token_expression:
-				return 'do{' + this.compile_expression(value, child) + '}'
-			default:
-				return 'do{' + this.compile_procedure(value, child.child[0], []) + '}'
-		}
+	compile_while (value, child, frame, stack) {
+		return 'while(1)' + '{' + this.compile_if(value, child, frame, stack) + 'else{break;}' '}'
 	}
-	compile_else (value, child) {
-		switch (child.value) {
-			case this.token_expression:
-				return 'else{' + this.compile_expression(value, child) + '}'
-			case this.token_statement:
-				return 'else{' + this.compile_procedure(value, child.child[0], []) + '}'
-		}
+	compile_if (value, child, frame, stack) {
+		return this.compile_expression(value, child.child[0], frame, stack) + 'if(var_to_bit(r64))' + '{' + this.compile_procedure(value, child.child[1], [], stack) + '}'
 	}
-	compile_if (value, child) {
-		switch (child.value) {
-			case this.token_expression:
-				return this.compile_expression(value, child) + 'if(rax)'
-			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'if(rax){' + this.compile_procedure(value, child.child[1], []) + '}'
-		}
+	compile_switch (value, child, frame, stack) {
+		return this.compile_expression(value, child.child[0], frame, stack) + 'switch(0)' + '{default:' + this.compile_procedure(value, child.child[1], [], stack) + '}'
 	}
-	compile_while (value, child) {
-		switch (child.value) {
-			case this.token_expression:
-				return this.compile_expression(value, child) + 'while(rax)'
-			case this.token_statement:
-				return this.compile_expression(value, child.child[0]) + 'while(rax){' + this.compile_procedure(value, child.child[1], []) + '}'
-		}
+	compile_case (value, child, frame, stack) {
+		return this.compile_if(value, child, frame, stack)
 	}
-	compile_arguments(value, child) {
+	compile_argument (value, child, frame, stack) {
 		return ''
 	}
-	compile_await (value, child) {
-		return this.compile_operator(value, child)
+	compile_throw (value, child, frame, stack) {
+		return this.compile_operator(value, child, frame, stack, child)
 	}
-	compile_throw (value, child) {
-		return this.compile_operator(value, child)
+	compile_break (value, child, frame, stack) {
+		return this.compile_operator(value, child, frame, stack, child)
 	}
-	compile_break (value, child) {
-		return this.compile_operator(value, child)
+	compile_return (value, child, frame, stack) {
+		return this.compile_operator(value, child, frame, stack, child)
 	}
-	compile_return (value, child) {
-		return this.compile_operator(value, child)
-	}
-	compile_continue (value, child) {
-		return this.compile_operator(value, child)
+	compile_continue (value, child, frame, stack) {
+		return this.compile_operator(value, child, frame, stack, child)
 	}
 }

@@ -61,6 +61,7 @@ export class Lexer {
 		this.token_sizeof = 221262240
 		this.token_instanceof = -4091102314
 		// symbol(operators)
+		this.token_argument = 2620402777
 		this.token_sequence = -2620402777
 		this.token_returns = 1675434631
 		this.token_assignment = -2620402760
@@ -156,7 +157,7 @@ export class Lexer {
 		return arguments.length ? this.scan_child = value : this.scan_child
 	}
 	scan_node (value, types, props, child) {
-		return this.scan_prev({value, types, props, child, index: 0, ident: '', owner: null, scope: null, caret: this.scan_addr()})
+		return this.scan_prev({value, types, props, child, ident: '', frame: null, stack: null, index: 0, scope: 0, caret: this.scan_addr()})
 	}
 	/*
 	 * lexer

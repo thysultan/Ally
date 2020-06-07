@@ -8,7 +8,7 @@ export function main (value) {
 	var compiler = new Compiler(value)
 	var parser = compiler.parse_program()
 
-	console.log(compiler.compile_program(0, parser, compiler.head))
+	console.log(compiler.compile_program(0, parser, [], []))
 
 	return compiler
 }

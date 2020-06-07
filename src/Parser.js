@@ -2,16 +2,16 @@ import {Lexer} from './Lexer.js'
 
 export class Parser extends Lexer {
 	parse_program () {
-		return this.parse_validate(this.token_program, this.parse_root(this.token_program, [], 0), null, [], [])
+		return this.parse_validate(this.token_program, this.parse_root(this.token_program, [], 0), null, [], 0, [])
 	}
-	parse_validate (value, child, frame, scope, stack) {
-		child.scope = scope
+	parse_validate (value, child, frame, stack, scope, queue) {
+		child.stack = stack
 
 		for (var entry of child.child) {
 			switch (entry.value) {
 				case this.token_statement:
 					switch (entry.types) {
-						case this.token_procedure: stack.push(entry)
+						case this.token_procedure: queue.push(entry)
 							continue
 						case this.token_case:
 							switch (value) {
@@ -42,27 +42,31 @@ export class Parser extends Lexer {
 					break
 				case this.token_expression:
 					switch (entry.types) {
-						case this.token_typing: entry.index = entry.child[0].index = scope.push(entry)
+						case this.token_typing: this.parse_identify(value, entry, frame, stack, scope)
 							continue
-						case this.token_identifier: this.parse_reference(entry.props, entry, child, scope)
+						case this.token_identifier: this.parse_reference(entry.props, entry, child, stack)
 					}
 
 					break
 			}
 
-			this.parse_validate(value, entry, entry.frame = frame, scope, stack)
+			this.parse_validate(value, entry, entry.frame = frame, stack, scope, queue)
 		}
 
-		for (var entry of stack) {
-			this.parse_validate(entry.props, entry, entry.frame = child, token_identify(entry.props) == this.token_keyword ? scope : entry.scope = [], [])
+		for (var entry of queue) {
+			this.parse_validate(entry.props, entry, entry.frame = child, entry.stack = [], scope + 1, [])
 		}
 
 		return child
 	}
-	parse_reference (value, child, frame, scope) {
+	parse_identify (value, child, frame, stack, scope) {
+		child.scope = child.child[0].scope = scope
+		child.index = child.child[0].index = stack.push(child)
+	}
+	parse_reference (value, child, frame, stack) {
 		do {
-			if (scope = frame.scope) {
-				for (var entry of scope) {
+			if (stack = frame.stack) {
+				for (var entry of stack) {
 					while (entry.props == value) {
 						switch (entry.value) {
 							case this.token_identifier:
