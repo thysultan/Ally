@@ -1,0 +1,16 @@
+[
+	fun -> dispatch function
+	env -> enviroment reference
+	arg... arguments/properties
+]
+
+call(len, env, ...arg)
+	fun : fun[0](len, fun[1], ...arg)
+	obj : obj[0](len, obj[1], ...arg)
+	str :
+	int :
+	flt :
+	var : box[0](len, env, ...arg)
+
+box[fun, env, ...box] interned (strings, numbers, booleans)
+obj[fun, env, ...obj] instatianted (closures, objects, classes)

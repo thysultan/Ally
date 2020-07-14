@@ -1,15 +1,14 @@
 export class Lexer {
 	constructor (value) {
-		// scan
-		this.scan_value = null
-		this.scan_child = null
-		this.scan_input = value
-		this.scan_index = 0
-		this.scan_state = 0
-		this.scan_token = 1
-		// node
+		// state
+		this.state_value = null
+		this.state_child = null
+		this.state_input = value
+		this.state_index = 0
+		this.state_token = 1
+		// token nodes
 		this.token_program = 0
-		this.token_typing = 1
+		this.token_typings = 1
 		this.token_literal = 2
 		this.token_keyword = 3
 		this.token_operator = 4
@@ -18,8 +17,8 @@ export class Lexer {
 		this.token_procedure = 123
 		this.token_expression = 40
 		this.token_membership = 91
-		// typing(chr, int, flt, str, obj, def, fun, var)
-		this.token_character = -1060053207
+		// token types(int, flt, str, obj, def, fun, var, asm)
+		this.token_undefined = 0
 		this.token_integer = -1010090581
 		this.token_float = -1035006294
 		this.token_string = -927081939
@@ -27,11 +26,13 @@ export class Lexer {
 		this.token_definition = -1051988511
 		this.token_function = -1034415909
 		this.token_variable = -903543805
-		// literal
+		this.token_assembly = -1075854633
+		// token literals
 		this.token_null = -2806273074
+		this.token_void = NaN // TODO
 		this.token_true = 1853055989
 		this.token_false = -1072102688
-		// keyword
+		// token keywords
 		this.token_do = 1677993041,
 		this.token_if = 1678321027
 		this.token_for = -1034809499
@@ -49,21 +50,22 @@ export class Lexer {
 		this.token_continue = -1763732208
 		this.token_import = 1926321549
 		this.token_as = 1677796248
-		// keyword(operators)
+		// token keyword operators
 		this.token_in = 1678321035
 		this.token_of = 1678714621
 		this.token_pick = -1344827128
-		this.token_yield = NaN
+		this.token_yield = -3298744406
 		this.token_await = 1721527123
 		this.token_delete = 629840307
 		this.token_keyof = -734729869
 		this.token_typeof = 2430491513
 		this.token_sizeof = 221262240
 		this.token_instanceof = -4091102314
-		// symbol(operators)
+		// token symbol operators
+		this.token_terminate = -2620402762
 		this.token_argument = 2620402777
 		this.token_sequence = -2620402777
-		this.token_returns = 1675434631
+		this.token_subroutine = 1675434631
 		this.token_assignment = -2620402760
 		this.token_add_equal = 1674253848
 		this.token_subtract_equal = 1674385046
@@ -108,142 +110,138 @@ export class Lexer {
 		this.token_bitwise_not = -2620402695
 		this.token_increment = 1674253830
 		this.token_decrement = 1674385030
-		this.token_property = -2620402775
+		this.token_properties = -2620402775
 		this.token_optional_chaining = 1675565813
 	}
 	/*
 	 * scanner
 	 */
-	scan_addr () {
-		return this.scan_index
+	lexer_addr () {
+		return this.state_index
 	}
-	scan_jump (value) {
-		return this.scan_index = value
+	lexer_jump (value) {
+		return this.state_index = value
 	}
-	scan_move (value) {
-		return value + (this.scan_jump(this.scan_addr() + 1) * 0)
+	lexer_move (value) {
+		return value + (this.lexer_jump(this.lexer_addr() + 1) * 0)
 	}
-	scan_code (value) {
-		return this.scan_token ? this.scan_token = this.scan_input.charCodeAt(value) | 0 : this.scan_token
+	lexer_code (value) {
+		return this.state_token ? this.state_token = this.state_input.charCodeAt(value) | 0 : this.state_token
 	}
-	scan_char (value) {
-		return this.scan_token = this.scan_look(value)
+	lexer_char (value) {
+		return this.state_token = this.lexer_look(value)
 	}
-	scan_read () {
-		return this.scan_token
+	lexer_read () {
+		return this.state_token
 	}
-	scan_look (value) {
-		return this.scan_code(this.scan_addr() + value)
+	lexer_look (value) {
+		return this.lexer_code(this.lexer_addr() + value)
 	}
-	scan_hash (value, count) {
-		return this.scan_read() + (value << 6) + (value << 16) - value + count
+	lexer_hash (value, count) {
+		return this.lexer_read() + (value << 6) + (value << 16) - value + count
 	}
-	scan_numb (value) {
+	lexer_numb (value) {
 		return (value > 47 && value < 58) | 0
 	}
-	scan_word (value) {
+	lexer_word (value) {
 		return ((value == 95 || value > 127) || (value > 64 && value < 91) || (value > 96 && value < 123)) | 0
 	}
-	scan_sign (value) {
-		return ((value == 33 || value == 37 || value == 38 || value == 94 || value == 124 || value == 126) || (value > 41 && value < 48) || (value > 59 && value < 64)) | 0
+	lexer_sign (value) {
+		return ((value == 33 || value == 37 || value == 38 || value == 94 || value == 124 || value == 126) || (value > 41 && value < 48) || (value > 57 && value < 65)) | 0
 	}
-	scan_flag (value) {
-		return arguments.length ? this.scan_state = value : this.scan_state
+	lexer_root (value) {
+		return arguments.length ? this.state_value = value : this.state_value
 	}
-	scan_next (value) {
-		return arguments.length ? this.scan_value = value : this.scan_value
-	}
-	scan_prev (value) {
-		return arguments.length ? this.scan_child = value : this.scan_child
-	}
-	scan_node (value, types, props, child) {
-		return this.scan_prev({value, types, props, child, ident: '', frame: null, stack: null, index: 0, scope: 0, caret: this.scan_addr()})
+	lexer_node (token, value, props, child) {
+		return {token: token, value: value, props: props, child: child, caret: this.lexer_addr(), types: 0, index: 0, count: 0, frame: null, scope: null}
 	}
 	/*
 	 * lexer
 	 */
 	lexer_string (value) {
-		while (this.scan_char(0)) {
-			if (this.scan_read() == value) {
-				return this.scan_move(this.scan_addr() + 1)
+		while (this.lexer_char(0)) {
+			if (this.lexer_read() == value) {
+				return this.lexer_move(this.lexer_addr() + 1)
 			} else {
-				this.scan_move(0)
+				this.lexer_move(0)
 			}
 		}
 
-		return this.scan_addr()
+		return this.lexer_addr()
 	}
 	lexer_operator (value, index) {
 		do {
-			if (this.scan_sign(this.scan_read())) {
-				this.scan_move(value = this.scan_hash(value, this.scan_addr() - index))
+			if (this.lexer_sign(this.lexer_read())) {
+				if (this.token_not(this.lexer_move(value = this.lexer_hash(value, this.lexer_addr() - index)))) {
+					break
+				}
 			} else {
 				break
 			}
-		} while (this.scan_char(0))
+		} while (this.lexer_char(0))
 
 		return value
 	}
 	lexer_identifier (value, index) {
 		do {
-			if (this.scan_word(this.scan_read())) {
-				this.scan_move(value = this.scan_hash(value, this.scan_addr() - index))
+			if (this.lexer_word(this.lexer_read())) {
+				this.lexer_move(value = this.lexer_hash(value, this.lexer_addr() - index))
 			} else {
 				break
 			}
-		} while (this.scan_char(0))
+		} while (this.lexer_char(0))
 
 		return value
 	}
 	lexer_whitespace (value) {
-		while (this.scan_char(0)) {
-			if (this.scan_read() > value) {
+		while (this.lexer_char(0)) {
+			if (this.lexer_read() > 32) {
 				break
-			} else {
-				this.scan_move(0)
+			} else if (this.lexer_read() == this.lexer_move(10)) {
+				value = 10
 			}
 		}
 
 		return value
 	}
 	lexer_number (value) {
-		if (this.scan_read() != 48) {
+		if (this.lexer_read() != 48) {
 			return this.lexer_decimal(0, 0)
-		} else if (this.scan_char(1) == 120) {
-			return this.lexer_hexadecimal(this.scan_move(this.scan_move(0)))
-		} else if (this.scan_numb(this.scan_read())) {
-			return this.lexer_octal(this.scan_move(0))
+		} else if (this.lexer_char(1) == 120) {
+			return this.lexer_hexadecimal(this.lexer_move(this.lexer_move(0)))
+		} else if (this.lexer_numb(this.lexer_read())) {
+			return this.lexer_octal(this.lexer_move(0))
 		} else {
-			return this.scan_move(value)
+			return this.lexer_move(value)
 		}
 	}
 	lexer_decimal (value, count) {
 		do {
-			if (this.scan_numb(this.scan_read())) {
-				value = this.scan_move(value * 10 + this.scan_read() - 48)
-			} else if (this.scan_read() == 46 && this.scan_look(1) != 46) {
-				count = this.scan_move(this.scan_addr() + 1)
-			} else if (this.scan_word(this.scan_read())) {
-				switch (this.scan_move(this.scan_read())) {
+			if (this.lexer_numb(this.lexer_read())) {
+				value = this.lexer_move(value * 10 + this.lexer_read() - 48)
+			} else if (this.lexer_read() == 46 && this.lexer_look(1) != 46) {
+				count = this.lexer_move(this.lexer_addr() + 1)
+			} else if (this.lexer_word(this.lexer_read())) {
+				switch (this.lexer_move(this.lexer_read())) {
 					case 98:
 						return this.lexer_binary(0, 1)
 					case 101:
 						return this.lexer_exponent(
-							this.lexer_exponent(value, count ? count - this.scan_addr() : 0),
-							(this.scan_numb(this.scan_char(0)) || this.scan_move((this.scan_read() != 45) * this.scan_char(1)) ? 1 : -1) * this.lexer_number(0)
+							this.lexer_exponent(value, count ? count - this.lexer_addr() : 0),
+							(this.lexer_numb(this.lexer_char(0)) || this.lexer_move((this.lexer_read() != 45) * this.lexer_char(1)) ? 1 : -1) * this.lexer_number(0)
 						)
 				}
 			} else {
 				break
 			}
-		} while (this.scan_char(0))
+		} while (this.lexer_char(0))
 
-		return count ? this.lexer_exponent(value, count - this.scan_addr()) : value
+		return count ? this.lexer_exponent(value, count - this.lexer_addr()) : value
 	}
 	lexer_hexadecimal (value) {
-		while (this.scan_char(0)) {
-			if (this.scan_numb(this.scan_read()) || this.scan_word(this.scan_read())) {
-				value = this.scan_move(value * 16 + (this.scan_read() & 15) + (this.scan_read() > 65 ? 9 : 0))
+		while (this.lexer_char(0)) {
+			if (this.lexer_numb(this.lexer_read()) || this.lexer_word(this.lexer_read())) {
+				value = this.lexer_move(value * 16 + (this.lexer_read() & 15) + (this.lexer_read() > 65 ? 9 : 0))
 			} else {
 				break
 			}
@@ -253,24 +251,24 @@ export class Lexer {
 	}
 	lexer_octal (value) {
 		do {
-			if (this.scan_numb(this.scan_read())) {
-				value = this.scan_move(value * 8 + this.scan_read() - 48)
-			} else if (this.scan_word(this.scan_read())) {
-				this.scan_move(0)
+			if (this.lexer_numb(this.lexer_read())) {
+				value = this.lexer_move(value * 8 + this.lexer_read() - 48)
+			} else if (this.lexer_word(this.lexer_read())) {
+				this.lexer_move(0)
 			} else {
 				break
 			}
-		} while (this.scan_char(0))
+		} while (this.lexer_char(0))
 
 		return value
 	}
 	lexer_binary (value, count) {
-	  while (this.scan_char(0)) {
-	  	if (this.scan_numb(this.scan_read())) {
-	  		value += this.scan_move(this.scan_read() == 49 ? count : 0)
+	  while (this.lexer_char(0)) {
+	  	if (this.lexer_numb(this.lexer_read())) {
+	  		value += this.lexer_move(this.lexer_read() == 49 ? count : 0)
 	  		count *= 2
-	  	} else if (this.scan_word(this.scan_read())) {
-	  		this.scan_move(0)
+	  	} else if (this.lexer_word(this.lexer_read())) {
+	  		this.lexer_move(0)
 	  	} else {
 	  		break
 	  	}
@@ -283,6 +281,7 @@ export class Lexer {
 			value *= 10
 			count -= 1
 		}
+
 		while (count < 0) {
 			value /= 10
 			count += 1
@@ -293,36 +292,46 @@ export class Lexer {
 	lexer_comment (value) {
 		switch (value) {
 			// //
-			case 47: this.scan_move(this.scan_move(0))
-				while (this.scan_char(0)) {
-					if (this.scan_move(this.scan_read()) == 10) {
+			case 47: this.lexer_move(this.lexer_move(0))
+				while (this.lexer_char(0)) {
+					if (this.lexer_move(this.lexer_read()) == 10) {
 						break
 					}
 				}
 				return 1
 			// /*
-			case 42: this.scan_move(this.scan_move(0))
-				while (this.scan_char(0)) {
-					if (this.scan_move(this.scan_read()) == value) {
-						if (this.scan_char(0) == 47) {
-							return this.scan_move(1)
+			case 42: this.lexer_move(this.lexer_move(0))
+				while (this.lexer_char(0)) {
+					if (this.lexer_move(this.lexer_read()) == value) {
+						if (this.lexer_char(0) == 47) {
+							return this.lexer_move(1)
 						}
 					} else {
-						this.scan_move(0)
+						this.lexer_move(0)
 					}
 				}
 				return 1
-			default: this.scan_look(0)
+			default: this.lexer_look(0)
 		}
 
 		return 0
+	}
+	token_not (value) {
+		switch (value) {
+			// ! ~
+			case this.token_logical_not:
+			case this.token_bitwise_not:
+				return 1
+			default:
+				return 0
+		}
 	}
 	/*
 	 * token
 	 */
 	token_unary (value) {
 		switch (value) {
-			// yield delete keyof typeof
+			// keyword operator
 			case this.token_yield:
 			case this.token_delete:
 			case this.token_keyof:
@@ -335,9 +344,9 @@ export class Lexer {
 			case this.token_increment:
 			case this.token_decrement:
 				return 1
+			default:
+				return 0
 		}
-
-		return 0
 	}
 	token_identify (value) {
 		switch (value) {
@@ -350,10 +359,11 @@ export class Lexer {
 			case this.token_definition:
 			case this.token_function:
 			case this.token_variable:
-				return this.token_typing
+				return this.token_typings
 			// literals
-			case this.literal_true:
-			case this.literal_false:
+			case this.token_null:
+			case this.token_true:
+			case this.token_false:
 				return this.token_literal
 			// keywords
 			case this.token_do:
@@ -385,16 +395,41 @@ export class Lexer {
 			case this.token_sizeof:
 			case this.token_instanceof:
 				return this.token_operator
+			default:
+				return this.token_identifier
 		}
-
-		return this.token_identifier
+	}
+	token_terminal (value) {
+		switch (value) {
+			// ,
+			case this.token_sequence:
+			// ;
+			case this.token_terminate:
+				return 1
+			default:
+				return 0
+		}
+	}
+	token_collection (value) {
+		switch (value) {
+			// {
+			case this.token_procedure:
+			// [
+			case this.token_membership:
+			// (
+			case this.token_expression:
+				return 1
+			default:
+				return 0
+		}
 	}
 	token_precedence (value) {
 		switch (value) {
-			// , =>
+			// => ; ,
+			case this.token_subroutine:
+			case this.token_terminate:
 			case this.token_sequence:
-			case this.token_returns:
-				return 1
+				return 11
 			// =
 			case this.token_assignment:
 			// += -= /= %=
@@ -414,88 +449,102 @@ export class Lexer {
 			case this.token_shift_right_equal:
 			case this.token_shift_left_unsigned_equal:
 			case this.token_shift_right_unsigned_equal:
-				return 2
+				return 12
 			// ? :
 			case this.token_ternary_condition:
 			case this.token_ternary_default:
-				return 3
+				return 13
 			// ||
 			case this.token_logical_or:
-				return 4
+				return 14
 			// &&
 			case this.token_logical_and:
-				return 5
+				return 15
 			// ??
 			case this.token_nullish:
-				return 6
+				return 16
 			// == != === !==
 			case this.token_compare:
 			case this.token_uncompare:
 			case this.token_deep_compare:
 			case this.token_deep_uncompare:
-				return 7
+				return 17
 			// < <= > >=
 			case this.token_less_than:
 			case this.token_less_than_equal:
 			case this.token_greater_than:
 			case this.token_greater_than_equal:
-				return 8
+				return 18
 			// in of instanceof
 			case this.token_in:
 			case this.token_of:
 			case this.token_pick:
 			case this.token_instanceof:
-				return 9
+				return 19
 			// |
 			case this.token_bitwise_or:
-				return 10
+				return 20
 			// ^
 			case this.token_bitwise_xor:
-				return 11
+				return 21
 			// &
 			case this.token_bitwise_and:
-				return 12
+				return 22
 			// << >> <<< >>>
 			case this.token_shift_left:
 			case this.token_shift_right:
 			case this.token_shift_left_unsigned:
 			case this.token_shift_right_unsigned:
-				return 13
+				return 23
 			// + -
 			case this.token_add:
 			case this.token_subtract:
-				return 14
+				return 24
 			// % / *
 			case this.token_modulo:
 			case this.token_divide:
 			case this.token_multiply:
-				return 15
+				return 25
 			// **
 			case this.token_exponent:
-				return 16
-			// await delete keyof typeof sizeof
+				return 26
+			// keyword operator
 			case this.token_await:
 			case this.token_delete:
 			case this.token_keyof:
 			case this.token_typeof:
 			case this.token_sizeof:
-				return 17
+				return 27
 			// ! ~ ++ --
 			case this.token_logical_not:
 			case this.token_bitwise_not:
 			case this.token_increment:
 			case this.token_decrement:
-				return 18
+				return 28
 			// ?. . [
 			case this.token_optional_chaining:
-			case this.token_property:
+			case this.token_properties:
 			case this.token_membership:
-				return 19
+				return 29
 			// (
 			case this.token_expression:
-				return 20
+				return 30
+			default:
+				return 0
 		}
-
-		return 0
+	}
+	token_intermediate (value) {
+		switch (value) {
+			// keywords
+			case this.token_do:
+			case this.token_if:
+			case this.token_for:
+			case this.token_try:
+			case this.token_while:
+			case this.token_switch:
+				return 0
+			default:
+				return 1
+		}
 	}
 }
