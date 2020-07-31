@@ -14,13 +14,10 @@ export function main (value) {
 // fun foo = a, b {
 // }
 
-console.log(main(`
-int a = 1
-int b = 2
-
-int a = 3
-int b = 4
-`));
+// console.log(main(`1, 2, 3`));
+// console.log(main(`'abc\nxyz'`));
+console.log(main(`'abc@(1+2)\nxyz'`));
+// console.log(main(`(1+2)`));
 
 // console.log(main(`
 // 	fun print var a, var b { return a + b + 1 }
