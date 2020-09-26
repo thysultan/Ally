@@ -14,3 +14,13 @@ call(len, env, ...arg)
 
 box[fun, env, ...box] interned (strings, numbers, booleans)
 obj[fun, env, ...obj] instatianted (closures, objects, classes)
+
+
+// function structure
+i64 fun_id(i64 argc/* argument count */, p64 argv/* argument vector */, p64 argx/* argument context */) {
+	do {
+		// function procedure
+	} while (0);
+
+	return rax; // function return most recent evaulated expression
+}

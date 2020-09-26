@@ -7,7 +7,7 @@
 typedef double f64;
 typedef unsigned long long i64;
 typedef i64* p64;
-typedef i64 (*fun)(i64, i64, ...);
+typedef i64 (*x64)(i64, i64, ...);
 
 static i64 rax;
 static i64 rbx;
