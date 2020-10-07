@@ -14,9 +14,9 @@ export class Lexer {
 		this.token_operator = 4
 		this.token_statement = 5
 		this.token_identifier = 6
-		this.token_subroutine = 123
-		this.token_expression = 40
-		this.token_membership = 91
+		this.token_subroutine = -123
+		this.token_expression = -40
+		this.token_membership = -91
 		// token types(int, flt, str, obj, def, fun, var, asm, nil)
 		this.token_integer = -1010090581
 		this.token_float = -1035006294
@@ -64,7 +64,7 @@ export class Lexer {
 		// token symbol operators
 		this.token_terminate = -2620402762
 		this.token_arguments = -2620402777
-		this.token_subroutine = 1675434631
+		this.token_deroutine = 1675434631
 		this.token_assignment = -2620402760
 		this.token_declaration = 2166136261
 		this.token_addition_equal = 1674253848
@@ -118,7 +118,7 @@ export class Lexer {
 	lexer_addr () {
 		return this.state_index
 	}
-	lexer_view () {
+	lexer_blob () {
 		return this.state_input
 	}
 	lexer_jump (value) {
@@ -128,7 +128,7 @@ export class Lexer {
 		return value + (this.lexer_jump(this.lexer_addr() + 1) * 0)
 	}
 	lexer_code (value) {
-		return this.state_token ? this.state_token = this.lexer_view().charCodeAt(value) | 0 : this.state_token
+		return this.state_token ? this.state_token = this.lexer_blob().charCodeAt(value) | 0 : this.state_token
 	}
 	lexer_char (value) {
 		return this.state_token = this.lexer_look(value)
@@ -155,14 +155,14 @@ export class Lexer {
 		return arguments.length ? this.state_value = value : this.state_value
 	}
 	lexer_node (token, value, props, child) {
-		return {token: token, value: value, props: props, child: child, caret: this.lexer_addr(), types: 0, index: 0, count: 1, frame: null, scope: null}
-	}
-	lexer_subs (value, index) {
-		return this.lexer_view().substring(value, index)
+		return {token: token, value: value, props: props, child: child, caret: this.lexer_addr(), types: 0, index: 0, count: 0, state: 0, frame: null}
 	}
 	/*
 	 * lexer
 	 */
+	lexer_substr (value, index) {
+		return this.lexer_blob().substring(value, index || this.lexer_addr())
+	}
 	lexer_string (value, index, count, props) {
 		while (this.lexer_char(0)) {
 			if (this.lexer_read() == value) {
@@ -170,7 +170,7 @@ export class Lexer {
 			} else {
 				switch (this.lexer_read()) {
 					// \n
-					case 10: props[count++] = this.lexer_subs(index, index = this.lexer_move(this.lexer_addr()))
+					case 10: props[count++] = this.lexer_substr(index, index = this.lexer_move(this.lexer_addr()))
 						break
 					// @
 					case 64: this.lexer_look(1) == 40 ? value = 64 : this.lexer_move(value)
@@ -182,7 +182,7 @@ export class Lexer {
 			}
 		}
 
-		props[count++] = this.lexer_subs(index, index = this.lexer_move(this.lexer_addr()))
+		props[count++] = this.lexer_substr(index, index = this.lexer_move(this.lexer_addr()))
 
 		return value
 	}
@@ -437,7 +437,7 @@ export class Lexer {
 	token_precedence (value) {
 		switch (value) {
 			// => ; ,
-			case this.token_subroutine:
+			case this.token_deroutine:
 			case this.token_terminate:
 			case this.token_arguments:
 				return 11
