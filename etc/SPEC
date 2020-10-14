@@ -1,26 +1,11 @@
-[
-	fun -> dispatch function
-	env -> enviroment reference
-	arg... arguments/properties
-]
+blob [...meta, scope, func, size, ...data]
+call (len, arg, env)
+fun : fun[-2](sizeof(arg)/i64, arg[...], fun[-3]) [...meta,next,scope(function),func,size=0]
+obj : obj[-2](sizeof(arg)/i64, arg[...], obj[-3]) [...meta,next,scope(object),func,size=sizeof(props),props]
+str : str[-2](sizeof(arg)/i64, arg[...], str[-3]) [...meta,next,scope(box(string)),func,size=sizeof(chars),chars]
+int : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,next,scope(box(number)),func,size=0,number]
+flt : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,next,scope(box(number)),func,size=0,number]
+var : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,next,scope(box(variable)),func,size=0,variable]
 
-call(len, env, ...arg)
-	fun : fun[0](len, fun[1], ...arg)
-	obj : obj[0](len, obj[1], ...arg)
-	str :
-	int :
-	flt :
-	var : box[0](len, env, ...arg)
-
-box[fun, env, ...box] interned (strings, numbers, booleans)
-obj[fun, env, ...obj] instatianted (closures, objects, classes)
-
-
-// function structure
-i64 fun_id(i64 argc/* argument count */, p64 argv/* argument vector */, p64 argx/* argument context */) {
-	do {
-		// function procedure
-	} while (0);
-
-	return rax; // function return most recent evaulated expression
-}
+the next link is for creating chains of data that are only flattened on read, i.e pushing an element to an array may mearly create a small wrapper pointing to a chain of segments of the array
+with each segment symbolising a operation to be actuallized in it's flat form on read and actually this flattening operation on only the first read

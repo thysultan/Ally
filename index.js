@@ -22,14 +22,15 @@ export function main (value) {
 // console.log(main(`a=1`))
 // console.log(main(`a`))
 
-console.log(main(`
-	var a = 20
-	var b = 30
-	{
-		var c = 40
-		var d = 50
-	}
-`))
+console.log(main(`1 ?= 2`))
+// console.log(main(`
+// 	var a = 20
+// 	var b = 30
+// 	{
+// 		var c = 40
+// 		var d = 50
+// 	}
+// `))
 
 // console.log(main(`
 // 	fun print var a, var b { return a + b + 1 }

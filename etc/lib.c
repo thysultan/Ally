@@ -14,10 +14,10 @@ static i64 rbx;
 static i64 rcx;
 static i64 rdx;
 
-static i64 rsi;
-static i64 rdi;
 static i64 rbp;
 static i64 rsp;
+static i64 rsi;
+static i64 rdi;
 
 // NaN (64 bit):
 // |----NaNs----|
