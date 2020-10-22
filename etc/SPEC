@@ -1,11 +1,19 @@
 blob [...meta, scope, func, size, ...data]
 call (len, arg, env)
-fun : fun[-2](sizeof(arg)/i64, arg[...], fun[-3]) [...meta,next,scope(function),func,size=0]
-obj : obj[-2](sizeof(arg)/i64, arg[...], obj[-3]) [...meta,next,scope(object),func,size=sizeof(props),props]
-str : str[-2](sizeof(arg)/i64, arg[...], str[-3]) [...meta,next,scope(box(string)),func,size=sizeof(chars),chars]
-int : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,next,scope(box(number)),func,size=0,number]
-flt : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,next,scope(box(number)),func,size=0,number]
-var : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,next,scope(box(variable)),func,size=0,variable]
+fun : fun[-2](sizeof(arg)/i64, arg[...], fun[-3]) [...meta,prev,next,scope(function),func,size=0]
+obj : obj[-2](sizeof(arg)/i64, arg[...], obj[-3]) [...meta,prev,next,scope(object),func,size=sizeof(props),props]
+str : str[-2](sizeof(arg)/i64, arg[...], str[-3]) [...meta,prev,next,scope(string),func,size=sizeof(chars),chars]
+int : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,prev,next,scope(number),func,size=0,number]
+flt : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,prev,next,scope(number),func,size=0,number]
+var : var[-2](sizeof(arg)/i64, arg[...], var[-3]) [...meta,prev,next,scope(variable),func,size=0,variable]
+
+size < 0 when the object is in chain more, and on first write should be flattened, i.e a string with a negative size -4, indicates that it is a string with 4 in full characters but in segments that
+should be flattened on first time read causing it to revert to +4 indicating it's natural flat structure, -0 is impossible as you cannot have added a link to a string with 0 size, same can be said for arrays, objects, etc...
 
 the next link is for creating chains of data that are only flattened on read, i.e pushing an element to an array may mearly create a small wrapper pointing to a chain of segments of the array
 with each segment symbolising a operation to be actuallized in it's flat form on read and actually this flattening operation on only the first read
+
+or instead the next link can point to a growable vector with a size limit(that also can point to another vector) that keeps track of the elements added.
+[1, 2, 3]
+	.push(4) = [-1=next=[4,...], 1, 2, 3]
+	.unshift(0) = [-2=prev[0,...],next[4,...], 1, 2, 3]

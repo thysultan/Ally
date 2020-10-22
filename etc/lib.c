@@ -19,6 +19,8 @@ static i64 rsp;
 static i64 rsi;
 static i64 rdi;
 
+static i64 zfg;
+
 // NaN (64 bit):
 // |----NaNs----|
 // 1111-1111 1111-QTTT FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF
