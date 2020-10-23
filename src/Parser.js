@@ -17,6 +17,9 @@ export class Parser extends Lexer {
 			this.lexer_next(null)
 		}
 	}
+	parse_skip () {
+		return this.parse_next() this.parse_next()
+	}
 	parse_prev (value) {
 		return this.lexer_next(value)
 	}
@@ -64,7 +67,7 @@ export class Parser extends Lexer {
 	parse_template (value, props, child) {
 		return props == 64 ? this.parse_substrings(value, props, this.parse_string(value, value, child)) : this.parse_string(value, props, child)
 	}
-	parse_property (value, child) {
+	parse_property (value, props, child) {
 		return this.lexer_subs(child.value, child.caret)
 	}
 	parse_identity (value, props) {
@@ -83,11 +86,11 @@ export class Parser extends Lexer {
 		return this.lexer_node(this.token_expression, value, props, child)
 	}
 	parse_substrings (value, props, child) {
-		return this.lexer_node(this.token_expression, this.token_operator, this.token_addition, [child, this.parse_expression(this.token_operator, this.token_addition, [this.parse_node(), this.parse_scan(value, [])])])
+		return this.lexer_node(this.token_expression, this.token_operator, this.token_addition, [child, this.parse_expression(this.token_operator, this.token_concatenation, [this.parse_node(), this.parse_scan(value, [])])])
 	}
 	parse_collection (value, props, child) {
 		while (value = this.parse_next()) {
-			if (value = this.parse_dispatch(-props, value)) {
+			if (value = this.parse_dispatch(props, value, value, props)) {
 				child[child.length] = value
 			}
 		}
@@ -98,7 +101,7 @@ export class Parser extends Lexer {
 	 * Parse
 	 */
 	parse_program (value, child) {
-		return this.parse_verify(0, child = this.parse_collection(value, this.token_subroutine, []), child, [], 0, 0, 0, 0, [])
+		return this.parse_verify(0, child = this.parse_collection(value, this.token_subroutine, []), child, [], 0, 0, 0, [])
 	}
 	parse_literal (value, child) {
 		switch (child.token) {
@@ -108,20 +111,22 @@ export class Parser extends Lexer {
 
 		return child
 	}
-	parse_typings (value, child, right) {
+	parse_typings (value, child, right, props) {
 		switch (right?.token) {
 			case this.token_literal:
 			case this.token_expression:
-				return this.parse_expression(this.token_operator, right.types = value, [child, right])
+				return this.parse_expression(this.token_operator, this.token_typings, [child, right])
+			case this.token_subroutine:
+				break
 			case this.token_identifier:
 				switch (right.types = value) {
 					case this.token_function:
 					case this.token_definition:
 						if (child = this.parse_peek()) {
 							switch (child.token) {
-								case this.token_expression: child = this.parse_dispatch(this.token_operator, this.parse_next())
-									 break
-								case this.token_subroutine: child = this.parse_identifier(this.token_operator, this.parse_expression(this.token_expression, value, []), this.parse_next())
+								case this.token_expression: child = this.parse_dispatch(this.token_operator, this.parse_next(), child, this.token_expression)
+									break
+								case this.token_subroutine: child = this.parse_identifier(this.token_operator, this.parse_expression(this.token_expression, value, []), this.parse_next(), props)
 									break
 							}
 							switch (child.value) {
@@ -132,37 +137,34 @@ export class Parser extends Lexer {
 				}
 				break
 			default:
-				return this.parse_typings(value, child, this.parse_next())
+				return this.parse_typings(value, child, this.parse_next(), props)
 		}
 
 		return right
 	}
-	parse_dispatch (value, child) {
-		return this.parse_priority(value, this.parse_children(value, child), this.parse_peek(), value)
+	parse_dispatch (value, child, right, props) {
+		return this.parse_priority(value, this.parse_children(value, child, child, props), this.parse_peek(), props)
 	}
-	parse_children (value, child) {
+	parse_children (value, child, right, props) {
 		switch (child?.token) {
 			case this.token_literal:
 				return this.parse_literal(value, child)
 			case this.token_typings:
-				return this.parse_typings(child.props, child, this.parse_next())
+				return this.parse_typings(child.props, child, this.parse_next(), props)
 			case this.token_keyword:
 				return this.parse_keywords(child.props, child, child, value)
 			case this.token_operator:
-				return this.parse_operable(value, child, child, value)
+				return this.parse_priority(value, child, child, props)
 			case this.token_membership:
-				return this.parse_membership(value, child, child)
+				return this.parse_membership(value, child, child, props)
 			case this.token_subroutine:
-				return this.parse_subroutine(value, child, child)
+				return this.parse_subroutine(value, child, child, props)
 			case this.token_expression:
 			case this.token_identifier:
-				return this.parse_identifier(value, child, this.parse_peek())
+				return this.parse_identifier(value, child, this.parse_peek(), props)
 			default:
 				return child
 		}
-	}
-	parse_operable (value, child, right) {
-		return this.parse_dispatch(value, this.parse_expression(this.token_operator, right.props, [child, this.parse_children(right.props, this.parse_next())]))
 	}
 	parse_priority (value, child, right, props) {
 		switch (right?.token) {
@@ -170,13 +172,14 @@ export class Parser extends Lexer {
 			case this.token_membership:
 			case this.token_operator:
 				switch (props = right.props) {
+					case this.token_terminate:
 					case this.token_separator:
 						if (child != right) {
 							if (value != props) {
 								switch (value) {
-									case -this.token_expression:
-									case -this.token_membership:
-									case -this.token_subroutine: this.parse_next()
+									case this.token_expression:
+									case this.token_membership:
+									case this.token_subroutine: this.parse_next()
 										break
 									default: this.parse_separate(value, child = this.parse_expression(this.token_expression, props, [child]), right, props)
 								}
@@ -186,11 +189,13 @@ export class Parser extends Lexer {
 						}
 						break
 					default:
-						switch (this.token_argument(props)) {
-							case 1: return this.parse_operable(value, child, right)
-							case 2: return this.token_priority(props) > this.token_priority(value) ? this.parse_operable(value, child, this.parse_next()) : child
+						switch (child == right ? 3 : this.token_argument(props)) {
+							case 1: return this.parse_priority(value, this.parse_expression(this.token_operator, props, [child, this.parse_next()]), this.parse_peek(), props)
+							case 2: return this.parse_dispatch(value, this.parse_expression(this.token_operator, props, [child, this.parse_dispatch(props, this.parse_skip(), child, this.token_expression)]))
+							case 3: return this.parse_priority(value, this.parse_expression(this.token_operator, props, [child, this.parse_dispatch(props, this.parse_next(), child, this.token_expression)]), this.parse_peek(), props)
 						}
 				}
+				break
 		}
 
 		return child
@@ -198,7 +203,7 @@ export class Parser extends Lexer {
 	parse_separate (value, child, right, props) {
 		do {
 			if (value = this.parse_next()) {
-				if (value = this.parse_dispatch(props, this.parse_next())) {
+				if (value = this.parse_dispatch(props, this.parse_next(), child, this.token_expression)) {
 					child.child[child.child.length] = value
 				}
 			}
@@ -207,11 +212,11 @@ export class Parser extends Lexer {
 	parse_keywords (value, child, right, props) {
 		switch (value) {
 			case this.token_do:
-				if (child = this.parse_dispatch(value, this.parse_next())) {
+				if (child = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 					if (right = this.parse_next()) {
 						switch (right.props) {
 							case this.token_while:
-								if (right = this.parse_dispatch(value, this.parse_next())) {
+								if (right = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 									return this.parse_statement(this.token_keyword, value, [child, right])
 								}
 						}
@@ -222,46 +227,46 @@ export class Parser extends Lexer {
 			case this.token_for:
 			case this.token_while:
 			case this.token_switch:
-				if (child = this.parse_dispatch(value, this.parse_next())) {
+				if (child = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 					switch (child.token) {
 						case this.token_statement:
 						case this.token_subroutine:
 							right = child
-							child = this.parse_identity(this.token_true)
+							child = this.parse_number(value)
 						default:
-							if (right.token == this.token_keyword ? right = this.parse_dispatch(value, this.parse_next()) : right) {
+							if (right.token == this.token_keyword ? right = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword) : right) {
 								return this.parse_statement(this.token_keyword, value, [child, right])
 							}
 					}
 				}
 				break
 			case this.token_else:
-				if (child = this.parse_dispatch(value, this.parse_next())) {
-					this.parse_statement(this.token_keyword, value, [child])
+				if (child = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
+					return this.parse_statement(this.token_keyword, value, [child])
 				}
 				break
 			case this.token_case:
-				if (child = this.parse_dispatch(value, this.parse_next())) {
+				if (child = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 					switch (child.props) {
 						case this.token_separator: child.props = this.token_membership
 						default:
-							if (right = this.parse_dispatch(value, this.parse_next())) {
-								return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_case ? [child, right, this.parse_dispatch(value, this.parse_next())] : [child, right])
+							if (right = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
+								return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_case ? [child, right, this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)] : [child, right])
 							}
 					}
 				}
 				break
 			case this.token_try:
-				if (child = this.parse_dispatch(value, this.parse_next())) {
+				if (child = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 					switch (child.props) {
 						case this.token_catch:
 						case this.token_finally:
 							break
 						default:
-							if (right = this.parse_dispatch(value, this.parse_next())) {
+							if (right = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 								switch (right.props) {
 									case this.token_catch:
-										return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_finally ? [child, right, this.parse_dispatch(value, this.parse_next())] : [child, right])
+										return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_finally ? [child, right, this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)] : [child, right])
 									case this.token_finally:
 										return this.parse_statement(this.token_keyword, value, [child, right])
 								}
@@ -273,26 +278,26 @@ export class Parser extends Lexer {
 				switch (props) {
 					case this.token_try:
 					case this.token_catch:
-						if (child = this.parse_dispatch(value, this.parse_next())) {
+						if (child = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 							switch (child.token) {
 								case this.token_statement:
 								case this.token_subroutine:
 									right = child
 									child = this.parse_expression(value, value, [])
 								default:
-									if (right.token == this.token_keyword ? right = this.parse_dispatch(value, this.parse_next()) : right) {
-										return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_catch ? [child, right, this.parse_dispatch(value, this.parse_next())] : [child, right])
+									if (right.token == this.token_keyword ? right = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword) : right) {
+										return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_catch ? [child, right, this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)] : [child, right])
 									}
 							}
 						}
 				}
 				break
 			case this.token_finally:
-				if (child = this.parse_dispatch(value, this.parse_next())) {
+				if (child = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)) {
 					switch (props) {
 						case this.token_try:
 						case this.token_finally:
-							return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_finally ? [child, this.parse_dispatch(value, this.parse_next())] : [child])
+							return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_finally ? [child, this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)] : [child])
 					}
 				}
 				break
@@ -301,7 +306,7 @@ export class Parser extends Lexer {
 					switch (child.token) {
 						case this.token_literal:
 						case this.token_identifier:
-							return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_as ? [child, this.parse_dispatch(value, this.parse_next())] : [child])
+							return this.parse_statement(this.token_keyword, value, this.parse_peek()?.props == this.token_as ? [child, this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)] : [child])
 					}
 				}
 				break
@@ -338,7 +343,7 @@ export class Parser extends Lexer {
 											child = null
 									}
 								default:
-									return this.parse_statement(this.token_keyword, value, child ? [this.parse_dispatch(value, this.parse_next())] : [])
+									return this.parse_statement(this.token_keyword, value, child ? [this.parse_dispatch(value, this.parse_next(), child, this.token_expression)] : [])
 							}
 						}
 					default:
@@ -348,31 +353,19 @@ export class Parser extends Lexer {
 
 		return this.parse_report('keyword syntax')
 	}
-	parse_parameters (value, child) {
-		for (var entry of child.child) {
-			switch (entry.token) {
-				case this.token_identifier: entry.types ? value : entry.types = this.token_variable
-					break
-				case this.token_expression:
-					if (this.token_assignee(entry.props)) {
-						for (var entry of entry.child) {
-							return this.parse_parameters(value, entry)
-						}
-					}
-			}
-		}
-	}
-	parse_identifier (value, child, right) {
+	parse_identifier (value, child, right, props) {
 		switch (right?.token) {
 			case this.token_operator:
 				if (right.props == this.token_direction) {
-					switch (this.token_identifier(value)) {
-						case this.token_identifier:
+					switch (props) {
+						case this.token_keyword:
+							break
+						default:
 							switch (child.token) {
 								case this.token_identifier:
 									child = this.parse_expression(this.token_expression, value, [child])
 								case this.token_expression:
-									right = this.parse_expression(this.token_expression, value, [this.parse_expression(this.token_operator, value = this.token_return, [right, this.parse_dispatch(value, this.parse_next())])])
+									right = this.parse_expression(this.token_expression, value, [this.parse_expression(this.token_operator, value = this.token_return, [right, this.parse_dispatch(value, this.parse_next(), child, this.token_expression)])])
 							}
 					}
 				} else {
@@ -380,11 +373,32 @@ export class Parser extends Lexer {
 				}
 			case this.token_subroutine:
 				if (child.value == this.token_expression) {
-					switch (this.token_identify(value)) {
-						case this.token_identifier:
-							return this.parse_function(this.parse_parameters(child.props = this.token_parameters, child), right.token = child.value, [child, value == this.token_subroutine ? right : this.parse_next()])
+					switch (props) {
+						case this.token_keyword:
+							break
+						default: child = this.parse_function(child.props = this.token_parameters, right.token = child.value, [child, value == this.token_subroutine ? right : this.parse_next()])
 					}
 				}
+		}
+
+		return child
+	}
+	parse_membership (value, child, right, props) {
+		switch (props) {
+			case this.token_expression:
+			case this.token_membership: child.types = this.token_object
+			case this.token_subroutine:
+				break
+		}
+
+		return child
+	}
+	parse_subroutine (value, child, right, props) {
+		switch (props) {
+			case this.token_expression:
+			case this.token_membership: child.types = this.token_object
+			case this.token_subroutine:
+				break
 		}
 
 		return child
@@ -395,27 +409,29 @@ export class Parser extends Lexer {
 			default: return child
 		}
 	}
-	parse_membership (value, child, right) {
-		switch (value) {
-			case this.token_typings:
-				break
+	parse_parameters (value, child) {
+		for (var entry of child.child) {
+			switch (entry.token) {
+				case this.token_identifier: entry.types ? value : entry.types = this.token_variable
+					break
+				case this.token_expression:
+					switch (entry.props) {
+						switch this.token_assignment: entry.props = this.token_assignment_optional
+						default:
+							if (this.token_assignee(entry.props)) {
+								for (var entry of entry.child) {
+									return this.parse_parameters(value, entry)
+								}
+							}
+					}
+			}
 		}
-
-		return child
-	}
-	parse_subroutine (value, child, right) {
-		switch (value) {
-			case this.token_typings:
-				break
-		}
-
-		return child
 	}
 	/*
 	 * Verify
 	 */
-	parse_lookup (value, child, frame, stack, index, count, caret, state) {
-		while (count-- > caret) {
+	parse_lookup (value, child, frame, stack, index, count) {
+		while (count--) {
 			if (value = stack[count]) {
 				if (child.props == value.props) {
 					return frame.child[index] = value
@@ -423,16 +439,17 @@ export class Parser extends Lexer {
 			}
 		}
 	}
-	parse_verify (value, child, frame, stack, index, count, caret, state, queue) {return child
+	parse_verify (value, child, frame, stack, index, count, state, queue) {throw console.log(child)
 		for (var entry of child.child) {
 			entry.index = index = count - frame.index
-			entry.frame = frame
 			entry.state = state
+			entry.count = count
+			entry.frame = frame
 
 			switch (entry.token) {
 				case this.token_identifier:
-					if (caret != 0 || entry.types == 0) {
-						if (this.parse_lookup(value, entry, child, stack, index, count, caret, count)) {
+					if (entry.types == 0) {
+						if (this.parse_lookup(value, entry, child, stack, index, count)) {
 							continue
 						} else {
 							switch (child.props) {
@@ -440,13 +457,12 @@ export class Parser extends Lexer {
 									if (index == 0) {
 										break
 									}
-								default:
-									this.parse_report(value, value, child)
+								default: this.parse_report(value, value, child)
 							}
 						}
 					}
 					switch (frame.types) {
-						case this.token_object: entry.child = this.parse_property(value, entry)
+						case this.token_object: entry.child = this.parse_property(value, value, entry)
 						default: stack[count++] = entry
 					}
 					continue
@@ -467,38 +483,30 @@ export class Parser extends Lexer {
 					}
 					continue
 				case this.token_operator:
-					switch (child.props) {} // TODO
-					continue
-				case this.token_membership:
-					switch (child.token) {
-						case this.token_expression:
-						case this.token_membership: this.parse_verify(entry.types = this.token_object, entry, frame, stack, 0, count, 0, state, queue)
-							break
-						default: this.parse_verify(value, entry, entry, stack, 0, count, 0, state, queue)
-					}
+					switch (child.props) {}
 					continue
 				case this.token_subroutine:
 					switch (child.token) {
 						case this.token_expression:
-						case this.token_membership: this.parse_verify(entry.types = this.token_object, entry, entry, stack, 0, count, index, state + 1, queue)
-							break
-						default: this.parse_verify(value, entry, entry, stack, 0, count, 0, state + 1, queue)
+						case this.token_membership: entry.types = this.token_object
+						default: this.parse_verify(entry.types, entry, entry, stack, 0, count, entry.token == this.token_membership ? state : state + 1, queue)
 					}
 					continue
 				default:
 					switch (entry.props) {
-						case this.token_spread_iterable: this.parse_verify(value, entry, frame, stack, value == this.token_object ? child.count++ : value, count, 0, state, queue)
+						case this.token_spread_iterable: this.parse_verify(value, entry, frame, stack, value == this.token_object ? child.count++ : value, count, state, queue)
 							break
-						case this.token_parameters: this.parse_verify(value, entry, frame, stack, 0, count, 0, -1, queue)
+						case this.token_parameters: this.parse_verify(value, entry, frame, stack, this.parse_parameters(value, entry), count, -1, queue)
 							break
 						default:
-							this.parse_verify(entry.props, entry, frame, stack, 0, count, 0, state, queue)
+							this.parse_verify(entry.props, entry, frame, stack, 0, count, state, queue)
 					}
 			}
 
-			count = count + frame.count
+			count = entry.count
 		}
 
+		child.count = count
 		frame.count = count - frame.index
 
 		switch (child.token) {
@@ -516,7 +524,7 @@ export class Parser extends Lexer {
 				break
 			default:
 				for (var entry of queue) {
-					this.parse_verify(0, entry, entry, stack, 0, 0, 0, state + 1, [])
+					this.parse_verify(entry.token, entry, entry, stack, 0, count, state + 1, [])
 				}
 		}
 

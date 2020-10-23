@@ -36,7 +36,7 @@ export class Lexer {
 		this.token_true = 1853055989
 		this.token_false = -1072102688
 		// token keywords
-		this.token_do = 1677993041,
+		this.token_do = 1677993041
 		this.token_if = 1678321027
 		this.token_for = -1034809499
 		this.token_try = -918951625
@@ -104,6 +104,7 @@ export class Lexer {
 		this.token_shift_right = 1675500230
 		this.token_shift_left_unsigned = -1385138312
 		this.token_shift_right_unsigned = -1368484102
+		this.token_concatenation = 2620402778
 		this.token_addition = -2620402778
 		this.token_subtract = -2620402776
 		this.token_modulo = -2620402784
@@ -352,48 +353,6 @@ export class Lexer {
 	/*
 	 * Token
 	 */
-	token_argument (value) {
-		switch (value) {
-			// keyword operator
-			case this.token_void:
-			case this.token_yield:
-			case this.token_delete:
-			case this.token_keyof:
-			case this.token_typeof:
-			case this.token_sizeof:
-			// ; =>
-			case this.token_terminate:
-			case this.token_direction:
-			// ! ~
-			case this.token_logical_not:
-			case this.token_bitwise_not:
-			// ++ --
-			case this.token_increment:
-			case this.token_decrement:
-			// [] ()
-			case this.token_membership:
-			case this.token_expression:
-				return 1
-			default:
-				return 2
-		}
-	}
-	token_terminal (value) {
-		switch (value) {
-			// , ;
-			case this.token_separator:
-			case this.token_terminate:
-			// ! ~
-			case this.token_logical_not:
-			case this.token_bitwise_not:
-			// ++ --
-			case this.token_increment:
-			case this.token_decrement:
-				return 1
-			default:
-				return 2
-		}
-	}
 	token_identify (value) {
 		switch (value) {
 			// types
@@ -450,9 +409,7 @@ export class Lexer {
 	}
 	token_priority (value) {
 		switch (value) {
-			// , ; =>
-			case this.token_separator:
-			case this.token_terminate:
+			// =>
 			case this.token_direction:
 				return 10
 			// .. ...
@@ -556,16 +513,54 @@ export class Lexer {
 			case this.token_increment:
 			case this.token_decrement:
 				return 29
-			// ?. . [
+			// ?. .
 			case this.token_properties_optional:
 			case this.token_properties:
-			case this.token_membership:
 				return 30
-			// (
-			case this.token_expression:
-				return 31
 			default:
 				return 0
+		}
+	}
+	token_argument (value) {
+		switch (value) {
+			// keyword operator
+			case this.token_void:
+			case this.token_yield:
+			case this.token_delete:
+			case this.token_keyof:
+			case this.token_typeof:
+			case this.token_sizeof:
+			// =>
+			case this.token_direction:
+			// ! ~
+			case this.token_logical_not:
+			case this.token_bitwise_not:
+				return 0
+			// ++ --
+			case this.token_increment:
+			case this.token_decrement:
+			// () []
+			case this.token_expression:
+			case this.token_membership:
+				return 1
+			default:
+				return 2
+		}
+	}
+	token_terminal (value) {
+		switch (value) {
+			// , ;
+			case this.token_separator:
+			case this.token_terminate:
+			// ! ~
+			case this.token_logical_not:
+			case this.token_bitwise_not:
+			// ++ --
+			case this.token_increment:
+			case this.token_decrement:
+				return 1
+			default:
+				return 2
 		}
 	}
 	token_assignee (value) {
