@@ -17,3 +17,51 @@ or instead the next link can point to a growable vector with a size limit(that a
 [1, 2, 3]
 	.push(4) = [-1=next=[4,...], 1, 2, 3]
 	.unshift(0) = [-2=prev[0,...],next[4,...], 1, 2, 3]
+
+
+all values are callable
+
+array
+	a() clone
+	a(',') join ','
+	a([1,2],[3,4]) concat [1,2,3,4]
+	a((v,i) => v) map (v,i) => v
+	a(0) slice
+	a(0,1) slice
+	a(0,1,2) slice
+
+string
+	a() clone
+	a(',') split ','
+	a([1,2],[3,4]) concat [1,2,3,4]
+	a((v,i) => v) map (v,i) => v
+	a(0) slice
+	a(0,1) slice
+	a(0,1,2) slice
+
+number
+	a() clone
+	a(':') format
+	a([1,2],[3,4]) matrix
+	a((v,i) => v) map (v,i) => v
+	a(0) base64
+	a(0,1) base64
+	a(0,1,2) base64
+
+object
+	a() clone
+	a('k') keys
+	a([1,2],[1,2]) concat [key,val]
+	a((v,k) => v) map (v,k) => v
+	a(0) ?
+	a(0,1) ?
+	a(0,1,2) ?
+
+null
+	a() nil
+	a(',') nil
+	a([1,2],[1,2]) nil
+	a((v,i) => v) nil
+	a(0) nil
+	a(0,1) nil
+	a(0,1,2) nil

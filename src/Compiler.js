@@ -5,63 +5,174 @@ export class Compiler extends Parser {
 		return this.compile_assemble(this.compile_children(value, child, frame = child, stack = [], index = 0), child, frame, stack, index)
 	}
 	/*
-	 * Compiler
+	 * Dispatch
 	 */
-	compile_assemble (value, child, frame, stack, index) {
-		return stack.join('') + 'i64 main(i64 argc, char** argv){do{' + value + '}while(0);return 0;}'
-	}
 	compile_dispatch (value, child, frame, stack, index) {
 		switch (child?.token) {
 			case this.token_literal:
-				return this.compile_literal(value, child, frame, stack, stack.length)
+				return this.compile_literal(child.value, child, frame, stack, stack.length)
 			case this.token_statement:
-				return this.compile_statement(value, child.child, frame, stack, index)
+				return this.compile_statement(child.value, child.child, frame, stack, index)
 			case this.token_subroutine:
-				return this.compile_subroutine(value, child, frame, stack, index)
+				return this.compile_subroutine(child.value, child, frame, stack, index)
 			case this.token_membership:
-				return this.compile_membership(value, child, frame, stack, index)
+				return this.compile_membership(child.value, child, frame, stack, index)
 			case this.token_identifier:
-				return this.compile_identifier(value, child, frame, stack, index)
+				return this.compile_identifier(child.value, child, frame, stack, index)
 			case this.token_expression:
-				return this.compile_expression(value, child, frame, stack, index)
+				return this.compile_expression(child.value, child, frame, stack, index)
 			default:
 				return ''
 		}
 	}
+	compile_literal (value, child, frame, stack, index) {
+		switch (value) {
+			case this.token_float:
+				return this.compile_number(child.props, child, frame, stack, index)
+			case this.token_string:
+				return this.compile_template(child.child.join(''), child, frame, stack, child.props)
+			case this.token_variable:
+				return this.compile_variable(child.props, child, frame, stack, index)
+			case this.token_function:
+			case this.token_definition:
+				return this.compile_function(child.props, stack[index] = this.compile_prototype(value, child, frame, stack, index), child, frame, stack, index)
+		}
+	}
+	compile_statement (value, child, frame, stack, index) {
+		switch (value) {
+			case this.token_do: return this.compile_do(value, child, frame, stack, index)
+			case this.token_if: return this.compile_if(value, child, frame, stack, index)
+			case this.token_for: return this.compile_for(value, child, frame, stack, index)
+			case this.token_try: return this.compile_try(value, child, frame, stack, index)
+			case this.token_else: return this.compile_else(value, child, frame, stack, index)
+			case this.token_case: return this.compile_case(value, child, frame, stack, index)
+			case this.token_catch: return this.compile_catch(value, child, frame, stack, index)
+			case this.token_while: return this.compile_while(value, child, frame, stack, index)
+			case this.token_switch: return this.compile_switch(value, child, frame, stack, index)
+			case this.token_finally: return this.compile_finally(value, child, frame, stack, index)
+			case this.token_throw: return this.compile_throw(value, child, frame, stack, index)
+			case this.token_break: return this.compile_break(value, child, frame, stack, index)
+			case this.token_return: return this.compile_return(value, child, frame, stack, index)
+			case this.token_continue: return this.compile_continue(value, child, frame, stack, index)
+		}
+	}
+	compile_expression (value, child, frame, stack, index) {
+		switch (value) {
+			case this.token_operator:
+				return this.compile_operator(child.props, child.child, frame, stack, index)
+			case this.token_expression:
+				return this.compile_children(child.props, child, frame, stack, index)
+			default:
+				return ''
+		}
+	}
+	compile_membership (value, child, frame, stack, index) {
+		return this.compile_children(value, child, frame, stack, index)
+	}
+	compile_subroutine (value, child, frame, stack, index) {
+		return this.compile_children(value, child, frame, stack, index)
+	}
 	/*
 	 * Literal
 	 */
-	compile_literal (value, child, frame, stack, index) {
-		switch (child.value) {
-			case this.token_string:
-				return this.compile_string(value, child, frame, stack, index)
-			case this.token_float:
-			case this.token_integer:
-				return this.compile_number(value, child, frame, stack, index)
-			case this.token_variable:
-				return this.compile_variable(value, child, frame, stack, index)
-			case this.token_function:
-			case this.token_definition:
-				return this.compile_function(value, stack[index] = this.compile_function_prototype(value, child, frame, stack, index), child, frame, stack, index)
-		}
-	}
-	compile_string (value, child, frame, stack, index) {
-		return '{static i64 rbx=(i64)("' + child.child.join('') + '");rax=str_to_any(rbx);}'
-	}
 	compile_number (value, child, frame, stack, index) {
-		return '{static f64 rbx=(f64)(' + child.props + ');rax=flt_to_int(rbx);}'
+		return '{static f64 rbx=(' + value + ');rax=flt_to_int(rbx);}'
 	}
 	compile_variable (value, child, frame, stack, index) {
-		return '{static f64 rbx=(f64)(' + child.props + ');rax=var_to_any(rbx);}'
+		return '{static f64 rbx=(' + value + ');rax=var_to_any(rbx);}'
+	}
+	compile_template (value, child, frame, stack, index) {
+		return '{static i08 rbx="' + value + '";static i64 obj[4];obj+=4;obj[-3]=(i64)rbx;obj[-2]=str;obj[-1]=' + index + ';{i64 rbx=(i64)obj;rax=str_to_any(rbx);}}'
 	}
 	/*
 	 * Function
 	 */
 	compile_function (value, child, frame, stack, index) {
-		return '{' + (frame.state ? 'static i64 fun[4];' : 'i64 fun=fun_to_new(argx);') + 'fun=fun+4;fun[-3]=argx;fun[-2]=(i64)(&fun' + index + ');fun[-1]=0;i64 rbx=(i64)fun;rax=fun_to_any(rbx);}'
+		return '{' + (frame.state ? 'i64 obj=fun_to_new(argx);' : 'static i64 obj[4];') + 'obj+=4;obj[-3]=argx;obj[-2]=(i64)(&fun' + index + ');obj[-1]=0;i64 rbx=(i64)obj;rax=fun_to_any(rbx);}'
 	}
-	compile_function_prototype (value, child, frame, stack, index) {
-		return 'static i64 fun' + index + '(i64 argc,p64 argv,p64 arge){do{' + this.compile_children(this.token_enviroment, child, frame, stack, index) + '}while(0);return rax;}'
+	compile_prototype (value, child, frame, stack, index) {
+		return 'static i64 fun' + index + '(i64 argc,p64 argv,p64 arge){i64 rax;i64 rcx;do{' + this.compile_children(value, child, frame, stack, index) + '}while(0);return rax;}'
+	}
+	/*
+	 * Statement
+	 */
+	compile_if (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child[0], frame, stack, index) + 'zfg=any_to_int(rax);if(zfg!=0){i64 zfg=0;' + this.compile_dispatch(value, child[1], frame, stack, index) + '}'
+	}
+	compile_else (value, child, frame, stack, index) {
+		return 'if(zfg==0){' + this.compile_dispatch(value, child[0], frame, stack, index) + '}'
+	}
+	compile_switch (value, child, frame, stack, index) {
+		return '{' + this.compile_switch_prologue(value, child[0], frame, stack, index) + this.compile_switch_epilogue(value, child[1], frame, stack, index) + '}'
+	}
+	compile_switch_prologue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 cfg=0;i64 rbx=rax;'
+	}
+	compile_switch_epilogue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child, frame, stack, index)
+	}
+	compile_case (value, child, frame, stack, index) {
+		return this.compile_case_prologue(value, child[0], frame, stack, index) + this.compile_case_epilogue(value, child[1], frame, stack, index) + this.compile_dispatch(value, child[2], frame, stack, index)
+	}
+	compile_case_prologue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child, frame, stack, index) + 'zfg=cfg?zfg:cfg=any_to_cmp(rbx);'
+	}
+	compile_case_epilogue (value, child, frame, stack, index) {
+		return 'if(cfg!=0){' + this.compile_dispatch(value, child, frame, stack, index) + '}'
+	}
+	compile_do (value, child, frame, stack, index) {
+		return 'while(1){' + this.compile_do_prologue(value, child[0], frame, stack, index) + this.compile_do_epilogue(value, child[1], frame, stack, index) + '}'
+	}
+	compile_do_prologue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child, frame, stack, index)
+	}
+	compile_do_epilogue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child, frame, stack, index) + 'zfg=any_to_int(rax);if(zfg==0)break;'
+	}
+	compile_while (value, child, frame, stack) {
+		return 'while(1){' + this.compile_while_prologue(value, child[0], frame, stack, index) + this.compile_while_epilogue(value, child[1], frame, stack, index) + '}'
+	}
+	compile_while_prologue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child, frame, stack, index) + 'zfg=any_to_int(rax);if(zfg==0)break;'
+	}
+	compile_while_epilogue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child, frame, stack, index)
+	}
+	compile_for (value, child, frame, stack, index) {
+		return '{' + this.compile_for_prologue(value, child[0], frame, stack, 0) + 'while(1){' + this.compile_for_epilogue(value, child, frame, stack, 0) + '}}'
+	}
+	compile_for_prologue (value, child, frame, stack, index) {
+		return 'i64 rsi=0;i64 rdi=0;' + child.child.reduce((state, child, index, array) => index < array.length - 2 ? state + this.compile_dispatch(value, child, frame, stack, index) : state, '')
+	}
+	compile_for_epilogue (value, child, frame, stack, index) {
+		return this.compile_for_condition(value, child[0], frame, stack, index) + this.compile_dispatch(value, child[1], frame, stack, index) + this.compile_for_iteration(value, child[0], frame, stack, index)
+	}
+	compile_for_condition (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child.child[child.child.length - 2], frame, stack, index) + 'zfg=any_to_int(rax);if(zfg==0)break;'
+	}
+	compile_for_iteration (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child.child[child.child.length - 1], frame, stack, index)
+	}
+	compile_throw (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child[0], frame, stack, index) + 'throw;'
+	}
+	compile_break (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child[0], frame, stack, index) + 'break;'
+	}
+	compile_continue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child[0], frame, stack, index) + 'continue;'
+	}
+	compile_return (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child[0], frame, stack, index) + 'return rax;'
+	}
+	compile_try (value, child, frame, stack, index) {
+		throw 'TODO: try'
+	}
+	compile_catch (value, child, frame, stack, index) {
+		throw 'TODO: catch'
+	}
+	compile_finally (value, child, frame, stack, index) {
+		throw 'TODO: finally'
 	}
 	/*
 	 * Identifier
@@ -88,12 +199,13 @@ export class Compiler extends Parser {
 	compile_children (value, child, frame, stack, index) {
 		return '{' + child.child.reduce((state, entry, index) => {
 			return state + this.compile_children_prologue(value, entry, child, entry, index) + this.compile_dispatch(value, entry, child, stack, index) + this.compile_children_epilogue(value, entry, child, entry, index)
-		}, this.compile_children_elements(value, child, frame, stack, index)) + '}'
+		}, this.compile_children_elements(value, child, frame, stack, child.child.length)) + '}'
 	}
 	compile_children_prologue (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_parameters:
-				return '{' + this.compile_parameters(child.token, child, frame, stack, index) + '}'
+				return this.compile_parameters(child.token, child, frame, stack, index)
+			case this.token_subroutine:
 			default:
 				return ''
 		}
@@ -111,48 +223,23 @@ export class Compiler extends Parser {
 	compile_children_elements (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_enviroment:
-				return 'rax=ptr_to_any(argx);i64 argc=' + child.count + (child.types ? ';p64 argx=env_to_new(argc);' : 'i64 argx[argc+4];argc=-argc;') + 'argx=argx+4;argx[-1]=argc;argv[-2]=rax;rax=obj_to_any(argx);'
+				return 'rax=ptr_to_any(argx);i64 argc=' + index + (child.types ? ';p64 argx=env_to_new(argc);' : 'i64 argx[argc+4];argc=-argc;') + 'argx=argx+4;argx[-1]=argc;argv[-2]=rax;rax=obj_to_any(argx);'
 			case this.token_subroutine:
-				return 'rax=ptr_to_any(argx);i64 argc=' + child.count + (child.types ? ';p64 argx=sub_to_new(argc);' : 'i64 argx[argc+4];argc=-argc;') + 'argx=argx+4;argx[-1]=argc;argv[-2]=rax;rax=sub_to_any(argx);'
+				return 'rax=ptr_to_any(argx);i64 argc=' + index + (child.types ? ';p64 argx=sub_to_new(argc);' : 'i64 argx[argc+4];argc=-argc;') + 'argx=argx+4;argx[-1]=argc;argv[-2]=rax;rax=sub_to_any(argx);'
 			case this.token_membership:
-				return 'rax=ptr_to_any(argx);i64 argc=' + child.child.length + (child.types ? ';p64 argv=mem_to_new(argc);' : 'i64 argv[argc+4];argc=-argc') + 'argx=argx+1;argv[-1]=argc;argv[2]=argv;rax=mem_to_any(argx);'
+				return 'rax=ptr_to_any(argx);i64 argc=' + index + (child.types ? ';p64 argv=mem_to_new(argc);' : 'i64 argv[argc+4];argc=-argc;') + 'argv=argv+1;argv[-1]=argc;argv[2]=argv;rax=mem_to_any(argv);'
 			case this.token_expression:
-				return 'rax=ptr_to_any(argv);i64 argc=' + child.child.length + (child.types ? ';i64 argv[argc];' : '') + 'rax=ptr_to_any(argv);'
+				return 'rax=ptr_to_any(argv);i64 argc=' + index + (child.types ? ';i64 argv[argc];' : '') + 'rax=ptr_to_any(argv);'
 			default:
 				return ''
 		}
 	}
-	compile_parameters (value, child, frame, stack, index) {
+	compile_children_parameters (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_identifier:
-				return (child.types ? 'i64 argi=(i64)(' + child.index + ');if(argi < argc)argx[argi]=argv[' + index + '];' : '')
+				return (child.types ? '{i64 argi=(i64)(' + child.index + ');if(argi < argc)argx[argi]=argv[' + index + '];}' : '')
 			case this.token_expression:
-				return (child.index > hild.state ? this.compile_parameters(this.token_identifier, child, frame, stack, index) : '')
-			default:
-				return ''
-		}
-	}
-	/*
-	 * Membership
-	 */
-	compile_membership (value, child, frame, stack, index) {
-		return this.compile_children(child.value, child, frame, stack, index)
-	}
-	/*
-	 * Subroutine
-	 */
-	compile_subroutine (value, child, frame, stack, index) {
-		return this.compile_children(child.value, child, frame, stack, index)
-	}
-	/*
-	 * Expression
-	 */
-	compile_expression (value, child, frame, stack, index) {
-		switch (child.value) {
-			case this.token_operator:
-				return this.compile_operator(child.props, child.child, frame, stack, index)
-			case this.token_expression:
-				return this.compile_children(child.props, child, frame, stack, index)
+				return (child.index > child.state ? this.compile_parameters(this.token_identifier, child, frame, stack, index) : '')
 			default:
 				return ''
 		}
@@ -161,144 +248,187 @@ export class Compiler extends Parser {
 	 * Operator
 	 */
 	compile_operator (value, child, frame, stack, index) {
-		return '{' + compile_operator_prologue(value, child, frame, stack, index) + compile_operator_epilogue(value, child, frame, stack, index) + '}'
+		return '{i64 rbx;i64 rdx;' + compile_operator_prologue(value, child, frame, stack, index) + compile_operator_epilogue(value, child, frame, stack, index) + '}'
 	}
 	compile_operator_prologue (value, child, frame, stack, index) {
 		switch (value) {
-			case this.token_conditional:
-				return this.compile_if(value, [child[0], child[1].child[0], child[1].child[1]], frame, stack, index)
-			case this.token_logical_and:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'if(any_to_int(rax)){' + this.compile_dispatch(value, child[1], frame, stack, index) + '}'
+			case this.token_in:
+			case this.token_of:
+				return 'if(rsi==rdi){' + this.compile_operator_prologue(index, child, frame, stack, index) + '}'
+			case this.token_logical_if:
 			case this.token_logical_or:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'if(!any_to_int(rax)){' + this.compile_dispatch(value, child[1], frame, stack, index) + '}'
-			case this.token_nullish:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'if(any_to_cmp(rax,nil)){' + this.compile_dispatch(value, child[1], frame, stack, index) + '}'
+			case this.token_logical_and:
+			case this.token_logical_null:
 			case this.token_assignment_optional:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'if(any_to_cmp(rax,nil)){i64 rbx=rax;' + this.compile_dispatch(value, child[1], frame, stack, index) + '}'
+				return this.compile_dispatch(value, child[0], frame, stack, index) + 'rbx=rax;rdx=rcx;'
 			default:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;' + this.compile_dispatch(value, child[1], frame, stack, index)
+				return this.compile_dispatch(value, child[0], frame, stack, index) + 'rbx=rax;rdx=rcx;' + this.compile_dispatch(value, child[1], frame, stack, index)
 		}
 	}
 	compile_operator_epilogue (value, child, frame, stack, index) {
 		switch (value) {
+			// () []
+			case this.token_expression: // TODO
+				return 'rip=any_to_fun(rbx);rax=(fun)rip(argc,argv,argx);'
+			case this.token_membership: // TODO
+				return ''
+			// =>
+			case this.token_direction:
+				return 'break;'
+			// .. ...
+			case this.token_ranges: // TODO
+			case this.token_spread: // TODO
+				return ''
+			// ?
+			case this.token_logical_if:
+				return this.compile_if(value, [, child.value == child[1].value ? child[1].child[0] : child[1]], frame, stack, index) + this.compile_else(value, [child.value == child[1].value ? child[1].child[1] : child[1]])
+			// ?=
+			case this.token_assignment_optional:
+				return 'rax=rbx==NIL;' + this.compile_if(value, [, child[1]], frame, stack, index)
+			// :
+			case this.token_initialize:
+			// =
+			case this.token_assignment:
+				return '*rdx=rax;'
+			// += -= /= %=
+			case this.token_assignment_addition:
+				return this.compile_operator_epilogue(this.token_addition, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_subtract:
+				return this.compile_operator_epilogue(this.token_subtract, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_division:
+				return this.compile_operator_epilogue(this.token_division, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_modulous:
+				return this.compile_operator_epilogue(this.token_modulous, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			// &= ^= |=
+			case this.token_assignment_bitwise_and:
+				return this.compile_operator_epilogue(this.token_bitwise_and, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_bitwise_xor:
+				return this.compile_operator_epilogue(this.token_bitwise_xor, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_bitwise_or:
+				return this.compile_operator_epilogue(this.token_bitwise_or, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			// *= **=
+			case this.token_assignment_multiply:
+				return this.compile_operator_epilogue(this.token_multiply, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_exponent:
+				return this.compile_operator_epilogue(this.token_exponent, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			// <<= >>= <<<= >>>=
+			case this.token_assignment_shift_left:
+				return this.compile_operator_epilogue(this.token_shift_left, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_shift_right:
+				return this.compile_operator_epilogue(this.token_shift_right, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_shift_left_unsigned:
+				return this.compile_operator_epilogue(this.token_shift_left_unsigned, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			case this.token_assignment_shift_right_unsigned:
+				return this.compile_operator_epilogue(this.token_shift_right_unsigned, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			// ||
+			case this.token_logical_or:
+				return this.compile_if(value, [child[0]], frame, stack, index) + this.compile_else(value, [child[1]])
+			// &&
+			case this.token_logical_and:
+				return this.compile_if(value, [child[0], child[1]], frame, stack, index)
+			// ??
+			case this.token_logical_null:
+				return 'rax=any_to_cmp(NIL);' + this.compile_if(value, [, child[1]], frame, stack, index)
+			// == != === !==
+			case this.token_compare:
+				return 'rax=rax==rbx||any_is_str(rax)&&any_is_str(rbx)&&str_to_cmp(rax,rbx)!=0;'
+			case this.token_uncompare:
+				return 'rax=rax!=rbx||any_is_str(rax)&&any_is_str(rbx)&&str_to_cmp(rax,rbx)==0;'
+			case this.token_deep_compare:
+				return 'rax=rax==rbx||any_to_cmq(rax,rbx)!=0;'
+			case this.token_deep_uncompare:
+				return 'rax=rax!=rbx||any_to_cmq(rax,rbx)==0;'
+			// < > <= >=
+			case this.token_less_than:
+				return 'rax=rax<rbx;'
+			case this.token_greater_than:
+				return 'rax=rax>rbx;'
+			case this.token_equal_less_than:
+				return 'rax=rax<=rbx;'
+			case this.token_equal_greater_than:
+				return 'rax=rax>=rbx;'
+			// in of instanceof
+			case this.token_in:
+				return 'if(rsi==rdi)rdi=sizes(rax);if(rsi<rdi)rbx=key_of_obj(rax,rsi++);'
+			case this.token_of:
+				return 'if(rsi==rdi)rdi=sizes(rax);if(rsi<rdi)rbx=val_of_obj(rax,rsi++);'
+			case this.token_instanceof: // TODO
+				return ''
+			case this.token_concatenation:
+				return 'if(any_is_flt(rax)&&any_is_flt(rbx))' + this.compile_operator_epilogue(this.token_addition, child, frame, stack, index) + 'else rax=str_to_con(rax,rbx);'
+			// + -
+			case this.token_addition:
+				return 'rax=flt_to_int(int_to_flt(rax)+int_to_flt(rbx));'
+			case this.token_subtract:
+				return 'rax=flt_to_int(int_to_flt(rax)-int_to_flt(rbx));'
+			// % / *
+			case this.token_modulous:
+				return 'rax=ftl_to_int(int_to_flt(rax)/int_to_flt(rbx));'
+			case this.token_division:
+				return 'rax=ftl_to_int(int_to_flt(rax)%int_to_flt(rbx));'
+			case this.token_multiply:
+				return 'rax=ftl_to_int(int_to_flt(rax)*int_to_flt(rbx));'
+			// **
+			case this.token_exponent:
+				return 'rax=flt_to_int(pow(int_to_flt(rax),int_to_flt(rbx)));'
+			// |
+			case this.token_bitwise_or:
+				return 'rax=rax|rbx;'
+			// ^
+			case this.token_bitwise_xor:
+				return 'rax=rax^rbx;'
+			// &
+			case this.token_bitwise_and:
+				return 'rax=rax&rbx;'
+			// << >> <<< >>>
+			case this.token_shift_left:
+				return 'rax=rax<<rbx;'
+			case this.token_shift_right:
+				return 'rax=rax>>rbx;'
+			case this.token_shift_left_unsigned:
+				return 'rax=rax>>rbx;'
+			case this.token_shift_right_unsigned:
+				return 'rax=rax<<rbx;'
+			// keyword operators
+			case this.token_void:
+				return 'rax=NIL;'
+			case this.token_await:
+				return 'rax=await(rax);'
+			case this.token_keyof:
+				return 'rax=keyof(rax);'
+			case this.token_typeof:
+				return 'rax=types(any_to_tag(rax));'
+			case this.token_sizeof:
+				return 'rax=sizes(rax);'
+			case this.token_delete:
+				return ''
+			// ! ~ ++ --
+			case this.token_logical_not:
+				return 'rax=!rbx;'
+			case this.token_bitwise_not:
+				return 'rax=~rbx;'
+			case this.token_increment:
+				return this.compile_operator_epilogue(this.token_assignment_addition, child, frame, stack, index) + (child[0].token == this.token_operator ? 'rax=*rdx' : '')
+			case this.token_decrement:
+				return this.compile_operator_epilogue(this.token_assignment_subtract, child, frame, stack, index) + (child[0].token == this.token_operator ? 'rax=*rdx' : '')
+			// . ?.
+			case this.token_properties:
+			case this.token_properties_optional: // TODO
+				return '{static i64 i;p64 j=any_to_obj(a);if(b!=j[i]){i=obj_to_idx(j,b,i);}rax=&(j[i+1]); }'
 			default:
-				return 'ops_' + (value < 0 ? -value : value) + '(' + this.compile_operator_identity(0, child[0], frame, stack, index) + ',' + this.compile_operator_identity(1, child[1], frame, stack, index) + ');'
-		}
-	}
-	compile_operator_identity (value, child, frame, stack, index) {
-		switch (child?.token) {
-			case this.token_identifier:
-				return this.compile_identifier_identity(value, child, frame, stack, index)
-			case this.token_membership:
-			case this.token_expression:
-				if (child.value == this.token_operator) {
-					switch (child.props) {
-						case this.token_properties:
-						case this.token_membership:
-							return value ? '*rbx' : '*rax'
-					}
-				}
-			default:
-				return value ? 'rbx' : 'rax'
+				return ''
 		}
 	}
 	/*
-	 * Statement
+	 * Assemble
 	 */
-	compile_statement (value, child, frame, stack, index) {
-		switch (child.props) {
-			case this.token_do: return this.compile_do(value, child, frame, stack, index)
-			case this.token_if: return this.compile_if(value, child, frame, stack, index)
-			case this.token_for: return this.compile_for(value, child, frame, stack, 0)
-			case this.token_try: return this.compile_try(value, child, frame, stack, index)
-			case this.token_else: return this.compile_else(value, child, frame, stack, index)
-			case this.token_case: return this.compile_case(value, child, frame, stack, index)
-			case this.token_catch: return this.compile_catch(value, child, frame, stack, index)
-			case this.token_while: return this.compile_while(value, child, frame, stack, index)
-			case this.token_switch: return this.compile_switch(value, child, frame, stack, index)
-			case this.token_finally: return this.compile_finally(value, child, frame, stack, index)
-			case this.token_throw: return this.compile_throw(value, child, frame, stack, index)
-			case this.token_break: return this.compile_break(value, child, frame, stack, index)
-			case this.token_return: return this.compile_return(value, child, frame, stack, index)
-			case this.token_continue: return this.compile_continue(value, child, frame, stack, index)
-		}
+	compile_assemble (value, child, frame, stack, index) {
+		return this.compile_assemble_prologue(value, child, frame, stack, index) + this.compile_assemble_epilogue(value, child, frame, stack, index)
 	}
-	compile_if (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'zfg=any_to_int(rax);if(zfg){' + this.compile_dispatch(value, child[1], frame, stack, index) + '}'
+	compile_assemble_prologue (value, child, frame, stack, index) {
+		return stack.join('') + 'static void eval(i64 argc, char** argv){do{' + value + '}while(0);}'
 	}
-	compile_else (value, child, frame, stack, index) {
-		return 'if(!zfg){' + this.compile_dispatch(value, child, frame, stack, index) + '}'
-	}
-	compile_switch (value, child, frame, stack, index) {
-		return this.compile_do_prologue(value, child, frame, stack, index) + this.compile_do_epilogue(value, child, frame, stack, index)
-	}
-	compile_switch_prologue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index)
-	}
-	compile_switch_epilogue (value, child, frame, stack, index) {
-		return 'do{i64 rbx=rax;' + this.compile_dispatch(value, child[1], frame, stack, index) + '}while(0);'
-	}
-	compile_case (value, child, frame, stack, index) {
-		return this.compile_do_prologue(value, child, frame, stack, index) + this.compile_do_epilogue(value, child, frame, stack, index)
-	}
-	compile_case_prologue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'zfg=any_to_cmp(rbx,rax);if(zfg)rbx=rax;'
-	}
-	compile_case_epilogue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[1], frame, stack, index) + this.compile_dispatch(value, child[2], frame, stack, index)
-	}
-	compile_do (value, child, frame, stack, index) {
-		return 'while(1){' + this.compile_do_prologue(value, child, frame, stack, index) + this.compile_do_epilogue(value, child, frame, stack, index) + '}'
-	}
-	compile_do_prologue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index)
-	}
-	compile_do_epilogue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[1], frame, stack, index) + 'zfg=any_to_int(rax);if(!zfg)break;'
-	}
-	compile_while (value, child, frame, stack) {
-		return 'while(1){' + this.compile_while_prologue(value, child, frame, stack, index) + this.compile_while_epilogue(value, child, frame, stack, index) + '}'
-	}
-	compile_while_prologue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'zfg=any_to_int(rax);if(!zfg)break;'
-	}
-	compile_while_epilogue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[1], frame, stack, index)
-	}
-	compile_for (value, child, frame, stack, index) {
-		return this.compile_for_prologue(value, child[0], frame, stack, 0) + 'while(1){' + this.compile_for_epilogue(value, child, frame, stack, 0) + '}'
-	}
-	compile_for_prologue (value, child, frame, stack, index) {
-		return 'i64 rbx=0;i64 rcx=0;' + child.child.reduce((state, entry, index, array) => index < array.length - 2 ? state + this.compile_dispatch(value, entry, frame, stack, index) : value, '')
-	}
-	compile_for_epilogue (value, child, frame, stack, index) {
-		return this.compile_for_condition(value, child[0], frame, stack, index) + this.compile_dispatch(value, child[1], frame, stack, index) + this.compile_for_iteration(value, child[0], frame, stack, index)
-	}
-	compile_for_condition (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child.child[child.child.length - 2], frame, stack, index) + 'zfg=any_to_int(rax);if(!zfg)break;'
-	}
-	compile_for_iteration (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child.child[child.child.length - 1], frame, stack, index)
-	}
-	compile_throw (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'throw;'
-	}
-	compile_break (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'break;'
-	}
-	compile_continue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'continue;'
-	}
-	compile_return (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'return rax;'
-	}
-	compile_try (value, child, frame, stack, index) {
-		throw 'TODO: try'
-	}
-	compile_catch (value, child, frame, stack, index) {
-		throw 'TODO: catch'
-	}
-	compile_finally (value, child, frame, stack, index) {
-		throw 'TODO: finally'
+	compile_assemble_epilogue () {
+		return 'int main(int argc, char** argv){eval(argc, argv);return 0;}'
 	}
 }

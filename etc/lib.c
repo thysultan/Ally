@@ -4,22 +4,28 @@
 #include <assert.h>
 #include <threads.h>
 
+typedef char* i08;
 typedef double f64;
 typedef unsigned long long i64;
 typedef i64* p64;
 typedef i64 (*x64)(i64, i64, ...);
+
+static i64 cfg;
+static i64 zfg;
+static i64 sfg;
+static i64 ofg;
 
 static i64 rax;
 static i64 rbx;
 static i64 rcx;
 static i64 rdx;
 
-static i64 rbp;
-static i64 rsp;
+static i64 rip;
+
 static i64 rsi;
 static i64 rdi;
-
-static i64 zfg;
+static i64 rbp;
+static i64 rsp;
 
 // NaN (64 bit):
 // |----NaNs----|
@@ -54,11 +60,3 @@ static i64 zfg;
 #define any_is_flt(a) (int_to_flt(a) == int_to_flt(a))
 
 #define any_to_obj(a) (any_is_obj(a) ? (p64)any_to_val(a) : (p64)any_to_box(a))
-
-#define ops_2620402760(a, b) { rax = a = b; }
-#define ops_1675434630(a, b) { rax = a == b || any_is_str(a) && any_is_str(b) && str_to_cmp(a, b); }
-#define ops_2620402776(a, b) { rax = flt_to_int(int_to_flt(a) - int_to_flt(b)); }
-#define ops_2620402779(a, b) { rax = ftl_to_int(int_to_flt(a) * int_to_flt(b)); }
-#define ops_2620402774(a, b) { rax = flt_to_int(int_to_flt(a) / int_to_flt(b)); }
-#define ops_2620402778(a, b) { rax = any_is_flt(a) && any_is_flt(b) ? flt_to_int(int_to_flt(a) + int_to_flt(b)) : any_to_str(a, b); }
-#define ops_2620402775(a, b) { static i64 i; p64 j = any_to_obj(a); if (b != j[i]) { i = obj_to_idx(j, b, i); } rax = &(j[i + 1]); }

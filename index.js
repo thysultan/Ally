@@ -53,7 +53,7 @@ export function format (value) {
 		case this.token_terminate: return 'terminate'
 		case this.token_separator: return 'separator'
 		case this.token_direction: return 'direction'
-		case this.token_resolution: return 'resolution'
+		case this.token_initialize: return 'initialize'
 		case this.token_assignment: return 'assignment'
 		case this.token_assignment_addition: return 'assignment_addition'
 		case this.token_assignment_subtract: return 'assignment_subtract'
@@ -73,7 +73,7 @@ export function format (value) {
 		case this.token_greater_than: return 'greater_than'
 		case this.token_equal_less_than: return 'equal_less_than'
 		case this.token_equal_greater_than: return 'equal_greater_than'
-		case this.token_conditional: return 'conditional'
+		case this.token_logical_if: return 'token_logical_if'
 		case this.token_logical_or: return 'logical_or'
 		case this.token_logical_and: return 'logical_and'
 		case this.token_nullish: return 'nullish'
@@ -109,8 +109,9 @@ export function format (value) {
 export function main (value) {
 	var compile = new Compiler(value)
 	var program = compile.parse_program(0, null)
-	// return JSON.stringfiy(program, null, 2)
-	return console.log(value.trim() + '\n\n' + JSON.stringify(program, function (key, value) {
+	console.log(value.trim())
+	console.log(program)
+	console.log(JSON.stringify(program, function (key, value) {
 	  switch (key) {
 	  	case 'index':
 	  	case 'count':
@@ -128,33 +129,48 @@ export function main (value) {
 
 // fun foo = a, b => while 1 if a == b break else continue
 // fun foo = a, b {}
+// main(`a.b[]`)
+// main(`a[0][1]`)
+// main(`a(0)(1)`)
 // main(`1,2,3`)
 // main(`if 1,2,3 {}`)
 // main(`while 1, 2, 3 {}`)
-
+// main(`do{}while 1`)
+// main(`({a=1})`)
 // main(`'abc\nxyz'`)
 // main(`'abc"xyz'`)
 // main(`'abc@(1+2)\nxyz'`)
 // main(`(1+2)`)
+// main(`1+2=>3`)
+// main(`1*2+3`)
 // main(`a=1`)
 // main(`a`)
-// main(`a = 1`)
-// main(`a = 1`)
 // main(`
 // 	{
 // 		var a = 40
+// 		a
 // 	}
 // `)
+// main(`
+// var a = 20
+// var b = 30
+// {
+// 	var c = 40
+// 	var d = 50
+// 	c
+// }
+// `)
+// main(`
+// case 0,1 => 2
+// `)
 main(`
-var a = 20
-var b = 30
-{
-	var c = 40
-	var d = 50
-	c
-}
+	a = b = c = 0
+	a ? b : c
 `)
 // main(`
-// 	fun print var a, var b { return a + b + 1 }
+// fun bar (a,b=1) {return faz(1,2)}
+// `)
+// main(`
+// 	fun print (var a, var b) { return a + b + 1 }
 // 	print(1, 2)
 // `)
