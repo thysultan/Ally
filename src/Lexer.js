@@ -56,6 +56,10 @@ export class Lexer {
 		// token keyword operators
 		this.token_in = 1678321035
 		this.token_of = 1678714621
+		this.token_is = 1678321040
+		this.token_or = 1678714633
+		this.token_not = -968717457
+		this.token_and = -1076182637
 		this.token_void = -906308613
 		this.token_yield = -3298744406
 		this.token_await = 1721527123
@@ -518,6 +522,24 @@ export class Lexer {
 			case this.token_properties:
 			case this.token_properties_optional:
 				return 30
+			default:
+				return value
+		}
+	}
+	token_identify (value) {
+		switch (value) {
+			// is as ==
+			case this.token_is:
+				return this.token_compare
+			// or as ||
+			case this.token_or:
+				return this.token_logical_or
+			// not as !=
+			case this.token_not:
+				return this.token_uncompare
+			// and as &&
+			case this.token_and:
+				return this.token_logical_and
 			default:
 				return value
 		}

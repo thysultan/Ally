@@ -81,6 +81,8 @@ var value = while i > 0 {
 var {a, b, c} = {a: 1, b: 2, c: 3}
 var [a, b, c] = [1, 2, 3]
 
+a[0, 1, 2] == a[0][1][2]
+
 // command line
 aly --sys/net/asm htp:aly.com
 aly --sys/net/asm ftp:aly.com

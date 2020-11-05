@@ -41,6 +41,8 @@ export function format (value) {
 		case this.token_as: return 'as'
 		case this.token_in: return 'in'
 		case this.token_of: return 'of'
+		case this.token_or: return 'or'
+		case this.token_and: return 'and'
 		case this.token_void: return 'void'
 		case this.token_pick: return 'pick'
 		case this.token_yield: return 'yield'
@@ -164,8 +166,8 @@ export function main (value) {
 // case 0,1 => 2
 // `)
 main(`
-	a = b = c = 0
-	a ? b : c
+	var is
+	var not
 `)
 // main(`
 // fun bar (a,b=1) {return faz(1,2)}

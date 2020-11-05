@@ -29,6 +29,7 @@ array
 	a(0) slice
 	a(0,1) slice
 	a(0,1,2) slice
+	a((a,v,i) => a + v, '') reduce =>
 
 string
 	a() clone
@@ -50,7 +51,7 @@ number
 
 object
 	a() clone
-	a('k') keys
+	a('k') key
 	a([1,2],[1,2]) concat [key,val]
 	a((v,k) => v) map (v,k) => v
 	a(0) ?
