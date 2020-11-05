@@ -10,6 +10,7 @@ export class Compiler extends Parser {
 	compile_dispatch (value, child, frame, stack, index) {
 		switch (child?.token) {
 			case this.token_literal:
+			case this.token_operator:
 				return this.compile_literal(child.value, child, frame, stack, stack.length)
 			case this.token_statement:
 				return this.compile_statement(child.value, child.child, frame, stack, index)
@@ -36,6 +37,8 @@ export class Compiler extends Parser {
 			case this.token_function:
 			case this.token_definition:
 				return this.compile_function(child.props, stack[index] = this.compile_prototype(value, child, frame, stack, index), child, frame, stack, index)
+			default:
+				return ''
 		}
 	}
 	compile_statement (value, child, frame, stack, index) {
@@ -91,7 +94,7 @@ export class Compiler extends Parser {
 		return '{' + (frame.state ? 'i64 obj=fun_to_new(5);' : 'static i64 obj[5];') + 'obj+=5;obj[-1]=0;obj[-2]=argx;obj[-3]=&fun' + index + ';i64 rbx=obj;rax=fun_to_any(rcx=rbx);}'
 	}
 	compile_prototype (value, child, frame, stack, index) {
-		return 'static i64 fun' + index + '(i64 argc,p64 argv){i64 rax;i64 rcx;do{' + this.compile_children(value, child, frame, stack, index) + '}while(0);return rax;}'
+		return 'static i64 fun' + index + '(i64 argc,p64 argv){i64 rax=0;p64 rcx=&nop;do{' + this.compile_children(value, child, frame, stack, index) + '}while(0);return rax;}'
 	}
 	/*
 	 * Statement
@@ -241,27 +244,27 @@ export class Compiler extends Parser {
 		switch (value) {
 			case this.token_in:
 			case this.token_of:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;i64 rdx=rcx;if(rsi==0)' + this.compile_dispatch(value, child[1], frame, stack, index)
+				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;p64 rdx=rcx;if(rsi==0)' + this.compile_dispatch(value, child[1], frame, stack, index)
 			case this.token_logical_if:
 			case this.token_logical_or:
 			case this.token_logical_and:
 			case this.token_logical_null:
 			case this.token_assignment_optional:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;i64 rdx=rcx;'
+				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;p64 rdx=rcx;'
 			case this.token_properties:
 			case this.token_properties_optional:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;i64 rdx=rcx;' + this.compile_property(value, child[1], frame, stack, index)
+				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;p64 rdx=rcx;' + this.compile_property(value, child[1], frame, stack, index)
 			default:
-				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;i64 rdx=rcx;' + this.compile_dispatch(value, child[1], frame, stack, index)
+				return this.compile_dispatch(value, child[0], frame, stack, index) + 'i64 rbx=rax;p64 rdx=rcx;' + this.compile_dispatch(value, child[1], frame, stack, index)
 		}
 	}
 	compile_operator_epilogue (value, child, frame, stack, index) {
 		switch (value) {
 			// () []
 			case this.token_expression:
-				return 'rax=any_to_fun(rbx)(any_to_ptr(rcx)[-1],any_to_ptr(rcx));'
+				return 'rax=any_to_fun(rbx)(rcx[-1],rcx);'
 			case this.token_membership:
-				return 'rcx=any_to_obj(rbx);if(rax<any_to_ptr(rcx)[-1]){rcx=&any_to_ptr(rcx)[rax];rax=*rcx;}else{rcx=-rcx;rax=NIL;}'
+				return 'rcx=any_to_obj(rbx);if(rax<rcx[-1]){rcx=&rcx[rax];rax=*rcx;}else{rcx=&nop;rax=NIL;}'
 			// =>
 			case this.token_direction:
 				return 'break;'
@@ -272,14 +275,16 @@ export class Compiler extends Parser {
 			// ?
 			case this.token_logical_if:
 				return this.compile_if(value, [, child.value == child[1].value ? child[1].child[0] : child[1]], frame, stack, index) + this.compile_else(value, [child.value == child[1].value ? child[1].child[1] : child[1]])
-			// ?=
-			case this.token_assignment_optional:
-				return 'rax=rbx==NIL;' + this.compile_if(value, [, child[1]], frame, stack, index)
 			// :
 			case this.token_initialize:
 			// =
 			case this.token_assignment:
-				return 'if(rdx<0)rdx=any_to_cap(rdx);*rdx=rax;'
+				return '*rdx=rax;'
+			case this.token_assignment_property:
+				return 'if(rdx==&nop)rdx=any_to_cap(rdx);' + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
+			// ?=
+			case this.token_assignment_optional:
+				return 'rax=rbx==NIL;' + this.compile_if(value, [, child[1]], frame, stack, index)
 			// += -= /= %=
 			case this.token_assignment_addition:
 				return this.compile_operator_epilogue(this.token_addition, child, frame, stack, index) + this.compile_operator_epilogue(this.token_assignment, child, frame, stack, index)
@@ -339,11 +344,11 @@ export class Compiler extends Parser {
 				return 'rax=rax>=rbx;'
 			// in of instanceof
 			case this.token_in:
-				return 'if(rsi==0)rdi=any_to_obj(rax);if(rsi<any_to_ptr(rdi)[-1])rbx=key_in_ptr(rdi,rsi++);else{rsi=0;break;}'
+				return 'if(rsi==0)rdi=any_to_obj(rax);if(rsi<rdi[-1])rbx=key_in_ptr(rdi,rsi++);else{rsi=0;break;}'
 			case this.token_of:
-				return 'if(rsi==0)rdi=any_to_obj(rax);if(rsi<any_to_ptr(rdi)[-1])rbx=val_of_ptr(rdi,rsi++);else{rsi=0;break;}'
+				return 'if(rsi==0)rdi=any_to_obj(rax);if(rsi<rdi[-1])rbx=val_of_ptr(rdi,rsi++);else{rsi=0;break;}'
 			case this.token_instanceof:
-				return 'rax=rax==any_to_ptr(rcx)[-3]'
+				return 'rax=rax==rcx[-3]'
 			case this.token_concatenation:
 				return 'if(any_is_flt(rax)&&any_is_flt(rbx))' + this.compile_operator_epilogue(this.token_addition, child, frame, stack, index) + 'else{rax=any_to_con(rax,rbx);}'
 			// + -
@@ -398,13 +403,13 @@ export class Compiler extends Parser {
 			case this.token_bitwise_not:
 				return 'rax=~rbx;'
 			case this.token_increment:
-				return this.compile_operator_epilogue(this.token_assignment_addition, child, frame, stack, index) + (child[0].token == this.token_operator ? 'rax=*rdx' : '')
+				return child[0].token == this.token_operator ? 'rax=++*rcx;' : 'rax=*rcx++'
 			case this.token_decrement:
-				return this.compile_operator_epilogue(this.token_assignment_subtract, child, frame, stack, index) + (child[0].token == this.token_operator ? 'rax=*rdx' : '')
+				return child[0].token == this.token_operator ? 'rax=--*rcx;' : 'rax=*rcx++'
 			// . ?.
 			case this.token_properties:
 			case this.token_properties_optional:
-				return '{static i64 rsi;rcx=any_to_obj(rbx);if(rax!=any_to_ptr(rcx)[-5-any_to_ptr(rcx)[-1]+rsi]){rsi=obj_to_idx(rsi,rcx,rax);}if(rsi<0){/*TODO:key undefined*/}else{rcx=&any_to_ptr(rcx)[rsi];rax=*rcx;}}'
+				return '{static i64 rsi;rcx=any_to_obj(rbx);if(rax!=rcx[-5-rcx[-1]+rsi]){rsi=obj_to_idx(rsi,rcx,rax);}if(rsi<0){/*TODO:key undefined*/}else{rcx=&rcx[rsi];rax=*rcx;}}'
 			default:
 				return ''
 		}

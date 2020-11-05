@@ -1,3 +1,5 @@
+// -Wno-int-conversion
+
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
@@ -11,22 +13,26 @@ typedef unsigned long long i64;
 typedef i64* p64;
 typedef i64 (*x64)(i64, i64, ...);
 
+static i64 nop = 0;
+
 // flag
-static i64 cfg;
-static i64 zfg;
-static i64 sfg;
-static i64 ofg;
+static i64 cfg = 0;
+static i64 zfg = 0;
+static i64 sfg = 0;
+static i64 ofg = 0;
 
 // register
-static i64 rax;
-static i64 rbx;
-static i64 rcx;
-static i64 rdx;
-static i64 rsp;
-static i64 rbp;
-static i64 rsi;
-static i64 rdi;
-static i64 rip;
+static i64 rsp = 0;
+static i64 rbp = 0;
+static i64 rsi = 0;
+static i64 rdi = 0;
+
+static i64 rip = 0;
+static i64 rax = 0;
+static i64 rbx = 0;
+
+static p64 rcx = &nop;
+static p64 rdx = &nop;
 
 // nan boxing (64 bit):
 // |----NaNs----|
