@@ -8,9 +8,9 @@ Pronounced L-I, Ally is a static programming language with semi-optional types. 
 int, flt, str, obj, def, fun, var,
 true, false, null,
 import, export, as,
-continue, break, return, throw, delete, pick, typeof, sizeof, instanceof, keyof,
+continue, break, return, throw, pick, typeof, sizeof, instanceof,
 try, catch, finally, if, else, for, in, switch, case, default,
-super, extends, await
+super, extends, await, yield
 ```
 
 ## Comments

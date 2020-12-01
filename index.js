@@ -1,6 +1,6 @@
 import {Compiler} from './src/Compiler.js'
 
-export function format (value) {
+export function fmts (value) {
 	switch (value) {
 		case this.token_typings: return 'typings'
 		case this.token_literal: return 'literal'
@@ -41,14 +41,15 @@ export function format (value) {
 		case this.token_as: return 'as'
 		case this.token_in: return 'in'
 		case this.token_of: return 'of'
+		case this.token_is: return 'is'
 		case this.token_or: return 'or'
 		case this.token_and: return 'and'
+		case this.token_not: return 'not'
 		case this.token_void: return 'void'
 		case this.token_pick: return 'pick'
 		case this.token_yield: return 'yield'
 		case this.token_await: return 'await'
 		case this.token_delete: return 'delete'
-		case this.token_keyof: return 'keyof'
 		case this.token_typeof: return 'typeof'
 		case this.token_sizeof: return 'sizeof'
 		case this.token_instanceof: return 'instanceof'
@@ -92,8 +93,8 @@ export function format (value) {
 		case this.token_shift_right_unsigned: return 'shift_right_unsigned'
 		case this.token_addition: return 'addition'
 		case this.token_subtract: return 'subtract'
-		case this.token_modulo: return 'modulo'
-		case this.token_divide: return 'divide'
+		case this.token_modulous: return 'modulous'
+		case this.token_division: return 'division'
 		case this.token_multiply: return 'multiply'
 		case this.token_exponent: return 'exponent'
 		case this.token_logical_not: return 'logical_not'
@@ -102,16 +103,16 @@ export function format (value) {
 		case this.token_decrement: return 'decrement'
 		case this.token_properties: return 'properties'
 		case this.token_properties_optional: return 'properties_optional'
-		case this.token_spread_iterator: return 'spread_iterator'
-		case this.token_spread_iterable: return 'spread_iterable'
+		case this.token_generator: return 'generator'
+		case this.token_spreading: return 'spreading'
+		case this.token_destructuring: return 'destructuring'
 		default: return value
 	}
 }
 
 export function main (value) {
-	var compile = new Compiler(value)
+	var compile = new Compiler(value = value.trim())
 	var program = compile.parse_program(0, null)
-	console.log(value.trim())
 	console.log(program)
 	console.log(JSON.stringify(program, function (key, value) {
 	  switch (key) {
@@ -121,12 +122,18 @@ export function main (value) {
 	  	case 'state':
 	  	case 'caret':
 	  	case 'frame':
+	  	case 'scope':
 	  		return undefined
+	  	case 'types':
+	  		if (typeof value == 'object') {
+	  			return 'var'
+	  		}
 	  	default:
-	  		return format.call(compile, value)
+	  		return fmts.call(compile, value)
 	  }
 	}, 2))
-	// return console.log(compiler.compile_main(0, program))
+
+	console.log(compile.compile_program(0, program, program, [], 0))
 }
 
 // fun foo = a, b => while 1 if a == b break else continue
@@ -147,7 +154,7 @@ export function main (value) {
 // main(`1*2+3`)
 // main(`a=1`)
 // main(`a`)
-// main(`
+// main(`p
 // 	{
 // 		var a = 40
 // 		a
@@ -165,10 +172,10 @@ export function main (value) {
 // main(`
 // case 0,1 => 2
 // `)
-main(`
-	var is
-	var not
-`)
+// main(`
+// var is
+// var not
+// `)
 // main(`
 // fun bar (a,b=1) {return faz(1,2)}
 // `)
@@ -176,3 +183,56 @@ main(`
 // 	fun print (var a, var b) { return a + b + 1 }
 // 	print(1, 2)
 // `)
+
+// main('a = {a: 1}')
+// main('var a = 1')
+// main('if 2 a = 3')
+main('if 2 var a = 3')
+
+/*
+{
+	i64 rsi=1;
+	i64 rbp[5+rsi];
+	rax=ptr_to_any(argx);
+	p64 argx=rbp+5;
+	argx[-1]=rsi;
+	argx[-2]=rax;
+	rcx=argx;
+	p64 rdx=rcx;
+	{
+		rcx=argx;
+		rcx=&rcx[0];
+		rax=*rcx;
+		i64 rbx=rax;
+		p64 rdx=rcx;
+		{
+			i64 rsi=1;
+			p64 rbp=sub_to_new(5+rsi);
+			rax=ptr_to_any(argx);
+			p64 argx=rbp+5;
+			argx[-1]=rsi;
+			argx[-2]=rax;
+			rcx=argx;
+			p64 rdx=rcx;
+			{
+				rcx=arge;
+				rcx=rcx[-2];
+				rcx=&rcx[0];
+				rax=*rcx;
+				i64 rbx=rax;
+				p64 rdx=rcx;
+				{
+					static f64 rbx=(1);
+					rax=flt_to_int(&rbx);
+				}
+				*rdx=rax;
+			}
+			rcx=rdx;
+			rax=obj_to_any(ptr_to_any(rcx));
+		}
+		*rdx=rax;
+	}
+	rcx=rdx;
+	rax=obj_to_any(ptr_to_any(rcx));
+}
+*/

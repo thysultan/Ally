@@ -10,12 +10,12 @@ export class Lexer {
 		this.state_index = 0
 		this.state_token = 1
 		// token nodes
-		this.token_typings = 10
-		this.token_literal = 11
-		this.token_keyword = 12
-		this.token_operator = 13
-		this.token_statement = 14
-		this.token_identifier = 15
+		this.token_typings = 0
+		this.token_literal = 1
+		this.token_keyword = 2
+		this.token_operator = 3
+		this.token_statement = 4
+		this.token_identifier = 5
 		this.token_expression = 40
 		this.token_parameters = 41
 		this.token_membership = 91
@@ -63,10 +63,8 @@ export class Lexer {
 		this.token_void = -906308613
 		this.token_yield = -3298744406
 		this.token_await = 1721527123
-		this.token_keyof = -734729869
 		this.token_typeof = 2430491513
 		this.token_sizeof = 221262240
-		this.token_delete = 629840307
 		this.token_instanceof = -4091102314
 		// token symbol operators
 		this.token_terminate = -2620402762
@@ -121,8 +119,9 @@ export class Lexer {
 		this.token_decrement = 1674385030
 		this.token_properties = -2620402775
 		this.token_properties_optional = 1675565813
-		this.token_ranges = 1674450630
+		this.token_generator = 1674450630
 		this.token_spreading = -1501717782
+		this.token_destructuring = 1501717782
 	}
 	/*
 	 * Scan
@@ -173,7 +172,7 @@ export class Lexer {
 		return arguments.length ? this.state_value = value : this.state_value
 	}
 	lexer_node (token, value, props, child) {
-		return {token: token, value: value, props: props, child: child, caret: this.lexer_addr(), types: 0, index: 0, count: 0, state: 0, frame: null}
+		return {token: token, value: value, props: props, child: child, caret: this.lexer_addr(), types: 0, index: 0, count: 0, state: 0, frame: null, scope: null}
 	}
 	/*
 	 * Lexer
@@ -356,59 +355,6 @@ export class Lexer {
 	/*
 	 * Token
 	 */
-	token_identity (value) {
-		switch (value) {
-			// types
-			case this.token_character:
-			case this.token_integer:
-			case this.token_float:
-			case this.token_string:
-			case this.token_object:
-			case this.token_definition:
-			case this.token_function:
-			case this.token_variable:
-			case this.token_assembly:
-			case this.token_nullable:
-				return this.token_typings
-			// literals
-			case this.token_null:
-			case this.token_true:
-			case this.token_false:
-				return this.token_literal
-			// keywords
-			case this.token_do:
-			case this.token_if:
-			case this.token_for:
-			case this.token_try:
-			case this.token_else:
-			case this.token_case:
-			case this.token_catch:
-			case this.token_while:
-			case this.token_switch:
-			case this.token_extends:
-			case this.token_finally:
-			case this.token_throw:
-			case this.token_break:
-			case this.token_return:
-			case this.token_continue:
-			case this.token_import:
-			case this.token_as:
-				return this.token_keyword
-			// operators
-			case this.token_in:
-			case this.token_of:
-			case this.token_void:
-			case this.token_await:
-			case this.token_keyof:
-			case this.token_typeof:
-			case this.token_sizeof:
-			case this.token_delete:
-			case this.token_instanceof:
-				return this.token_operator
-			default:
-				return this.token_identifier
-		}
-	}
 	token_priority (value) {
 		switch (value) {
 			// () [] {}
@@ -420,8 +366,8 @@ export class Lexer {
 			case this.token_direction:
 				return 10
 			// .. ...
-			case this.token_ranges:
-			case this.token_spread:
+			case this.token_generator:
+			case this.token_spreading:
 				return 11
 			// ?
 			case this.token_logical_if:
@@ -510,7 +456,6 @@ export class Lexer {
 			case this.token_keyof:
 			case this.token_typeof:
 			case this.token_sizeof:
-			case this.token_delete:
 				return 28
 			// ! ~ ++ --
 			case this.token_logical_not:
@@ -523,7 +468,62 @@ export class Lexer {
 			case this.token_properties_optional:
 				return 30
 			default:
-				return value
+				return value == this.token_keyword ? value : 32
+		}
+	}
+	token_identity (value) {
+		switch (value) {
+			// types
+			case this.token_character:
+			case this.token_integer:
+			case this.token_float:
+			case this.token_string:
+			case this.token_object:
+			case this.token_definition:
+			case this.token_function:
+			case this.token_variable:
+			case this.token_assembly:
+			case this.token_nullable:
+				return this.token_typings
+			// literals
+			case this.token_null:
+			case this.token_true:
+			case this.token_false:
+				return this.token_literal
+			// keywords
+			case this.token_do:
+			case this.token_if:
+			case this.token_for:
+			case this.token_try:
+			case this.token_else:
+			case this.token_case:
+			case this.token_catch:
+			case this.token_while:
+			case this.token_switch:
+			case this.token_extends:
+			case this.token_finally:
+			case this.token_throw:
+			case this.token_break:
+			case this.token_return:
+			case this.token_continue:
+			case this.token_import:
+			case this.token_as:
+				return this.token_keyword
+			// operators
+			case this.token_in:
+			case this.token_of:
+			case this.token_is:
+			case this.token_or:
+			case this.token_not:
+			case this.token_and:
+			case this.token_void:
+			case this.token_await:
+			case this.token_typeof:
+			case this.token_sizeof:
+			case this.token_instanceof:
+				return this.token_operator
+			default:
+				return this.token_identifier
 		}
 	}
 	token_identify (value) {
@@ -581,10 +581,8 @@ export class Lexer {
 			// keyword operators
 			case this.token_void:
 			case this.token_yield:
-			case this.token_keyof:
 			case this.token_typeof:
 			case this.token_sizeof:
-			case this.token_delete:
 			// , ;
 			case this.token_separator:
 			case this.token_terminate:
@@ -595,7 +593,7 @@ export class Lexer {
 			case this.token_bitwise_not:
 				return 0
 			// ...
-			case this.token_spread:
+			case this.token_spreading:
 			// ++ --
 			case this.token_increment:
 			case this.token_decrement:
