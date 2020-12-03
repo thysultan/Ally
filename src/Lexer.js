@@ -15,18 +15,19 @@ export class Lexer {
 		this.token_keyword = 2
 		this.token_operator = 3
 		this.token_statement = 4
-		this.token_identifier = 5
+		this.token_operations = 5
+		this.token_identifier = 6
+		this.token_enviroment = 7
 		this.token_expression = 40
 		this.token_parameters = 41
 		this.token_membership = 91
 		this.token_subroutine = 123
-		this.token_enviroment = 125
 		// token types(int, flt, str, obj, def, fun, var, asm, nil)
 		this.token_integer = -1010090581
 		this.token_float = -1035006294
 		this.token_string = -927081939
 		this.token_object = -961308749
-		this.token_definition = -1051988511
+		this.token_definite = -1051988511
 		this.token_function = -1034415909
 		this.token_variable = -903543805
 		this.token_assembly = -1075854633
@@ -479,7 +480,7 @@ export class Lexer {
 			case this.token_float:
 			case this.token_string:
 			case this.token_object:
-			case this.token_definition:
+			case this.token_definite:
 			case this.token_function:
 			case this.token_variable:
 			case this.token_assembly:

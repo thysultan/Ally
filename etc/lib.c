@@ -11,11 +11,11 @@
 #include <threads.h>
 #include <sys/mman.h>
 
-// typings definitions
 typedef char i08;
-typedef char* u08;
+typedef char* p08;
+typedef short i16;
 typedef char32_t i32;
-typedef char32_t* u32;
+typedef char32_t* p32;
 typedef long long i64;
 typedef double f64;
 typedef i64* p64;
@@ -23,10 +23,14 @@ typedef f64* d64;
 typedef i64 (*x64)(i64, ...);
 
 // bytes
-static i64 b01 = sizeof(i08) * 1;
-static i64 b04 = sizeof(i32) * 1;
-static i64 b08 = sizeof(i64) * 1;
-static i64 b16 = sizeof(i64) * 2;
+static i64 b01 = 1;
+static i64 b02 = 2;
+static i64 b04 = 4;
+static i64 b08 = 8;
+static i64 b16 = 16;
+static i64 b64 = 64;
+static i64 k01 = 1024; // kilobyte
+static i64 m01 = 1024 * 1024; // megabyte
 
 // flagging
 static i64 cfg = 0;
@@ -66,10 +70,9 @@ static p64 are = 0;
 static p64 arg = 0;
 
 // constant variables
-#define str ((i64)(&string))
-#define fun ((i64)(&function))
-#define mem ((i64)(&membership))
-#define sub ((i64)(&subroutine))
+#define mem ((i64)(&member))
+#define sub ((i64)(&object))
+#define env ((i64)(&object))
 
 static i64 nil = 0x0000000000000000;
 static i64 nop = 0x0000000000000000;
@@ -85,7 +88,6 @@ static i64 false = 0xFFF1000000000003;
 //           tag ---V
 //           sig V
 //           nan VVV
-#define IS_ENV 0x0000000000000000
 #define IS_BIT 0x7000000000000000 // bit flag
 
 #define IS_VAR 0x0001000000000000 // null/true/false
@@ -93,6 +95,7 @@ static i64 false = 0xFFF1000000000003;
 #define IS_STR 0x0003000000000000 // string/character
 #define IS_MEM 0x0004000000000000 // membership(array)
 #define IS_SUB 0x0005000000000000 // subroutine(object)
+#define IS_ENV 0x0000000000000000 // enviroment(static)
 
 #define TO_VAR 0xFFF1000000000000
 #define TO_FUN 0xFFF2000000000000
@@ -163,10 +166,10 @@ static i64 false = 0xFFF1000000000003;
 #define mem_to_get(a,b) ((b)(((p64)(a))[3]))
 
 // allocate
-#define env_to_new(a) allocate_object(a,IS_ENV) // allocate new env object
 #define fun_to_new(a) allocate_object(a,IS_FUN) // allocate new fun object
 #define mem_to_new(a) allocate_object(a,IS_MEM) // allocate new mem object
 #define sub_to_new(a) allocate_object(a,IS_SUB) // allocate new sub object
+#define env_to_new(a) allocate_object(a,IS_ENV) // allocate new env object
 // allocate helpers
 #define int_to_new(a,b) (((a)+((b)-1))&~((b)-1))
 #define map_to_new(a,b) ((b)(mmap(NULL,a,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,0,0)))
@@ -276,7 +279,7 @@ static i64 spreading(a,b) { return a ? a : b}
 static i64 normalize(a,b) {}
 
 /*
- * Constructor
+ * Constructors
  */
 
 // string callable
@@ -294,8 +297,13 @@ static i64 object (i64 arc, p64 arv, p64 are, p64 arg) {
 	return nil;
 }
 
+// member callable
+static i64 member (i64 arc, p64 arv, p64 are, p64 arg) {
+	return nil;
+}
+
 /*
- * Allocation
+ * Allocations
  */
 
 // heap
@@ -307,19 +315,19 @@ static i64 size;
 
 // allocate heap segregation
 static i64 allocate_blocks (i64 rax) {
-	if (rax <= 8) {
+	if (rax <= b08) {
 		return 0;
-	} else if (rax <= 16) {
+	} else if (rax <= b16) {
 		return 1;
-	} else if (rax <= 32) {
+	} else if (rax <= b32) {
 		return 2;
-	} else if (rax <= 64) {
+	} else if (rax <= b64) {
 		return 3;
 	} else if (rax <= 128) {
 		return 4;
 	} else if (rax <= 256) {
 		return 5;
-	} else if (rax <= 1024) {
+	} else if (rax <= k01) {
 		return 6;
 	} else {
 		return 7;
@@ -328,19 +336,19 @@ static i64 allocate_blocks (i64 rax) {
 
 // allocate page segregation
 static i64 allocate_layout (i64 rax) {
-	if (rax <= 1024 * 128) {
+	if (rax <= k01 * 128) {
 		return 0;
-	} else if (rax <= 1024 * 256) {
+	} else if (rax <= k01 * 256) {
 		return 1;
-	} else if (rax <= 1024 * 512) {
+	} else if (rax <= k01 * 512) {
 		return 2;
-	} else if (rax <= 1024 * 1024) {
+	} else if (rax <= m01 * 1) {
 		return 3;
-	} else if (rax <= 1024 * 1024 * 2) {
+	} else if (rax <= m01 * 2) {
 		return 4;
-	} else if (rax <= 1024 * 1024 * 4) {
+	} else if (rax <= m01 * 4) {
 		return 5;
-	} else if (rax <= 1024 * 1024 * 8) {
+	} else if (rax <= m01 * 8) {
 		return 6;
 	} else {
 		return 7;
@@ -350,7 +358,7 @@ static i64 allocate_layout (i64 rax) {
 // allocate allocation
 static p64 allocate_memory (i64 rax, i64 rbx) {
 	i64 index = allocate_blocks(rax); // determine sizable kinds segregation
-	i64 bytes = rax * rbx + b16; // length multipled by the size of an element plus 16 bytes for additional bookkeeping information
+	i64 bytes = int_to_new(rax, 2) * rbx + b16; // length multipled by the size of an element plus 16 bytes for additional bookkeeping information
 
 	p64 taken = used[index]; // taken block of memory of like sizable kinds
 	p64 empty = free[index]; // empty block of memory of like sizable kinds
@@ -365,17 +373,17 @@ static p64 allocate_memory (i64 rax, i64 rbx) {
 
 		// virutalize if we where to try to allocate memory would it fall out of the pages memory break
 		if (heads - bytes < pages) {
-			lines = int_to_new(bytes, 1024 * 64); // calcuate page size
+			lines = int_to_new(bytes, k01 * 64); // calcuate page size
 			paper = map_to_new(lines, i08); // map memory for page
 
 			heads = paper == -1 ? fault(ENOMEM) : *paper[lines]; // advance head caret to end of page on success
-			paper = paper + b16; // advance page pointer to after meta data padding
+			paper = *paper[b16]; // advance page pointer to after meta data padding
 
 			cap_to_set(paper, lines); // assign capacity of page
 			tie_to_set(paper, pages); // assign connection to previous page
 		}
 
-		empty = head[index] = heads - bytes; // move caret of head to allocate N number of bytes for the memory request
+		empty = head[index] = *heads[-bytes]; // move caret of head to allocate N number of bytes for the memory request
 	}
 
 	used[index] = empty; // promote the empty block of memory to used segment
@@ -388,18 +396,18 @@ static p64 allocate_memory (i64 rax, i64 rbx) {
 
 // allocate container
 static p64 allocate_object (i64 rax, i64 rbx) {
-	p64 obj = allocate_memory(8, b64);
+	p64 obj = allocate_memory(b08, b64);
 
 	switch (rbx) {
-		case IS_ENV: mem_to_set(obj, allocate_memory(8 + rax * 1, b08));
+		case IS_FUN: mem_to_set(obj, allocate_memory(b08 + rax * 1, b08));
 			break
-		case IS_FUN: mem_to_set(obj, allocate_memory(8 + rax * 1, b08));
+		case IS_STR: mem_to_set(obj, allocate_memory(b08 + rax * 1, b04));
 			break
-		case IS_STR: mem_to_set(obj, allocate_memory(8 + rax * 1, b04));
+		case IS_MEM: mem_to_set(obj, allocate_memory(b08 + rax * 1, b08));
 			break
-		case IS_MEM: mem_to_set(obj, allocate_memory(8 + rax * 1, b08));
+		case IS_SUB: mem_to_set(obj, allocate_memory(b08 + rax * 2, b08));
 			break
-		case IS_SUB: mem_to_set(obj, allocate_memory(8 + rax * 2, b08));
+		case IS_ENV: mem_to_set(obj, allocate_memory(b08 + rax * 1, b08));
 			break
 	}
 
