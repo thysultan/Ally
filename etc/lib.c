@@ -268,12 +268,16 @@ static i64 any_to_cmp (i64 rax, i64 rbx) {
 
 			if (rsp != rbp) {
 				while (--rdi < -1) {
-					i64 a = rsp[1 + rdi - rsi];
-					i64 b = any_in_sub(a, rbx, &rax, rbp, 0, rbp);
+					i64 idx = rsi;
+					i64 key = rsp[rdi + rsi];
+					i64 val = any_in_sub(key, rbx, &nop, rbp, 0, &idx);
 
-					if (rax == undefined) {
+					if (idx == rsi) {
 						return 0;
 					}
+
+					i64 a = rsp[rdi];
+					i64 b = rbp[rdi];
 
 					if (a != b && (any_is_flt(a) || any_is_flt(b) || !any_to_cmp(a, b))) {
 						return 0;
@@ -325,9 +329,7 @@ static i64 any_in_sub (i64 rax, i64 rbx, p64 rcx, p64 rdx, i64 rsi, p64 rdi) {
 				}
 			}
 
-			if (rsi == len) {
-				*rcx = undefined;
-			} else {
+			if (rsi != len) {
 				return *(*rcx = &obj[*rdi = rsi]);
 			}
 	}
