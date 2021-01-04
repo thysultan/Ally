@@ -39,6 +39,11 @@ fun gen () {
 	asm mov(rax, 3)
 	asm mov(rbx, 4)
 	asm add(rax, rbx, rcx)
+	// or
+	asm(0x12)
+	asm(mov(rax 3))
+	asm(add(rbx 4))
+	asm(add(rax rbx))
 }
 
 // threads?

@@ -8,7 +8,7 @@ Pronounced L-I, Ally is a static programming language with semi-optional types. 
 int, flt, str, obj, def, fun, var,
 true, false, null,
 import, export, as,
-continue, break, return, throw, pick, typeof, sizeof, instanceof,
+continue, break, return, throw, keyof, typeof, sizeof, instanceof,
 try, catch, finally, if, else, for, in, switch, case, default,
 super, extends, await, yield
 ```
@@ -182,11 +182,11 @@ fun name var a = 1 {
 fun name var a = 1, var b = 2 {
 }
 
-fun name var a pick {var ref, var age = 1}, var b {
+fun name var {ref, age = 1}, var b {
 }
 
 fun name
-	obj a pick {str type, age = 1},
+	var {type, age = 1},
 	int b {
 }
 ```
@@ -196,29 +196,27 @@ fun name
 Lambdas are identical to functions and share the same type of `function`. The expression immediatly after '=>' is the return value of a lambda function.
 
 ```
-var a => 'return'
+(var a) => 'return'
 
-var a, var b => 'return'
+(var a, var b) => 'return'
 
 () => 'return'
 
-var ...args => 'return'
+(var ...args) => 'return'
 
-var ...args, var a => 'return'
+(var ...args, var a) => 'return'
 
-var a, var ...args => 'return'
+(var a, var ...args) => 'return'
 
-var a pick {var ref, var age} => 'return'
+(var {ref, age}) => 'return'
 
-var a pick {var ref, var age = 1} => 'return'
+({ref, age = 1}) => 'return'
 
-var a = 1 => 'return'
+a = 1 => 'return'
 
-var a = 1, var b = 2 => 'return'
+(a = 1, var b = 2) => 'return'
 
-var a pick {var ref, var age = 1}, int b => 'return'
-
-var a pick {str type, var age = 1}, int b => 'return'
+({ref, age = 1}, int b) => 'return'
 ```
 
 ## Invocations
@@ -300,17 +298,17 @@ def Person {
 	var integer = int(1024)
 	var object = obj(1024)
 
-	fun create var name, var age {}
-	fun assign var key, var value {}
-	fun destroy var id {}
-	fun generic def type, var value {}
+	fun create (var name, var age) {}
+	fun assign (var key, var value) {}
+	fun destroy (var id) {}
+	fun generic (def type, var value) {}
 }
 ```
 
 Class optional parameters resemble function parameters.
 
 ```
-def Person var a pick {var key}, var b = 1, obj c {
+def Person ({var key}, var b = 1, obj c) {
 	int age = key
 }
 ```
@@ -318,7 +316,7 @@ def Person var a pick {var key}, var b = 1, obj c {
 Fields are created statitically or through referenced named parameters.
 
 ```
-def Person var age, var year, var data pick {name} {
+def Person (var age, var year, {name}) {
 	int x = 0
 	int y = 0
 	fun print => print('Hello' + 'World' + '!')
@@ -339,11 +337,11 @@ obj person = Person(10, 1989, {name: 'Sultan'})
 All named arguments in the class are assigned to a corrosponding field.
 
 ```
-def Element var type, var props pick {var ref, var key}, children {
-  fun handleEvent obj event {
+def Element (var type, {var ref, var key}, children) {
+  fun handleEvent (obj event) {
     dispatchEvent(event, => print('dispatchEvent'))
   }
-  fun dispatchEvent obj event, fun callback {
+  fun dispatchEvent (obj event, fun callback) {
     try {
       callback(event)
     } catch e {
@@ -352,7 +350,7 @@ def Element var type, var props pick {var ref, var key}, children {
   }
 }
 
-fun createElement var type, obj props, var ...children {
+fun createElement (var type, obj props, var ...children) {
   return Element(type, props, children)
 }
 
@@ -365,13 +363,13 @@ Classes can extend other class.
 
 ```
 def Person {
-	fun getter var key {
+	fun getter (var key) {
 		return super[key]
 	}
 }
 
 def Student extends Person {
-	fun get var key {
+	fun get (var key) {
 		super.getter(key)
 	}
 }
@@ -468,22 +466,19 @@ student instanceof Student === true
 student instanceof Person !== true
 ```
 
-## Pick
+## Keyof
 
-The `pick` operator retrieves the corresponding value(s) from an `object`.
+The `keyof` operator retrieves the corresponding keys from an `object`.
 
 ```
-{var foo: 1, var bar: 2} pick {var foo, var bar} === {var foo: 1, var bar: 2}
-[2, 3, 5, 7, 11, 13] pick [1...4] === [3, 5, 7, 11]
-[2, 3, 5, 7, 11, 13] pick [1, 2, 3, 4] === [3, 5, 7, 11]
+keyof {var foo, var bar} === ['foo', 'bar']
+keyof [1...4] === [1, 2, 3, 4]
 ```
-
-In some respects the `pick` operator is much like the subscript `[]` operator. Pick however is aligned to support a range of contexts including destructuring function arguments and picking values from exotic objects.
 
 
 ## Spread
 
-The `...` operator is a generic operator that spreads it's contents onto the context of its binding. The different contexts include function arguments `fun ...arg`, objects `{...a}` arrays `[...a]` and numbers `0...3`.
+The `...` operator is a generic operator that spreads it's contents onto the context of its binding. The different contexts include function arguments `fun (...arg)`, objects `{...a}` and arrays `[...a]`.
 
 ```
 int arr = [1, 2]
@@ -493,16 +488,22 @@ obj foo = {var foo = 1}
 
 [0, ...arr] === [0, 1, 2]
 
-[1...3] === [1, 2, 3]
-
 fun name var ...args {
 	print(typeof args === 'array')
 }
 ```
 
+## Range
+
+The `..` operator is a generic range that generates an array with the contents made of the range of values of its binding.
+
+```
+1..3 === [1, 2, 3]
+```
+
 ## Array
 
-Arrays are immutable(size), Array literals are delimited with brackets `[`, `]` and share the form `[1, 2, 3]`.
+Array literals are delimited with brackets `[`, `]` and share the form `[1, 2, 3]`.
 
 ```
 // create
@@ -514,9 +515,7 @@ arr[0] = 1
 // deep compare
 arr === [1, 2, 3, 4, 5, 6]
 
-// noop
-arr[7] = 10
-arr[7] == null
+// length
 sizeof arr == 6
 ```
 
@@ -533,10 +532,12 @@ stringify(obj target) str
 ## System
 
 ```
-import sys as {write, print}
+import sys as {console}
 
-write(...arguments) int
-print(...arguments) int
+console.print(...arguments)
+console.write(...arguments)
+console.clear(...arguments)
+console.yield(...arguments)
 ```
 
 ### Math

@@ -64,6 +64,7 @@ export class Lexer {
 		this.token_void = -906308613
 		this.token_yield = -3298744406
 		this.token_await = 1721527123
+		this.token_keyof = -734729869
 		this.token_typeof = 2430491513
 		this.token_sizeof = 221262240
 		this.token_instanceof = -4091102314
@@ -78,9 +79,9 @@ export class Lexer {
 		this.token_assignment_subtract = 1674385046
 		this.token_assignment_division = 1674516244
 		this.token_assignment_modulous = 1673860254
-		this.token_assignment_bitwise = 1673925853
-		this.token_assignment_bitwise_xor = 1677599397
 		this.token_assignment_bitwise_or = 1679567367
+		this.token_assignment_bitwise_xor = 1677599397
+		this.token_assignment_bitwise_and = 1673925853
 		this.token_assignment_multiply = 1674188249
 		this.token_assignment_exponent = -1535026183
 		this.token_assignment_shift_left = -1385138311
@@ -120,9 +121,8 @@ export class Lexer {
 		this.token_decrement = 1674385030
 		this.token_properties = -2620402775
 		this.token_properties_optional = 1675565813
-		this.token_generator = 1674450630
-		this.token_spreading = -1501717782
-		this.token_destructuring = 1501717782
+		this.token_generate = 1674450630
+		this.token_iterable = -1501717782
 	}
 	/*
 	 * Scan
@@ -343,7 +343,7 @@ export class Lexer {
 	lexer_operator (value, index, props) {
 		do {
 			if (this.lexer_sign(this.lexer_scan())) {
-				if (this.token_operatee(this.lexer_move(value = this.lexer_hash(props = value, this.lexer_addr() - index))) < 2) {
+				if (this.token_argument(this.lexer_move(value = this.lexer_hash(props = value, this.lexer_addr() - index))) < 2) {
 					return value
 				}
 			} else {
@@ -367,8 +367,8 @@ export class Lexer {
 			case this.token_direction:
 				return 10
 			// .. ...
-			case this.token_generator:
-			case this.token_spreading:
+			case this.token_generate:
+			case this.token_iterable:
 				return 11
 			// ?
 			case this.token_logical_if:
@@ -384,10 +384,10 @@ export class Lexer {
 			case this.token_assignment_subtract:
 			case this.token_assignment_division:
 			case this.token_assignment_modulous:
-			// &= ^= |=
-			case this.token_assignment_bitwise_and:
-			case this.token_assignment_bitwise_xor:
+			// |= ^= &=
 			case this.token_assignment_bitwise_or:
+			case this.token_assignment_bitwise_xor:
+			case this.token_assignment_bitwise_and:
 			// *= **=
 			case this.token_assignment_multiply:
 			case this.token_assignment_exponent:
@@ -519,6 +519,7 @@ export class Lexer {
 			case this.token_and:
 			case this.token_void:
 			case this.token_await:
+			case this.token_keyof:
 			case this.token_typeof:
 			case this.token_sizeof:
 			case this.token_instanceof:
@@ -555,6 +556,30 @@ export class Lexer {
 				return 0
 		}
 	}
+	token_argument (value) {
+		switch (value) {
+			// keyword operators
+			case this.token_void:
+			case this.token_yield:
+			case this.token_keyof:
+			case this.token_typeof:
+			case this.token_sizeof:
+			// =>
+			case this.token_direction:
+			// ...
+			case this.token_iterable:
+			// ! ~
+			case this.token_logical_not:
+			case this.token_bitwise_not:
+				return 0
+			// ++ --
+			case this.token_increment:
+			case this.token_decrement:
+				return 1
+			default:
+				return 2
+		}
+	}
 	token_assignee (value) {
 		switch (value) {
 			case this.token_assignment:
@@ -575,32 +600,6 @@ export class Lexer {
 				return 1
 			default:
 				return 0
-		}
-	}
-	token_operatee (value) {
-		switch (value) {
-			// keyword operators
-			case this.token_void:
-			case this.token_yield:
-			case this.token_typeof:
-			case this.token_sizeof:
-			// , ;
-			case this.token_separator:
-			case this.token_terminate:
-			// =>
-			case this.token_direction:
-			// ! ~
-			case this.token_logical_not:
-			case this.token_bitwise_not:
-				return 0
-			// ...
-			case this.token_spreading:
-			// ++ --
-			case this.token_increment:
-			case this.token_decrement:
-				return 1
-			default:
-				return 2
 		}
 	}
 }

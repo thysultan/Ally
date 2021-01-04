@@ -184,10 +184,11 @@ export function main (value) {
 // 	print(1, 2)
 // `)
 
+// main('a + b')
 // main('a = {a: 1}')
-// main('var a = 1')
+main('while 1 a = 1')
 // main('if 2 a = 3')
-main('if 2 var a = 3')
+// main('if 2 var a = 3')
 
 /*
 {
