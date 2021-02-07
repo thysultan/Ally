@@ -173,7 +173,7 @@ export class Lexer {
 		return arguments.length ? this.state_value = value : this.state_value
 	}
 	lexer_node (token, value, props, child) {
-		return {token: token, value: value, props: props, child: child, caret: this.lexer_addr(), types: 0, index: 0, count: 0, state: 0, frame: null, scope: null}
+		return {token: token, value: value, props: props, child: child, caret: this.lexer_addr(), types: 0, index: 0, count: 0, state: 0, stack: 0, frame: null, scope: null}
 	}
 	/*
 	 * Lexer

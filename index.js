@@ -114,26 +114,28 @@ export function main (value) {
 	var compile = new Compiler(value = value.trim())
 	var program = compile.parse_program(0, null)
 	console.log(program)
-	console.log(JSON.stringify(program, function (key, value) {
-	  switch (key) {
-	  	case 'index':
-	  	case 'count':
-	  		return value
-	  	case 'state':
-	  	case 'caret':
-	  	case 'frame':
-	  	case 'scope':
-	  		return undefined
-	  	case 'types':
-	  		if (typeof value == 'object') {
-	  			return 'var'
-	  		}
-	  	default:
-	  		return fmts.call(compile, value)
-	  }
-	}, 2))
+	// console.log(JSON.stringify(program, function (key, value) {
+	//   switch (key) {
+	//   	case 'index':
+	//   	case 'count':
+	//   		return value
+	//   	case 'state':
+	//   	case 'caret':
+	//   	case 'frame':
+	//   	case 'scope':
+	//   		return undefined
+	//   	case 'types':
+	//   		if (typeof value == 'object') {
+	//   			return 'var'
+	//   		}
+	//   	default:
+	//   		return fmts.call(compile, value)
+	//   }
+	// }, 2))
 
-	console.log(compile.compile_program(0, program, program, [], 0))
+	var execute = compile.compile_program(0, program, program, [], 0)
+
+	document.body.innerHTML = '<pre style="max-width:100%;white-space:break-spaces;font-size:20px;line-height:1.5;">' + execute + '</pre>'
 }
 
 // fun foo = a, b => while 1 if a == b break else continue
@@ -184,56 +186,23 @@ export function main (value) {
 // 	print(1, 2)
 // `)
 
+main(`switch 1 {case 1, 2 {}}`)
+
+// main(`
+// 	var a = 1
+// 	var b = {a}
+// `)
+// main('a = [1]')
 // main('a + b')
 // main('a = {a: 1}')
-main('while 1 a = 1')
+// main('var o = {var a = 1, ...a}')
+// main('{var a = 1, ...2}')
+
+// main('var o = {1, 2}')
+// main('if 1 2, 3')
+// main('{1+2,3}')
+// main('(1,3)')
+
 // main('if 2 a = 3')
 // main('if 2 var a = 3')
 
-/*
-{
-	i64 rsi=1;
-	i64 rbp[5+rsi];
-	rax=ptr_to_any(argx);
-	p64 argx=rbp+5;
-	argx[-1]=rsi;
-	argx[-2]=rax;
-	rcx=argx;
-	p64 rdx=rcx;
-	{
-		rcx=argx;
-		rcx=&rcx[0];
-		rax=*rcx;
-		i64 rbx=rax;
-		p64 rdx=rcx;
-		{
-			i64 rsi=1;
-			p64 rbp=sub_to_new(5+rsi);
-			rax=ptr_to_any(argx);
-			p64 argx=rbp+5;
-			argx[-1]=rsi;
-			argx[-2]=rax;
-			rcx=argx;
-			p64 rdx=rcx;
-			{
-				rcx=arge;
-				rcx=rcx[-2];
-				rcx=&rcx[0];
-				rax=*rcx;
-				i64 rbx=rax;
-				p64 rdx=rcx;
-				{
-					static f64 rbx=(1);
-					rax=flt_to_int(&rbx);
-				}
-				*rdx=rax;
-			}
-			rcx=rdx;
-			rax=obj_to_any(ptr_to_any(rcx));
-		}
-		*rdx=rax;
-	}
-	rcx=rdx;
-	rax=obj_to_any(ptr_to_any(rcx));
-}
-*/
