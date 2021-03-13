@@ -74,7 +74,6 @@ export class Lexer {
 		this.token_direction = 1675434631
 		this.token_initialize = -2620402763
 		this.token_assignment = -2620402760
-		this.token_assignment_concatenation = 2620402778
 		this.token_assignment_addition = 1674253848
 		this.token_assignment_subtract = 1674385046
 		this.token_assignment_division = 1674516244
@@ -84,10 +83,10 @@ export class Lexer {
 		this.token_assignment_bitwise_and = 1673925853
 		this.token_assignment_multiply = 1674188249
 		this.token_assignment_exponent = -1535026183
-		this.token_assignment_shift_left = -1385138311
-		this.token_assignment_shift_right = -1368484103
-		this.token_assignment_shift_left_unsigned = 4934952648
-		this.token_assignment_shift_right_unsigned = -2077153338
+		this.token_assignment_shift_arithmetic_left = -1385138311
+		this.token_assignment_shift_arithmetic_right = -1368484103
+		this.token_assignment_shift_logical_left = 4934952648
+		this.token_assignment_shift_logical_right = -2077153338
 		this.token_assignment_optional = 1675565828
 		this.token_less_than = -2620402761
 		this.token_greater_than = -2620402759
@@ -104,11 +103,10 @@ export class Lexer {
 		this.token_uncompare = 1673597858
 		this.token_deep_compare = -1376811207
 		this.token_deep_uncompare = -1608133347
-		this.token_shift_left = 1675369030
-		this.token_shift_right = 1675500230
-		this.token_shift_left_unsigned = -1385138312
-		this.token_shift_right_unsigned = -1368484102
-		this.token_concatenation = 2620402778
+		this.token_shift_arithmetic_left = 1675369030
+		this.token_shift_arithmetic_right = 1675500230
+		this.token_shift_logical_left = -1385138312
+		this.token_shift_logical_right = -1368484102
 		this.token_addition = -2620402778
 		this.token_subtract = -2620402776
 		this.token_modulous = -2620402784
@@ -392,10 +390,10 @@ export class Lexer {
 			case this.token_assignment_multiply:
 			case this.token_assignment_exponent:
 			// <<= >>= <<<= >>>=
-			case this.token_assignment_shift_left:
-			case this.token_assignment_shift_right:
-			case this.token_assignment_shift_left_unsigned:
-			case this.token_assignment_shift_right_unsigned:
+			case this.token_assignment_shift_arithmetic_left:
+			case this.token_assignment_shift_arithmetic_right:
+			case this.token_assignment_shift_logical_left:
+			case this.token_assignment_shift_logical_right:
 				return 13
 			// ||
 			case this.token_logical_or:
@@ -446,10 +444,10 @@ export class Lexer {
 			case this.token_bitwise_and:
 				return 26
 			// << >> <<< >>>
-			case this.token_shift_left:
-			case this.token_shift_right:
-			case this.token_shift_left_unsigned:
-			case this.token_shift_right_unsigned:
+			case this.token_shift_arithmetic_left:
+			case this.token_shift_arithmetic_right:
+			case this.token_shift_logical_left:
+			case this.token_shift_logical_right:
 				return 27
 			// keyword operators
 			case this.token_void:
@@ -592,10 +590,10 @@ export class Lexer {
 			case this.token_assignment_bitwise_or:
 			case this.token_assignment_multiply:
 			case this.token_assignment_exponent:
-			case this.token_assignment_shift_left:
-			case this.token_assignment_shift_right:
-			case this.token_assignment_shift_left_unsigned:
-			case this.token_assignment_shift_right_unsigned:
+			case this.token_assignment_shift_arithmetic_left:
+			case this.token_assignment_shift_arithmetic_right:
+			case this.token_assignment_shift_logical_left:
+			case this.token_assignment_shift_logical_right:
 			case this.token_assignment_optional:
 				return 1
 			default:
