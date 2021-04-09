@@ -48,7 +48,7 @@ export class Compiler extends Parser {
 	compile_expression (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_expression:
-				return this.compile_children(child.props, child, child, stack, index)
+				return this.compile_children(child.props, child, child, stack, 0)
 			case this.token_operations:
 				return this.compile_operator(child.props, child.child, frame, stack, index)
 			default:
@@ -107,7 +107,7 @@ export class Compiler extends Parser {
 			default:
 				switch (value) {
 					case this.token_null:
-						return 'rax=null'
+						return 'rax=null;'
 					case this.token_true:
 						return 'rax=true;'
 					case this.token_false:
@@ -143,10 +143,10 @@ export class Compiler extends Parser {
 	}
 	compile_function_iterator (value, child, frame, stack, index) {
 		switch (value) {
-			case this.token_subroutine:
-				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg,p64 ars){do{' + this.compile_subroutine(value, child, frame, stack, index) + '}while(0);fun_to_set(pax,&fun' + index + ');return rax;}'
-			case this.token_enviroment:
-				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg,p64 ars){do{' + this.compile_subroutine(value, child, frame, stack, index) + '}while(0);return rax;}'
+			case this.token_function:
+				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg,p64 ars){do{' + this.compile_subroutine(this.token_enviroment, child, frame, stack, index) + '}while(0);return rax;}'
+			case this.token_definite:
+				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg,p64 ars){do{' + this.compile_subroutine(this.token_subroutine, child, frame, stack, index) + '}while(0);fun_to_set(pax,&fun' + index + ');return rax;}'
 		}
 	}
 	/*
@@ -193,11 +193,11 @@ export class Compiler extends Parser {
 	compile_children_allocate (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + (index * 2 || 1) + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
+				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + index * 2 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
 			case this.token_enviroment:
-				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + (index * 1 || 1) + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
+				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + index * 1 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
 			case this.token_membership:
-				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + (index * 1 || 1) + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
+				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + index * 1 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
 		}
 	}
 	/*
@@ -215,7 +215,7 @@ export class Compiler extends Parser {
 	compile_destruct_prologue (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return child.stack ? 'p64 arv=any_to_obj(rax=obj_to_cpy(rax,rax,pax),1);i64 arc=len_to_get(arv,i64);i64 rdi=arc;i64 rbx=rax;' : ''
+				return child.stack ? 'p64 arv=any_to_obj(rax=obj_to_cpy(rax,rax),1);i64 arc=len_to_get(arv,i64);i64 rdi=arc;i64 rbx=rax;' : ''
 			default:
 				return ''
 		}
@@ -386,10 +386,10 @@ export class Compiler extends Parser {
 				return this.compile_operator_dispatch(this.token_shift_logical_right_unsigned, child, frame, stack, index) + this.compile_operator_dispatch(this.token_assignment, child, frame, stack, index)
 			// ||
 			case this.token_logical_or:
-				return 'if(!any_to_bit(rax))'
+				return 'if(!any_to_bit(rax,i64))'
 			// &&
 			case this.token_logical_and:
-				return 'if(any_to_bit(rax))'
+				return 'if(any_to_bit(rax,i64))'
 			// ??
 			case this.token_logical_null:
 				return 'if(rax!=null)'
@@ -466,7 +466,7 @@ export class Compiler extends Parser {
 				return 'rax=any_to_len(rbx,rax);'
 			// ! ~ ++ --
 			case this.token_logical_not:
-				return 'rax=any_to_bit(rax)?false:true;'
+				return 'rax=var_to_any(any_to_bit(rax,i64));'
 			case this.token_bitwise_not:
 				return 'rax=any_to_not(rbx,rax);'
 			case this.token_increment:
@@ -511,7 +511,7 @@ export class Compiler extends Parser {
 			case this.token_membership:
 				return 'if(any_is_ptr(rax)&&(any_is_str(rax)||any_is_mem(rax))){rdi+=len_to_get(any_to_obj(rax,1),i64);rsp[rsi++]=' + index + ';}'
 			default:
-				return 'rax=obj_to_cpy(rax,rax,pax);'
+				return 'rax=obj_to_cpy(rax,rax);'
 		}
 	}
 	compile_operator_property (value, child, frame, stack, index) {
@@ -525,7 +525,7 @@ export class Compiler extends Parser {
 	compile_operator_generate (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_case:
-				return 'rax=any_to_bit(rax);for(i64 dfg=rbx<rax?1:-1;i64 afg=sfg;i64 sfg=any_to_bit(afg);rbx!=rax;rax+=dfg;){' + this.compile_case_prologue(value, null, frame, stack, index) + 'if(cfg)break;}'
+				return 'rax=any_to_bit(rax,i64);for(i64 dfg=rbx<rax?1:-1;i64 afg=sfg;i64 sfg=any_to_bit(afg,i64);rbx!=rax;rax+=dfg;){' + this.compile_case_prologue(value, null, frame, stack, index) + 'if(cfg)break;}'
 			default:
 				return 'rax=range(rbx,rax,rcx);'
 		}
@@ -540,7 +540,7 @@ export class Compiler extends Parser {
 		return this.compile_dispatch(value, child[0], frame, stack, index) + this.compile_if_epilogue(value, child[1], frame, stack, index) + this.compile_else(value, child[2], frame, stack, index)
 	}
 	compile_if_prologue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 zfg=any_to_bit(rax);'
+		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 zfg=any_to_bit(rax,i64);'
 	}
 	compile_if_epilogue (value, child, frame, stack, index) {
 		return 'if(zfg){' + this.compile_dispatch(value, child, frame, stack, index) + '}'
@@ -558,7 +558,7 @@ export class Compiler extends Parser {
 		return this.compile_case_prologue(value, child[0], frame, stack, index) + this.compile_case_epilogue(value, child[1], frame, stack, index) + this.compile_dispatch(value, child[2], frame, stack, index)
 	}
 	compile_case_prologue (value, child, frame, stack, index) {
-		return 'if(!cfg){' + this.compile_dispatch(value, child, frame, stack, index) + 'i64 rbx=sfg;' + this.compile_operator_prologue(this.token_compare, child, frame, stack, index) + 'if(rax==true)zfg=cfg=1;}'
+		return 'if(!cfg){' + this.compile_dispatch(value, child, frame, stack, index) + (child.props == value ? '' : 'i64 rbx=sfg;' + this.compile_operator_dispatch(this.token_compare, child, frame, stack, index) + 'if(rax==true)zfg=cfg=1;') + '}'
 	}
 	compile_case_epilogue (value, child, frame, stack, index) {
 		return 'if(cfg){' + this.compile_dispatch(value, child, frame, stack, index) + '}'
@@ -570,13 +570,13 @@ export class Compiler extends Parser {
 		return this.compile_dispatch(value, child, frame, stack, index)
 	}
 	compile_do_epilogue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 zfg=any_to_bit(rax);if(!zfg)break;'
+		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 zfg=any_to_bit(rax,i64);if(!zfg)break;'
 	}
 	compile_while (value, child, frame, stack, index) {
 		return 'while(1){' + this.compile_while_prologue(value, child[0], frame, stack, index) + this.compile_while_epilogue(value, child[1], frame, stack, index) + this.compile_dispatch(value, child[2], frame, stack, index) + '}'
 	}
 	compile_while_prologue (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 zfg=any_to_bit(rax);if(!zfg)break;'
+		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 zfg=any_to_bit(rax,i64);if(!zfg)break;'
 	}
 	compile_while_epilogue (value, child, frame, stack, index) {
 		return this.compile_dispatch(value, child, frame, stack, index)
@@ -591,7 +591,7 @@ export class Compiler extends Parser {
 		return this.compile_for_condition(value, child[0], frame, stack, index) + this.compile_dispatch(value, child[1], frame, stack, index) + this.compile_for_iteration(value, child[0], frame, stack, index)
 	}
 	compile_for_condition (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child.child[child.child.length - 2], frame, stack, index) + 'i64 zfg=any_to_bit(rax);if(!zfg)break;'
+		return this.compile_dispatch(value, child.child[child.child.length - 2], frame, stack, index) + 'i64 zfg=any_to_bit(rax,i64);if(!zfg)break;'
 	}
 	compile_for_iteration (value, child, frame, stack, index) {
 		return this.compile_dispatch(value, child.child[child.child.length - 1], frame, stack, index)
@@ -621,10 +621,10 @@ export class Compiler extends Parser {
 	 * Assemble
 	 */
 	compile_assemble (value, child, frame, stack, index) {
-		return this.compile_assemble_prologue(value, child, frame, stack, index) + this.compile_assemble_epilogue(value, child, frame, stack, index)
+		return this.compile_assemble_prologue(value, child, frame, stack, index)// + this.compile_assemble_epilogue(value, child, frame, stack, index)
 	}
 	compile_assemble_prologue (value, child, frame, stack, index) {
-		return '' + stack.join('')
+		return stack.join('')
 	}
 	compile_assemble_epilogue (value, child, frame, stack, index) {
 		return value

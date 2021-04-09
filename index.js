@@ -113,7 +113,6 @@ export function fmts (value) {
 export function main (value) {
 	var compile = new Compiler(value = value.trim())
 	var program = compile.parse_program(0, null)
-	console.log(program)
 	// console.log(JSON.stringify(program, function (key, value) {
 	//   switch (key) {
 	//   	case 'index':
@@ -132,11 +131,12 @@ export function main (value) {
 	//   		return fmts.call(compile, value)
 	//   }
 	// }, 2))
-
 	var execute = compile.compile_program(0, program, program, [], 0)
-
-	document.body.innerHTML = '<pre style="max-width:100%;white-space:break-spaces;font-size:20px;line-height:1.5;">' + execute + '</pre>'
+	console.log(program)
+	console.log(execute)
 }
+
+window.main = main
 
 // fun foo = a, b => while 1 if a == b break else continue
 // fun foo = a, b {}
@@ -181,12 +181,12 @@ export function main (value) {
 // main(`
 // fun bar (a,b=1) {return faz(1,2)}
 // `)
-// main(`
-// 	fun print (var a, var b) { return a + b + 1 }
-// 	print(1, 2)
-// `)
+main(`
+	fun print (var a, var b) { return 1 }
+`)
 
-main(`switch 1 {case 1, 2 {}}`)
+// main(`switch 1 {case 1, 2 {}}`)
+
 
 // main(`
 // 	var a = 1
