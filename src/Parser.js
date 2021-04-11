@@ -5,7 +5,7 @@ export class Parser extends Lexer {
 	 * Scan
 	 */
 	parse_node () {
-		return this.parse_scan(this.lexer_char(0))
+		return this.parse_scan(this.lexer_char(0), null)
 	}
 	parse_peek () {
 		return this.lexer_next() || this.lexer_next(this.parse_node())
@@ -20,7 +20,7 @@ export class Parser extends Lexer {
 	parse_prev (value) {
 		return this.lexer_next(value)
 	}
-	parse_scan (value) {
+	parse_scan (value, child) {
 		switch (value) {
 			// ] } ) \0
 			case 93: case 125: case 41: case 0:
@@ -36,7 +36,7 @@ export class Parser extends Lexer {
 				return this.parse_node()
 			// " '
 			case 34: case 39: case -34: case -39:
-				return this.parse_template(this.lexer_template(value < 0 ? -value : this.lexer_move(value), value = this.lexer_addr(), child = []), value, child)
+				return this.parse_template(this.lexer_template(value < 0 ? -value : this.lexer_move(value), value = this.lexer_head(), child = []), value, child)
 			// /
 			case 47:
 				if (this.lexer_comment(this.lexer_look(1))) {
@@ -46,9 +46,9 @@ export class Parser extends Lexer {
 				if (this.lexer_numb(value)) {
 					return this.parse_number(this.lexer_number(0))
 				} else if (this.lexer_word(value)) {
-					return this.parse_identity(this.lexer_identity(0, value = this.lexer_addr(), 0), value, this.lexer_addr())
+					return this.parse_identity(this.lexer_identity(0, value = this.lexer_head(), 0), value, this.lexer_head())
 				} else {
-					return this.parse_operator(this.lexer_operator(0, value = this.lexer_addr(), 0), value, this.lexer_addr())
+					return this.parse_operator(this.lexer_operator(0, value = this.lexer_head(), 0), value, this.lexer_head())
 				}
 		}
 	}
@@ -56,10 +56,10 @@ export class Parser extends Lexer {
 	 * Node
 	 */
 	parse_number (value) {
-		return this.lexer_node(this.token_literal, this.token_float, value, value)
+		return this.lexer_node(this.token_literal, this.token_float, this.lexer_tail(), value)
 	}
 	parse_string (value, props, child) {
-		return this.lexer_node(this.token_literal, this.token_string, this.lexer_addr() - props, child)
+		return this.lexer_node(this.token_literal, this.token_string, this.lexer_head() - props - 1, child)
 	}
 	parse_variable (value) {
 		return this.lexer_node(this.token_literal, this.token_variable, value, value)
@@ -89,7 +89,7 @@ export class Parser extends Lexer {
 		return this.lexer_node(this.token_expression, value, props, child)
 	}
 	parse_substrings (value, props, child) {
-		return this.lexer_node(this.token_expression, this.token_operations, this.token_addition, [child, this.parse_operation(value, this.token_addition, [this.parse_node(), this.parse_scan(value)])])
+		return this.lexer_node(this.token_expression, this.token_operations, this.token_addition, [child, this.parse_operation(value, this.token_addition, [this.parse_node(), this.parse_scan(value, child)])])
 	}
 	parse_collection (value, props, child) {
 		while (value = this.parse_next()) {

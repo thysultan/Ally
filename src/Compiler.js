@@ -84,7 +84,7 @@ export class Compiler extends Parser {
 				case this.token_parameters:
 					return '*pax=rax;'
 				case this.token_subroutine:
-					return '*pax=rax;' + this.compile_operator_property(value, child, frame, stack, index) + 'pax[rdi]=rax;'
+					return '*pax=rax;' + this.compile_operator_property(value, child, frame, stack, index) + 'pax[' + index + '+rdi]=rax;'
 				default:
 					return '*pax=rax;'
 			}
@@ -98,12 +98,13 @@ export class Compiler extends Parser {
 	compile_literal (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_float:
-				return this.compile_literal_number(child.child, child, frame, stack, index)
+				console.log(child)
+				return this.compile_literal_number(child.props, child.child, frame, stack, index)
 			case this.token_string:
-				return this.compile_literal_string(child.child.join(''), child, frame, stack, index) + this.compile_literal_object(child.props, child, frame, stack, index)
+				return this.compile_literal_string(value, child.child.join(''), frame, stack, index) + this.compile_literal_object(child.props, child, frame, stack, index)
 			case this.token_function:
 			case this.token_definite:
-				return this.compile_function(child.props, stack.push(this.compile_function_iterator(value, child, frame, stack, index)), frame, stack, index)
+				return this.compile_function(child.props, child, frame, stack, stack.push(this.compile_function_iterator(value, child, frame, stack, index)) - 1)
 			default:
 				switch (value) {
 					case this.token_null:
@@ -121,10 +122,10 @@ export class Compiler extends Parser {
 		}
 	}
 	compile_literal_number (value, child, frame, stack, index) {
-		return 'rax=dec_to_any(' + value + ',0);'
+		return value > 0 ? 'rax=any_to_nod(' + child + ',' + value + ');' : 'rax=any_to_dec(' + child + ',' + value + ');'
 	}
 	compile_literal_string (value, child, frame, stack, index) {
-		return '{static p32 str=U"' + value + '";rax=str_to_any(str);}'
+		return '{static p32 str=U"' + child + '";rax=str_to_any(str);}'
 	}
 	compile_literal_object (value, child, frame, stack, index) {
 		return '{static i64 str[4];fun_to_set(str,&fun_of_str);len_to_set(str,' + value + ');env_to_set(str,are);mem_to_set(str,rax);rax=str_to_any(str);}'
@@ -139,7 +140,7 @@ export class Compiler extends Parser {
 		return frame.state ? 'p64 fun=obj_to_new(0,i64);' : 'static i64 fun[4];'
 	}
 	compile_function_epilogue (value, child, frame, stack, index) {
-		return 'fun_to_set(fun,&fun' + child + ');len_to_set(fun,0);env_to_set(fun,are);rax=fun_to_any(fun);'
+		return 'fun_to_set(fun,&fun' + index + ');len_to_set(fun,0);env_to_set(fun,are);rax=fun_to_any(fun);'
 	}
 	compile_function_iterator (value, child, frame, stack, index) {
 		switch (value) {
@@ -238,7 +239,7 @@ export class Compiler extends Parser {
 					case this.token_subroutine:
 						return this.compile_dispatch(value, child, frame, stack, index) + 'p64 pbx=pax;' + this.compile_operator_epilogue(value, child, frame, stack, index) + this.compile_destruct_property(value, child, frame, stack, index) + '*pbx=rax;'
 					case this.token_membership:
-						return this.compile_dispatch(value, child, frame, stack, index) + 'p64 pbx=pax;' + this.compile_literal_number(index, child, frame, stack, index) + this.compile_operator_dispatch(value, child, frame, stack, index) + '*pbx=rax;'
+						return this.compile_dispatch(value, child, frame, stack, index) + 'p64 pbx=pax;' + this.compile_literal_number(0, index, frame, stack, index) + this.compile_operator_dispatch(value, child, frame, stack, index) + '*pbx=rax;'
 				}
 			case this.token_operations:
 				switch (child.props) {
@@ -621,7 +622,7 @@ export class Compiler extends Parser {
 	 * Assemble
 	 */
 	compile_assemble (value, child, frame, stack, index) {
-		return this.compile_assemble_prologue(value, child, frame, stack, index)// + this.compile_assemble_epilogue(value, child, frame, stack, index)
+		return this.compile_assemble_prologue(value, child, frame, stack, index) + this.compile_assemble_epilogue(value, child, frame, stack, index)
 	}
 	compile_assemble_prologue (value, child, frame, stack, index) {
 		return stack.join('')

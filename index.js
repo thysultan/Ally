@@ -181,10 +181,9 @@ window.main = main
 // main(`
 // fun bar (a,b=1) {return faz(1,2)}
 // `)
-main(`
-	fun print (var a, var b) { return 1 }
-`)
-
+// main(`fun print (var a, var b) { return 1 }`)
+// main(`var string = "abc@(1)xyz"`)
+main(`var number = 2.3e2`)
 // main(`switch 1 {case 1, 2 {}}`)
 
 

@@ -227,7 +227,6 @@ static i08 exp;
 // convert to largest value that is less than or equal to (b == -1) or greater than or equal to when (b == 1), small fractional numbers will either yield 0, 1 or -1 for example 0.5 will yield 0 but if b = -1 then 0.5 will yield -1
 #define any_to_int(a,b) ((e=any_to_exp(a))>=0||(c=any_to_cof(a))==0)?a:(a=c-(c=c/ten[e=e>-18?-e:18])*ten[e])?((a^b)>=0)*b+c:int_to_cof(c)
 
-
 // normalize get exponent as close to 0 as possible without losing signficance
 i64 any_to_nod (i64 rax, i08 rbx) {
 	if (rbx < 0) {
