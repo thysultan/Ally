@@ -4,7 +4,7 @@ import 'https://example.com' as {print} // fetch network bound module?
 
 int number = 64_000
 flt number = 64.000
-var number = 64.0km
+flt number = 64.0km
 flt number = #0366d6
 flt number = 0b01010
 flt number = 0xfff01
@@ -34,16 +34,11 @@ fun dot (obj a, obj b) {
 
 dot(vec(1, 2, 3), vec(4, 5, 6))
 
-fun gen () {
-	asm 0x12
-	asm mov(rax, 3)
-	asm mov(rbx, 4)
-	asm add(rax, rbx, rcx)
-	// or
+fun gen {
 	asm(0x12)
-	asm(mov(rax 3))
-	asm(add(rbx 4))
-	asm(add(rax rbx))
+	asm(mov, rax 3)
+	asm(add, rbx 4)
+	asm(add, rax rbx)
 }
 
 // threads?

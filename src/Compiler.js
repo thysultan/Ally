@@ -98,7 +98,6 @@ export class Compiler extends Parser {
 	compile_literal (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_float:
-				console.log(child)
 				return this.compile_literal_number(child.props, child.child, frame, stack, index)
 			case this.token_string:
 				return this.compile_literal_string(value, child.child.join(''), frame, stack, index) + this.compile_literal_object(child.props, child, frame, stack, index)
@@ -210,7 +209,7 @@ export class Compiler extends Parser {
 			case this.token_membership:
 				return '{i64 rbx=rax;' + this.compile_destruct_prologue(value, child, frame, stack, index) + this.compile_destruct_iterator(value, child, frame, stack, index) + this.compile_destruct_epilogue(value, child, frame, stack, index) + '}'
 			default:
-				return this.compile_destruct_operator(child.props, child, frame, stack, index)
+				return this.compile_destruct_operator(child.props, child.child, frame, stack, index)
 		}
 	}
 	compile_destruct_prologue (value, child, frame, stack, index) {
@@ -482,23 +481,9 @@ export class Compiler extends Parser {
 			case this.token_subroutine:
 				return 'static i64 rsi;pax=&nop;rax=any_in_sub(rax,rbx,&pax,arv,rsi,&rsi);'
 			// typings
-			case this.token_string:
-				return 'rax=any_to_str(rax);'
-			case this.token_float:
-				return 'rax=any_to_flt(rax);'
-			case this.token_integer:
-				return 'rax=any_to_int(rax);'
-			case this.token_object:
-				return 'rax=null;'
-			case this.token_definite:
-			case this.token_function:
-				return 'rax=null;'
-			case this.token_variable:
-				return 'rax=null;'
 			case this.token_nullable:
 				return 'rax=null;'
 			case this.token_assembly:
-				return 'rax=null;'
 			default:
 				return ''
 		}
@@ -518,7 +503,7 @@ export class Compiler extends Parser {
 	compile_operator_property (value, child, frame, stack, index) {
 		switch (child.token) {
 			case this.token_identifier:
-				return this.compile_literal_string(child.child, child, frame, stack, index)
+				return this.compile_literal_string(value, child.child, frame, stack, index)
 			default:
 				return ''
 		}

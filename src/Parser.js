@@ -56,7 +56,7 @@ export class Parser extends Lexer {
 	 * Node
 	 */
 	parse_number (value) {
-		return this.lexer_node(this.token_literal, this.token_float, this.lexer_tail(), value)
+		return this.lexer_node(this.token_literal, this.token_number, this.lexer_tail(), value)
 	}
 	parse_string (value, props, child) {
 		return this.lexer_node(this.token_literal, this.token_string, this.lexer_head() - props - 1, child)
@@ -442,6 +442,10 @@ export class Parser extends Lexer {
 	}
 	parse_identifiee (value, child, right, props) {
 		switch (child.token) {
+			case this.token_iterable:
+			case this.token_membership:
+			case this.token_subroutine: this.parse_parameters(value, child, child.token = this.token_expression, props)
+				break
 			case this.token_identifier: value ? child.types ||= this.token_variable : value
 				break
 			case this.token_expression:
@@ -453,10 +457,6 @@ export class Parser extends Lexer {
 							this.parse_identifiee(value, child.child[value - value], right, props)
 						}
 				}
-				break
-			case this.token_iterable:
-			case this.token_membership:
-			case this.token_subroutine: this.parse_parameters(value, child, child.token = this.token_expression, props)
 				break
 		}
 	}
@@ -497,10 +497,10 @@ export class Parser extends Lexer {
 						if (this.token_property(index ? child.props : index)) {
 							break
 						} else if (this.parse_lookup(value, entry, frame, stack, 0, count, state, scope)) {
-							switch (child.types) {
-								case this.token_subroutine: child.child[index] = this.parse_operation(entry = {...entry, index, state}, this.token_assignment, [entry, child.child[index]])
-									break
-								default: continue
+							if (child.types == this.token_subroutine) {
+								child.child[index] = this.parse_operation(entry = {...entry, index, state}, this.token_assignment, [entry, child.child[index]])
+							} else {
+								break
 							}
 						} else {
 							switch (child.props) {
@@ -537,7 +537,7 @@ export class Parser extends Lexer {
 						case this.token_assignment_optional:
 							switch (entry.child[index - index].value) {
 								case this.token_membership:
-								case this.token_subroutine: this.parse_identifiee(value, entry.child[entry.value = index - index], child, props)
+								case this.token_subroutine: this.parse_identifiee(value, entry.child[entry.value = index - index], child, value)
 									break
 								case this.token_identifier:
 									switch (child.types) {

@@ -26,6 +26,7 @@ export class Lexer {
 		// token types(int, flt, str, obj, def, fun, var, asm, nil)
 		this.token_integer = -1010090581
 		this.token_float = -1035006294
+		this.token_number = -1035006294
 		this.token_string = -927081939
 		this.token_object = -961308749
 		this.token_definite = -1051988511
@@ -462,7 +463,6 @@ export class Lexer {
 	token_identity (value) {
 		switch (value) {
 			// types
-			case this.token_character:
 			case this.token_integer:
 			case this.token_float:
 			case this.token_string:

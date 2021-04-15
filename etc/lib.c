@@ -130,7 +130,7 @@ static i08 exp;
 #define IS_SUB 0x00000000000005FF // subroutine(object)
 // create
 #define any_to_nan(a,b) (a|(i64)(b))
-#define any_to_dec(a,b) (int_to_cof(a)|int_to_exp(b))
+#define any_to_dec(a,b) (cof_to_dec(a)|exp_to_dec(b))
 // decode
 #define any_to_tag(a,b) ((b)((a)&0x0000000000000FFF))
 #define any_to_val(a,b) ((b)((a)&0xFFFFFFFFFFFFF000))
@@ -159,73 +159,75 @@ static i08 exp;
 // negative exponent equates to float
 #define any_is_flt(a) (any_to_exp(a)<0)
 // convert from floating point, e = floor(log10(abs(x))) for the base-10-exponent and s = x/pow(10, e) for the base-10-significand
-#define flt_to_any(a) (any_to_nod((a/pow(10,e=floor(log10(abs(a)))))*1e18,e-18))
-// zero out non-coefficient
-#define cof_to_any(a) ((a)&0xFFFFFFFFFFFFFF00)
-// zero out non-exponent
-#define int_to_exp(a) ((a)&0x00000000000000FF)
+#define flt_to_dec(a) (any_to_nod((a/pow(10,e=floor(log10(abs(a)))))*1e18,e-18))
+// coefficient to decimal
+#define cof_to_dec(a) ((a)&0xFFFFFFFFFFFFFF00)
+// exponent to decimal
+#define exp_to_dec(a) ((a)&0x00000000000000FF)
 // set coefficient
-#define int_to_cof(a) ((a)<<8)
+#define cof_to_dec(a) ((a)<<8)
 // get coefficient
 #define any_to_cof(a) ((a)>>8)
 // get exponent
 #define any_to_exp(a) (any_to_i08(a))
-// absolute
+// convert to number
+#define any_to_num(a) (any_is_nan(a)?0:a)
+// convert to absolute
 #define any_to_abs(a) (a<0?any_to_neg(a):a)
 // sign, if ltn 0, -1, if 0 else 1
-#define any_to_sig(a) (a<0?-int_to_cof(1LL):int_to_cof(1LL))
+#define any_to_sig(a) (a<0?-cof_to_dec(1LL):cof_to_dec(1LL))
 // convert to floating point
 #define any_to_flt(a) (any_to_cof(a)*pow(10,any_to_exp(a)))
 // ceil
-#define any_to_cil(a) (any_to_int(a,+1))
+#define any_to_cil(a) (any_to_mid(a,+1))
 // floor
-#define any_to_flo(a) (any_to_int(a,-1))
+#define any_to_flo(a) (any_to_mid(a,-1))
 // negation 0 - 1 == -1
 #define any_to_neg(a) (any_to_sub(0,a))
-// ~
+// bitwise not ~
 #define any_to_not(a) (any_to_dec(~any_to_cof(a),0))
-// ^
+// bitwise xor ^
 #define any_to_xor(a,b) (any_to_dec(any_to_cof(a)^any_to_cof(b),0))
-// &
+// bitwise and &
 #define any_to_and(a,b) (any_to_dec(any_to_cof(a)&any_to_cof(b),0))
-// |
+// bitwise or |
 #define any_to_nor(a,b) (any_to_dec(any_to_cof(a)|any_to_cof(b),0))
-// <<
+// shift left <<
 #define any_to_sal(a,b) (any_to_dec(any_to_cof(a)<<any_to_cof(b),0))
-// >>
+// shift right >>
 #define any_to_sar(a,b) (any_to_dec(any_to_cof(a)>>any_to_cof(b),0))
-// <<<
+// shift left <<<
 #define any_to_sll(a,b) (any_to_dec(any_to_cof(a)<<any_to_cof(b),0))
-// >>>
+// shift right >>>
 #define any_to_slr(a,b) (any_to_dec(any_to_cof(a)>>any_to_cof(b),0))
-// < same exponent? compare coefficients, assuming normalized coefficients simply compare exponents i.e 1.234 < 12.34
+// less than < same exponent? compare coefficients, assuming normalized coefficients simply compare exponents i.e 1.234 < 12.34
 #define any_to_ltn(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a<b:e<f)
-// >
+// greater than >
 #define any_to_gtn(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a>b:e>f)
-// <=
+// less than equal <=
 #define any_to_lte(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a<=b:e<=f)
-// >=
+// greather than equal >=
 #define any_to_gte(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a>=b:e>=f)
-// + if 0 exponent add numbers, if overflow(unlikely) make it fit, otherwise if exponents match(they aren't different) and not nan do the same but zero out one exponent to avoid a carry into coefficients when added
-#define any_to_add(a,b) (!any_to_u08(a|b)?(int_to_add(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_add(a,cof_to_any(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sad(a,+b)))
-// - replacing addition with subtraction otherwise everything else is identical to addition
-#define any_to_sub(a,b) (!any_to_u08(a|b)?(int_to_sub(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_sub(a,cof_to_any(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sad(a,-b)))
-// * replacing addition with multiplication otherwise everything else is identical to addition
-#define any_to_mul(a,b) (!any_to_u08(a|b)?(int_to_mul(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_mul(a,cof_to_any(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sam(a,+b)))
-// == equality referential equal or if both strings compare characters
+// addition + if 0 exponent add numbers, if overflow(unlikely) make it fit, otherwise if exponents match(they aren't different) and not nan do the same but zero out one exponent to avoid a carry into coefficients when added
+#define any_to_add(a,b) (!any_to_u08(a|b)?(int_to_add(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_add(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sad(a,+b)))
+// subtraction - replacing addition with subtraction otherwise everything else is identical to addition
+#define any_to_sub(a,b) (!any_to_u08(a|b)?(int_to_sub(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_sub(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sad(a,-b)))
+// multiplication * replacing addition with multiplication otherwise everything else is identical to addition
+#define any_to_mul(a,b) (!any_to_u08(a|b)?(int_to_mul(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_mul(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sam(a,+b)))
+// equality == referential equal or if both strings compare characters
 #define any_to_cmp(a,b) (a==b||(any_is_str(a&b)&&str_to_cmp(a,b))?true:false)
-// != non-equality inverse of equality
+// non-equality != inverse of equality
 #define any_to_ump(a,b) (a==b||(any_is_str(a&b)&&str_to_cmp(a,b))?false:true)
-// === deep equality if not referential equal deep compare if value equal
+// deep equality === if not referential equal deep compare if value equal
 #define any_to_cmq(a,b) (a==b||any_to_cmp(a,b)?true:false)
-// !== deep non-equality inverse of deep equality
+// deep non-equality !== inverse of deep equality
 #define any_to_umq(a,b) (a==b||any_to_cmp(a,b)?false:true)
 // instanceof
 #define any_to_iof(a,b) (fun_to_get(any_to_obj(a,1),i64)==fun_to_get(any_to_obj(b,1),i64)?true:false)
 // sizeof
 #define any_to_len(a,b) (len_to_get(any_to_obj(a,1),f64))
 // convert to largest value that is less than or equal to (b == -1) or greater than or equal to when (b == 1), small fractional numbers will either yield 0, 1 or -1 for example 0.5 will yield 0 but if b = -1 then 0.5 will yield -1
-#define any_to_int(a,b) ((e=any_to_exp(a))>=0||(c=any_to_cof(a))==0)?a:(a=c-(c=c/ten[e=e>-18?-e:18])*ten[e])?((a^b)>=0)*b+c:int_to_cof(c)
+#define any_to_mid(a,b) ((e=any_to_exp(a))>=0||(c=any_to_cof(a))==0)?a:(a=c-(c=c/ten[e=e>-18?-e:18])*ten[e])?((a^b)>=0)*b+c:int_to_cof(c)
 
 // normalize get exponent as close to 0 as possible without losing signficance
 i64 any_to_nod (i64 rax, i08 rbx) {

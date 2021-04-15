@@ -132,7 +132,7 @@ export function main (value) {
 	//   }
 	// }, 2))
 	var execute = compile.compile_program(0, program, program, [], 0)
-	console.log(program)
+	console.log(value)
 	console.log(execute)
 }
 
@@ -172,19 +172,19 @@ window.main = main
 // }
 // `)
 // main(`
-// case 0,1 => 2
-// `)
-// main(`
-// var is
-// var not
-// `)
-// main(`
 // fun bar (a,b=1) {return faz(1,2)}
 // `)
 // main(`fun print (var a, var b) { return 1 }`)
 // main(`var string = "abc@(1)xyz"`)
-main(`var number = 2.3e2`)
+// main(`var number = 2.3e2`)
+// main(`
+// var a = 2
+// var b = a.foo = 1
+// `)
+// main(`'abc'.foo`)
 // main(`switch 1 {case 1, 2 {}}`)
+
+main(`var{a,b}=1`)
 
 
 // main(`
