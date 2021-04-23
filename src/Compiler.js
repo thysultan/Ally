@@ -136,7 +136,7 @@ export class Compiler extends Parser {
 		return '{' + this.compile_function_prologue(value, child, frame, stack, index) + this.compile_function_epilogue(value, child, frame, stack, index) + '}'
 	}
 	compile_function_prologue (value, child, frame, stack, index) {
-		return frame.state ? 'p64 fun=obj_to_new(0,i64);' : 'static i64 fun[4];'
+		return frame.state ? 'p64 fun=new_to_get(0,sizeof(i64));' : 'static i64 fun[4];'
 	}
 	compile_function_epilogue (value, child, frame, stack, index) {
 		return 'fun_to_set(fun,&fun' + index + ');len_to_set(fun,0);env_to_set(fun,are);rax=fun_to_any(fun);'
@@ -144,9 +144,9 @@ export class Compiler extends Parser {
 	compile_function_iterator (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_function:
-				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg,p64 ars){do{' + this.compile_subroutine(this.token_enviroment, child, frame, stack, index) + '}while(0);return rax;}'
+				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg){do{' + this.compile_subroutine(this.token_enviroment, child, frame, stack, index) + '}while(0);return rax;}'
 			case this.token_definite:
-				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg,p64 ars){do{' + this.compile_subroutine(this.token_subroutine, child, frame, stack, index) + '}while(0);fun_to_set(pax,&fun' + index + ');return rax;}'
+				return 'static i64 fun' + index + '(i64 arc,p64 arv,p64 are,p64 arg){do{' + this.compile_subroutine(this.token_subroutine, child, frame, stack, index) + '}while(0);fun_to_set(pax,&fun' + index + ');return rax;}'
 		}
 	}
 	/*
@@ -158,11 +158,11 @@ export class Compiler extends Parser {
 	compile_children_prologue (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return this.compile_children_allocate(value, child, frame, stack, index) + (index ? 'mem_to_set(obj,mem);' : '') + 'env_to_set(obj,are);p64 are=obj;'
+				return this.compile_children_allocate(value, child, frame, stack, index) + (index ? 'mem_to_set(obj,mem);' : frame ? '' : 'arg=obj;') + 'env_to_set(obj,are);p64 are=obj;'
 			case this.token_enviroment:
-				return this.compile_children_allocate(value, child, frame, stack, index) + (index ? 'mem_to_set(obj,mem);' : '') + 'env_to_set(obj,are);p64 are=obj;'
+				return this.compile_children_allocate(value, child, frame, stack, index) + (index ? 'mem_to_set(obj,mem);' : frame ? '' : 'arg=obj;') + 'env_to_set(obj,are);p64 are=obj;'
 			case this.token_membership:
-				return this.compile_children_allocate(value, child, frame, stack, index) + (index ? 'mem_to_set(obj,mem);' : '')
+				return this.compile_children_allocate(value, child, frame, stack, index) + (index ? 'mem_to_set(obj,mem);' : frame ? '' : 'arg=obj;')
 			default:
 				return ''
 		}
@@ -170,22 +170,24 @@ export class Compiler extends Parser {
 	compile_children_epilogue (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return (child.stack ? (child.types ? 'mem_to_del(obj,mem);p64 rbp=mem_to_get(pax,p64);' : 'i64 rbp[0x0];') + 'mem_to_set(obj,any_to_exp(rax,IS_SUB,mem,rbp,rsi,rdi,rsp));' : '') + (child.types ? 'rax=sub_to_any(pax=obj);' : '')
+				return this.compile_children_iterable(value, frame, stack, index) + (child.types ? 'rax=sub_to_any(pax=obj);' : '')
 			case this.token_membership:
-				return (child.stack ? (child.types ? 'mem_to_del(obj,mem);p64 rbp=mem_to_new(rdi,i64);' : 'i64 rbp[rdi];') + 'mem_to_set(obj,any_to_exp(rax,IS_MEM,mem,rbp,rsi,rdi,rsp));' : '') + (child.types ? 'rax=mem_to_any(pax=obj);' : '')
+				return this.compile_children_iterable(value, frame, stack, index) + (child.types ? 'rax=mem_to_any(pax=obj);' : '')
 			default:
 				return ''
 		}
 	}
 	compile_children_iterator (value, child, frame, stack, index) {
-		return child.child.reduce((state, entry, index) => state + '{' + this.compile_children_dispatch(value, entry, child, stack, index) + '}', child.stack ? 'i64 rsi=0;i64 rdi=' + index + ';i64 rsp[' + child.stack + '];' : '')
+		return child.child.reduce((state, entry, index) => {
+			return state + '{' + this.compile_children_dispatch(value, entry, child, stack, index) + '}'
+		}, child.stack ? 'i64 rsi=0;i64 rdi=' + index + ';i64 rsp[' + child.stack + '];' : '')
 	}
 	compile_children_dispatch (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_parameters:
 				return 'rax=' + index + '<arc?arv[' + index + ']:null;' + this.compile_dispatch(value, child, frame, stack, index)
 			case this.token_membership:
-				return this.compile_dispatch(value, child, frame, stack, index) + 'mem_to_get(arv,p64)[' + index + ']=rax;'
+				return this.compile_dispatch(value, child, frame, stack, index) + 'mem[' + index + ']=rax;'
 			default:
 				return this.compile_dispatch(value, child, frame, stack, index)
 		}
@@ -193,11 +195,21 @@ export class Compiler extends Parser {
 	compile_children_allocate (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + index * 2 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
+				return child.types ? 'p64 obj=new_to_get(0,sizeof(i64));' + (index ? 'p64 mem=new_to_get(' + index * 2 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
 			case this.token_enviroment:
-				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + index * 1 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
+				return child.types ? 'p64 obj=new_to_get(0,sizeof(i64));' + (index ? 'p64 mem=new_to_get(' + index * 1 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
 			case this.token_membership:
-				return child.types ? 'p64 obj=obj_to_new(0,i64);' + (index ? 'p64 mem=mem_to_new(' + index * 1 + ',i64);' : '') : 'i64 obj[4];' + (index ? 'i64 mem[' + index + '];' : '')
+				return child.types ? 'p64 obj=new_to_get(0,sizeof(i64));' + (index ? 'p64 mem=new_to_get(' + index * 1 + ',i64);' : '') : 'i64 obj[2];' + (index ? 'i64 mem[' + index + '];' : '')
+		}
+	}
+	compile_children_iterable (value, child, frame, stack, index) {
+		switch (value) {
+			case this.token_subroutine:
+				return child.stack ? (child.types ? 'p64 rbp=mem_to_get(obj,p64);' : 'i64 rbp=NULL;') + 'p64 arv=any_to_exp(rax,IS_SUB,mem,rbp,rsi,rdi,rsp,obj);' + (child.types ? 'mem_to_set(obj,arv);' : '') : 'p64 arv=mem;'
+			case this.token_membership:
+				return child.stack ? (child.types ? 'p64 rbp=new_to_get(rdi,i64);' : 'i64 rbp[rdi];') + 'p64 arv=any_to_exp(rax,IS_MEM,mem,rbp,rsi,rdi,rsp,obj);' + (child.types ? 'mem_to_set(obj,arv);' : '') : 'p64 arv=mem;'
+			default:
+				return ''
 		}
 	}
 	/*
@@ -215,7 +227,7 @@ export class Compiler extends Parser {
 	compile_destruct_prologue (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return child.stack ? 'p64 arv=any_to_obj(rax=obj_to_cpy(rax,rax),1);i64 arc=len_to_get(arv,i64);i64 rdi=arc;i64 rbx=rax;' : ''
+				return child.stack ? 'rax=any_to_cpy(rax,rax);p64 obj=any_to_obj(rax,1);p64 mem=mem_to_get(obj,p64);i64 arc=len_to_get(obj,i64);i64 rdi=arc;i64 rbx=rax;' : ''
 			default:
 				return ''
 		}
@@ -223,7 +235,7 @@ export class Compiler extends Parser {
 	compile_destruct_epilogue (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return child.stack ? 'len_to_set(arv,-arc);' : ''
+				return child.stack ? 'len_to_set(obj,len);' : ''
 			default:
 				return ''
 		}
@@ -248,7 +260,7 @@ export class Compiler extends Parser {
 						for (var entry of child.child) {
 							switch (entry.value) {
 								case this.token_identifier:
-									return this.compile_destruct_dispatch(value, entry, frame, stack, index) + 'pax=pbx;' + this.compile_operator_epilogue(value, child.child, frame, stack, index)
+									return this.compile_destruct_dispatch(value, entry, frame, stack, index) + 'pax=pbx;' + this.compile_operator_epilogue(child.props, child.child[1], frame, stack, index)
 								default:
 									return this.compile_dispatch(value, child, frame, stack, index)
 							}
@@ -269,7 +281,7 @@ export class Compiler extends Parser {
 	compile_destruct_property (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_subroutine:
-				return child.stack ? 'rsi>-1&&(--arc,mem_to_get(arv,p64)[rsi+rdi]=0);' : ''
+				return child.stack ? 'if(rsi>=0){arc+=1;mem[rsi]=mem[rsi+rdi]=0;}' : ''
 			default:
 				return ''
 		}
@@ -328,16 +340,16 @@ export class Compiler extends Parser {
 						return 'if(pcx==0)' + this.compile_dispatch(value, child, frame, stack, index) + 'if(pcx==0)pcx=any_to_obj(rax,1);if(pbx<len_to_get(pcx,i64)){*pbx=key_in_obj(pcx,rdi++);rax=*pbx;}else{break}'
 				}
 			default:
-				return this.compile_dispatch(value, child, frame, stack, index) + this.compile_operator_dispatch(value, child, frame, stack, index)
+				return this.compile_operator_epilogue(value, child, frame, stack, index)
 		}
 	}
 	compile_operator_dispatch (value, child, frame, stack, index) {
 		switch (value) {
 			// () []
 			case this.token_expression:
-				return 'pbx=any_to_obj(rbx,1);rax=fun_to_get(pbx,x64)(rdi,mem_to_get(obj,p64),env_to_get(pbx,p64),arg,ars);'
+				return 'pbx=any_to_obj(rbx,1);rax=fun_to_get(pbx,x64)(rdi,arv,env_to_get(pbx,p64),arg);'
 			case this.token_membership:
-				return 'pbx=any_to_obj(rbx,1);pax=&nop;rax=any_in_mem(rax,rbx,&pax,pbx);'
+				return 'pbx=any_to_obj(rbx,1);pax=&nop;rax=any_to_get(rax,rbx,&pax,pbx);'
 			// =>
 			case this.token_direction:
 				return 'break;'
@@ -413,9 +425,9 @@ export class Compiler extends Parser {
 				return 'rax=any_to_gte(rbx,rax);'
 			// in of instanceof
 			case this.token_in:
-				return this.compile_operator_dispatch(this.token_subroutine, child, frame, stack, index) + 'rax=pax==&nop?false:true;'
+				return this.compile_operator_dispatch(this.token_subroutine, child, frame, stack, index) + 'rax=var_to_any(rsi!=-1);'
 			case this.token_of:
-				return this.compile_operator_dispatch(this.token_subroutine, child, frame, stack, index)
+				return this.compile_operator_dispatch(this.token_membership, child, frame, stack, index)
 			case this.token_instanceof:
 				return 'rax=any_to_iof(rbx,rax);'
 			// + -
@@ -455,13 +467,13 @@ export class Compiler extends Parser {
 			case this.token_void:
 				return 'rax=null;'
 			case this.token_yield:
-				return 'rax=res_to_jmp(rax);'
+				return 'rax=any_to_jmp(rax,1);'
 			case this.token_await:
-				return 'rax=req_to_jmp(rax);'
+				return 'rax=any_to_jmp(rax,0);'
 			case this.token_keyof:
-				return 'rax=key_to_mem(rax);'
+				return 'rax=any_to_map(rax,0);'
 			case this.token_typeof:
-				return 'rax=tag_to_str(rax);'
+				return 'rax=any_to_typ(rax,0);'
 			case this.token_sizeof:
 				return 'rax=any_to_len(rbx,rax);'
 			// ! ~ ++ --
@@ -479,10 +491,8 @@ export class Compiler extends Parser {
 				return 'p64 arv=any_to_obj(rbx,1);' + this.compile_operator_dispatch(this.token_subroutine, child, frame, stack, index)
 			// {}
 			case this.token_subroutine:
-				return 'static i64 rsi;pax=&nop;rax=any_in_sub(rax,rbx,&pax,arv,rsi,&rsi);'
+				return 'static i64 rsi;pax=&nop;rax=any_to_key(rax,rbx,&pax,arv,rsi,&rsi);'
 			// typings
-			case this.token_nullable:
-				return 'rax=null;'
 			case this.token_assembly:
 			default:
 				return ''
@@ -491,13 +501,13 @@ export class Compiler extends Parser {
 	compile_operator_iterable (value, child, frame, stack, index) {
 		switch (value) {
 			case this.token_parameters:
-				return `i64 rsi=` + index + ';i64 rdi=rsi<arc?arc-rsi:0;p64 obj=obj_to_new(0,i64);p64 mem=mem_to_set(obj,mem_to_new(rdi||1,i64));rax=*pax=mem_to_any(obj);if(rdi)while(rsi<rdi){mem[rsi-rdi]=arv[rsi++];}'
+				return 'i64 rsi=' + index + ';i64 rdi=rsi<arc?arc-rsi:0;p64 obj=new_to_get(0,sizeof(i64));rax=*pax=mem_to_any(obj);if(rdi){p64 mem=mem_to_set(obj,new_to_get(rdi,i64));while(rsi<rdi){mem[rsi-rdi]=arv[rsi++];}}'
 			case this.token_subroutine:
-				return 'if(any_is_ptr(rax)&&any_is_sub(rax)){rdi+=len_to_get(any_to_obj(rax,1),i64);rsp[rsi++]=' + index + ';}'
+				return 'if(any_is_nan(rax)&&any_is_sub(rax)){rdi+=len_to_get(any_to_obj(rax,1),i64);rsp[rsi++]=' + index + ';}'
 			case this.token_membership:
-				return 'if(any_is_ptr(rax)&&(any_is_str(rax)||any_is_mem(rax))){rdi+=len_to_get(any_to_obj(rax,1),i64);rsp[rsi++]=' + index + ';}'
+				return 'if(any_is_nan(rax)&&(any_is_str(rax)||any_is_mem(rax))){rdi+=len_to_get(any_to_obj(rax,1),i64);rsp[rsi++]=' + index + ';}'
 			default:
-				return 'rax=obj_to_cpy(rax,rax);'
+				return 'rax=any_to_cpy(rax,rax);'
 		}
 	}
 	compile_operator_property (value, child, frame, stack, index) {
@@ -582,9 +592,6 @@ export class Compiler extends Parser {
 	compile_for_iteration (value, child, frame, stack, index) {
 		return this.compile_dispatch(value, child.child[child.child.length - 1], frame, stack, index)
 	}
-	compile_throw (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + 'throw;'
-	}
 	compile_break (value, child, frame, stack, index) {
 		return this.compile_dispatch(value, child[0], frame, stack, index) + 'break;'
 	}
@@ -594,14 +601,26 @@ export class Compiler extends Parser {
 	compile_return (value, child, frame, stack, index) {
 		return this.compile_dispatch(value, child[0], frame, stack, index) + 'return rax;'
 	}
+	compile_throw (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child[0], frame, stack, index) + 'longjmp(any_to_j64(*any_to_v64(rip)),1);'
+	}
 	compile_try (value, child, frame, stack, index) {
-		throw 'TODO: try'
+		return '{i64 tfg;j64 rsi;i64 rdi=rip;rip=any_to_i64(&rsi);' + this.compile_try_prologue(value, child, frame, stack, index) + this.compile_try_epilogue(value, child, frame, stack, index) + '}'
+	}
+	compile_try_prologue (value, child, frame, stack, index) {
+		return 'switch(setjmp(rsi)){case -1:tfg=-1;break;case 0:tfg=1;case 1:tfg=!tfg;}if(!tfg){' + this.compile_returns(1, child, frame, stack, index) + this.compile_dispatch(value, child[0], frame, stack, index) + '}rip=rdi;'
+	}
+	compile_try_epilogue (value, child, frame, stack, index) {
+		return this.compile_dispatch(value, child[1], frame, stack, index) + this.compile_returns(0, child, frame, stack, index) + this.compile_dispatch(value, child[2], frame, stack, index)
 	}
 	compile_catch (value, child, frame, stack, index) {
-		throw 'TODO: catch'
+		return 'if(tfg>0){' + this.compile_dispatch(value, child[0], frame, stack, index) + this.compile_dispatch(value, child[1], frame, stack, index) + '}' + this.compile_dispatch(value, child[2], frame, stack, index)
 	}
 	compile_finally (value, child, frame, stack, index) {
-		throw 'TODO: finally'
+		return this.compile_dispatch(value, child[0], frame, stack, index) + this.compile_dispatch(value, child[1], frame, stack, index) + 'if(tfg<0)return rax;'
+	}
+	compile_returns (value, child, frame, stack, index) {
+		return child.length == 3 ? value ? '\n#undef return\n#define return longjmp(rsi,-1);\n' : '#undef return\n' : ''
 	}
 	/*
 	 * Assemble
@@ -613,7 +632,6 @@ export class Compiler extends Parser {
 		return stack.join('')
 	}
 	compile_assemble_epilogue (value, child, frame, stack, index) {
-		return value
-		return 'int main(int argc, char** argv){do{' + value + '}while(0);return 0;}'
+		return 'int main(int argc, char** argv){p64 arg;do{' + value + '}while(0);return 0;}'
 	}
 }

@@ -322,7 +322,7 @@ export class Parser extends Lexer {
 									right = child
 									child = this.parse_expression(this.token_expression, value, [])
 								default:
-									if (right = right.token == this.token_keyword ? this.parse_dispatch(value, this.parse_next(), child, this.token_keyword) : right) {
+									if (right.token == this.token_keyword ? right = this.parse_dispatch(value, this.parse_next(), child, this.token_keyword) : right) {
 										switch (this.parse_peek()?.props) {
 											case this.token_catch:
 												return this.parse_statement(value, value, [child, right, this.parse_dispatch(value, this.parse_next(), child, this.token_keyword)])

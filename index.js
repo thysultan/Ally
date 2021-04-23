@@ -131,7 +131,7 @@ export function main (value) {
 	//   		return fmts.call(compile, value)
 	//   }
 	// }, 2))
-	var execute = compile.compile_program(0, program, program, [], 0)
+	var execute = compile.compile_program(0, program, null, [], 0)
 	console.log(value)
 	console.log(execute)
 }
@@ -183,9 +183,8 @@ window.main = main
 // `)
 // main(`'abc'.foo`)
 // main(`switch 1 {case 1, 2 {}}`)
-
-main(`var{a,b}=1`)
-
+// main(`var{a,b}=1`)
+main(`var[a,b]=1`)
 
 // main(`
 // 	var a = 1
