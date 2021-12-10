@@ -132,7 +132,6 @@ export function main (value) {
 	//   }
 	// }, 2))
 	var execute = compile.compile_program(0, program, null, [], 0)
-	console.log(value)
 	console.log(execute)
 }
 
@@ -184,7 +183,20 @@ window.main = main
 // main(`'abc'.foo`)
 // main(`switch 1 {case 1, 2 {}}`)
 // main(`var{a,b}=1`)
-main(`var[a,b]=1`)
+
+main(`
+	var a=0
+	var b=1
+	{
+		var c=2
+		var d=3
+	}
+`)
+
+// main(`
+// 	import a from '../ally/a.js'
+// 	import b from '../ally/b.js'
+// `)
 
 // main(`
 // 	var a = 1

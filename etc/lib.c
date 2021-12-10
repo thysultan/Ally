@@ -3,19 +3,25 @@
 #define aly
 
 // prototypes
-i64 fun_of_num(i64, p64, p64, p64);
-i64 fun_of_str(i64, p64, p64, p64);
-i64 fun_of_mem(i64, p64, p64, p64);
-i64 fun_of_sub(i64, p64, p64, p64);
+i64 fun_of_num(i64, p64, p64);
+i64 fun_of_str(i64, p64, p64);
+i64 fun_of_mem(i64, p64, p64);
+i64 fun_of_sub(i64, p64, p64);
 
 // includes
 #include <math.h> // pow, fmod, fabs
 #include <uchar.h> // U"..."
-#include <wchar.h> // swprintf
+#include <wchar.h> // swprintf wcsstr
 #include <stdio.h> // printf
 #include <stdlib.h> // malloc, free
 #include <string.h> // memcpy
 #include <setjmp.h> // setjmp, longjmp, jmp_buf
+
+// redefinitions
+#ifdef sigsetjmp
+#define setjmp(a) sigsetjmp(a,0)
+#endif
+
 // typeings
 typedef char32_t c32;
 typedef char32_t* s32;
@@ -37,20 +43,20 @@ typedef i64 (*x64)(i64, p64, p64, p64);
 // 64 bit flagging
 i64 zfg, sfg, cfg, tfg;
 i64 dfg, ofg, ifg, afg;
-// 32 bit pointers
+// 32 bit character
 c32 cax, cbx, ccx, cdx;
-// 32 bit pointers
+// 32 bit character pointer
 s32 sax, sbx, scx, sdx;
-// 64 bit pointers
+// 64 bit pointer
 p64 pax, pbx, pcx, pdx;
 // 64 bit floats
 f64 fax, fbx, fcx, fdx;
 // 64 bit unsigned
 u64 uax, ubx, ucx, udx;
-// 64 bit register
-i64 rax, rbx, rcx, rdx;
 // 08 bit register
 i08 eax, ebx, ecx, edx;
+// 64 bit signed
+i64 rax, rbx, rcx, rdx;
 // 64 bit register(special)
 i64 rsi, rdi, esi, edi;
 p64 rsp, rdp, esp, edp;
@@ -67,6 +73,11 @@ i64 nop;
 static i64 cof;
 static i08 exp;
 // constants
+static i64 arc; // count
+static i64 arv; // vector
+static i64 art; // this
+extern p64 are; // export
+extern p64 ars; // stack
 // variables
 #define null nil_to_any(0)
 #define true var_to_any(1)
@@ -81,16 +92,18 @@ static i08 exp;
 #define int_to_mul(a,b,c) (__builtin_mul_overflow(a,b,&c))
 #define int_to_add(a,b,c) (__builtin_add_overflow(a,b,&c))
 #define int_to_sub(a,b,c) (__builtin_sub_overflow(a,b,&c))
-#define mem_to_cpy(a,b,c,d) ((d*)memcpy(a,b,(c)*sizeof(d)))
+#define int_to_cpy(a,b,c,d) ((d*)memcpy(a,b,(c)*sizeof(d)))
+#define int_to_set(a,b,c,d) ((d*)memset(a,b,(c)*sizeof(d)))
+
 // object(data) setter
-#define len_to_set(a,b) ((p64)(a)[0]=(i64)(b))
+#define env_to_set(a,b) ((p64)(a)[0]=(i64)(b))
 #define mem_to_set(a,b) ((p64)(a)[1]=(i64)(b))
-#define env_to_set(a,b) ((p64)(a)[2]=(i64)(b))
+#define len_to_set(a,b) ((p64)(a)[2]=(i64)(b))
 #define fun_to_set(a,b) ((p64)(a)[3]=(i64)(b))
 // object(data) getter
-#define len_to_get(a,b) ((b)(p64)(a)[0])
+#define env_to_get(a,b) ((b)(p64)(a)[0])
 #define mem_to_get(a,b) ((b)(p64)(a)[1])
-#define env_to_get(a,b) ((b)(p64)(a)[2])
+#define len_to_get(a,b) ((b)(p64)(a)[2])
 #define fun_to_get(a,b) ((b)(p64)(a)[3])
 // memory(page) setter
 #define cap_to_set(a,b) ((p64)(a)[-1]=(i64)(b))
@@ -139,6 +152,7 @@ static i08 exp;
 #define str_to_any(a) (any_to_nan(IS_STR,a))
 #define mem_to_any(a) (any_to_nan(IS_MEM,a))
 #define sub_to_any(a) (any_to_nan(IS_SUB,a))
+#define chr_to_any(a) (str_to_any(-(a)))
 // decode typeof
 #define any_is_nil(a) (any_to_tag(a,i08)==IS_NIL)
 #define any_is_var(a) (any_to_tag(a,i08)==IS_VAR)
@@ -147,7 +161,7 @@ static i08 exp;
 #define any_is_mem(a) (any_to_tag(a,i08)==IS_MEM)
 #define any_is_sub(a) (any_to_tag(a,i08)==IS_SUB)
 #define any_is_obj(a) (any_is_nan(a)&&any_to_tag(a,i64)>IS_STR)
-
+#define any_is_chr(a) (any_is_str(a)&&any_to_val(a)<0)
 // -128 reserved for nan and nan reserved for pointers etc
 #define any_is_nan(a) (any_to_exp(a)==-128)
 // positive exponent equates to integer
@@ -397,29 +411,29 @@ i64 any_to_str (i64 rax) {
 
 			return str_to_any(obj);
 		case IS_MEM:
-			p64 obj = any_to_obj(rax, rax = any_to_str(-91));
+			p64 obj = any_to_obj(rax, rax = chr_to_any(91));
 			p64 mem = mem_to_get(obj, p64);
 			i64 len = len_to_get(obj, i64);
 			i64 idx = 0;
 
 			while (idx < len) {
 				rax = any_to_seq(rax, any_to_str(mem[idx++]));
-				rax = idx < len ? any_to_seq(rax, any_to_str(-44)) : rax;
+				rax = idx < len ? any_to_seq(rax, chr_to_any(44)) : rax;
 			}
 
-			return any_to_seq(rax, any_to_str(-93));
+			return any_to_seq(rax, chr_to_any(93));
 		case IS_SUB:
-			p64 obj = any_to_obj(rax, rax = -123);
+			p64 obj = any_to_obj(rax, rax = chr_to_any(123));
 			p64 mem = mem_to_get(obj, p64);
 			i64 len = len_to_get(obj, i64);
 			i64 idx = 0;
 
 			while (idx < len) {
 				rax = any_to_seq(rax, any_to_str(mem[idx++]));
-				rax = idx < len ? any_to_seq(rax, any_to_str(-44)) : rax;
+				rax = idx < len ? any_to_seq(rax, chr_to_any(44)) : rax;
 			}
 
-			return any_to_seq(rax, any_to_str(-125));
+			return any_to_seq(rax, chr_to_any(125));
 		default:
 			i64 len = int_to_max(any_to_ctr(cof = any_to_cof(rax), exp = any_to_exp(rax)), int_to_abs(exp)) - 1;
 			s32 mem = new_to_get(len, sizeof(c32));
@@ -474,7 +488,7 @@ p64 any_to_obj (i64 rax, i64 rbx) {
 			case IS_NIL: return any_to_box(rax, eax);
 		}
 
-		return any_to_p64(rbx && fun_to_get(rax, i64) <= 0 ?  : rax);
+		return any_to_p64(rbx && fun_to_get(rax, i64) <= 0 ? any_to_sep(rax, eax) : rax);
 	} else {
 		return any_to_box(rax, IS_NIL);
 	}
@@ -539,7 +553,7 @@ i64 any_to_cmp (i64 rax, i64 rbx) {
 			if (pcx != pdx) {
 				while (rsi--) {
 					i64 key = pcx[rsi + rdi];
-					i64 val = any_to_key(key, rbx, &nop, pbx, key = 0, &key);
+					i64 val = any_to_key(key, rbx, &nop, pbx, &key, key = 0, 0);
 
 					if (key == -1) {
 						return 0;
@@ -565,20 +579,22 @@ i64 any_to_cmp (i64 rax, i64 rbx) {
 
 // generate
 i64 any_to_gen (i64 rax, i64 rbx) {
-	p64 obj = new_to_get(rsi = 0, sizeof(i64));
-	p64 mem = new_to_get(rdi = (rax > rbx ? rax - rbx : rbx - rax) || 1, sizeof(i64));
+	i64 idx = 0;
+	i64 len = (rax > rbx ? rax - rbx : rbx - rax) || 1;
+	p64 obj = new_to_get(0, sizeof(i64));
+	p64 mem = new_to_get(len, sizeof(i64));
 
-	len_to_set(obj, rdi);
+	len_to_set(obj, len);
 	mem_to_set(obj, mem);
 	fun_to_set(obj, &fun_of_mem);
 
 	if (rax > rbx) {
-		while (rsi < rdi) {
-			mem[rsi++] = rax = any_to_add(rax, any_to_dec(1, 0));
+		while (idx < len) {
+			mem[idx++] = rax = any_to_add(rax, any_to_dec(1, 0));
 		}
 	} else {
-		while (rsi < rdi) {
-			mem[rsi++] = rax = any_to_sub(rax, any_to_dec(1, 0));
+		while (idx < len) {
+			mem[idx++] = rax = any_to_sub(rax, any_to_dec(1, 0));
 		}
 	}
 
@@ -692,14 +708,14 @@ i64 any_to_dep (i64 rax, i64 rbx) {
 }
 
 // keyof
-i64 any_of_map (i64 rax, i64 rbx) {
+i64 any_to_map (i64 rax, i64 rbx) {
 	if (any_is_obj(rax)) {
 		i64 len = len_to_get(pax = any_to_obj(rax, eax = any_to_tag(rax, i64)), i64);
 		p64 obj = new_to_get(0, sizeof(i64));
 		p64 mem = new_to_get(len, sizeof(i64));
 
 		if (eax == IS_SUB) {
-			mem_to_cpy(mem, mem_to_get(pax, p64) + len, len, i64);
+			int_to_cpy(mem, mem_to_get(pax, p64) + len, len, i64);
 		} else {
 			while (len) {
 				mem[--len] = any_to_dec(len, 0);
@@ -713,7 +729,7 @@ i64 any_of_map (i64 rax, i64 rbx) {
 }
 
 // typeof
-i64 any_to_typ (i64 rax, i64 rbx) {
+i64 any_to_tof (i64 rax, i64 rbx) {
 	switch (any_is_nan(rax) && any_to_tag(rax, i08)) {
 		case IS_NIL:
 			static obj[4];
@@ -775,14 +791,14 @@ i64 any_to_typ (i64 rax, i64 rbx) {
 }
 
 // copy
-p64 any_to_cpy (i64 rax, i64 rbx) {
+p64 any_to_cop (i64 rax, i64 rbx) {
 	if ((eax = any_to_tag(rax, i08)) > IS_STR) {
 		p64 obj = any_to_obj(rax, 1);
 		i64 len = len_to_get(obj, i64);
 		p64 mem = new_to_get(len, sizeof(i64));
 
-		mem_to_cpy(mem, mem_to_get(obj, p64), len, i64);
-		mem_to_set(obj = new_to_get(0, sizeof(i64)), mem);
+		int_to_cpy(mem, mem_to_get(obj, p64), len, i64);
+		int_to_set(obj = new_to_get(0, sizeof(i64)), mem);
 
 		return any_to_nan(eax, obj);
 	} else {
@@ -801,29 +817,71 @@ i64 any_to_jmp (i64 rax, i64 rbx) {
 	return rax;
 }
 
-// membership
-i64 any_to_get (i64 rax, i64 rbx, p64 pax, p64 pbx) {
-	p64 mem = mem_to_get(pbx, p64);
-	i64 len = len_to_get(pbx, i64);
-
-	if (rax < len) {
-		switch (any_to_tag(rbx, i08)) {
-			case IS_STR:
-				return str_to_any(-mem[rax]);
-			case IS_MEM:
-				return *(*pax = &mem[rax]);
-			case IS_SUB:
+// has/includes
+i64 any_to_has (i64 rax, i64 rbx) {
+	switch (any_to_tag(rbx)) {
+		case IS_VAR:
+		case IS_FUN:
+			return var_to_any(rax == rbx);
+		case IS_STR:
+			if (any_is_str(rax)) {
+				if (any_is_val(rax) < 0 && any_is_val(rbx) < 0) {
+					return var_to_any(rax == rbx);
+				} else {
+					return var_to_any(wcsstr(mem_to_get(any_to_obj(rax, 1), s32), mem_to_get(any_to_obj(rbx, 1), s32)) != 0);
+				}
+			} else {
 				break;
+			}
+		default:
+			p64 obj = any_to_obj(rbx, 1);
+			p64 mem = mem_to_get(obj, p64)
+			i64 len = len_to_get(obj, i64);
+			i64 idx = 0;
+
+			while (idx < len) {
+				if (mem[idx++] == rax) {
+					return var_to_any(1);
+				}
+			}
+	}
+
+	return var_to_any(0);
+}
+
+// membership
+i64 any_to_idx (i64 rax, i64 rbx, p64 pax, p64 pbx) {
+	i64 idx = any_to_cof(rax);
+	p64 obj = any_to_obj(rbx, 1);
+	p64 mem = mem_to_get(obj, p64);
+	i64 len = len_to_get(obj, i64);
+
+	if (idx < 0) {
+		do {
+			idx += len;
+		} while (idx < 0);
+	}
+
+	if (idx < len) {
+		return any_is_str(rbx) ? str_to_any(-mem[idx]) : *(*pax = &mem[idx]);
+	} else if (any_is_mem(pbx && rbx)) {
+		if (idx >= (rbx = cap_to_get(mem, i64) / sizeof(i64))) {
+			mem_to_set(obj, mem = new_to_get(rbx + 1, sizeof(i64)));
 		}
+
+		int_to_set(mem + len, null, rbx - len, i64);
+		len_to_set(obj, idx + 1);
+
+		return *(*pax = &mem[idx]);
 	}
 
 	return null;
 }
 
 // subroutine
-i64 any_to_key (i64 rax, i64 rbx, p64 pax, p64 pbx, i64 rsi, p64 rdi) {
+i64 any_to_key (i64 rax, i64 rbx, p64 pax, p64 pbx, p64 pcx, i64 rsi, i64 rdi) {
+	i64 len = len_to_get(pbx, i64) - rdi;
 	p64 mem = mem_to_get(pbx, p64);
-	i64 len = len_to_get(pbx, i64);
 
 	switch (any_to_tag(rbx, i08)) {
 		case IS_STR:
@@ -841,70 +899,97 @@ i64 any_to_key (i64 rax, i64 rbx, p64 pax, p64 pbx, i64 rsi, p64 rdi) {
 				}
 
 				if (rsi != len) {
-					return *(*pax = &mem[*rdi = rsi]);
+					return *(*pax = &mem[*pcx = rsi]);
 				}
 			}
 
-			*rdi = -1;
+			*pcx = -1;
 	}
 
 	return null;
 }
 
-// expansion
-p64 any_to_exp (i64 rax, i64 rbx, p64 pax, p64 pbx, i64 rsi, i64 rdi, p64 rsp, p64 rbp) {
-	if (rbx == IS_SUB) {
-		i64 rdx = len_to_get(pax, i64);
-		i64 pdx[rdi * 2];
+// parameters accumulator
+i64 any_to_pat (i64 rax, i64 rbx, p64 pax) {
+	p64 obj = new_to_get(0, sizeof(i64));
+	i64 len = len_to_set(obj, rax < rbx ? rbx - rax : 0);
 
-		for (i64 idx = rbx = 0; idx < rsi; ++idx) {
-			mem_to_cpy(pdx + rbx, pax, rbx = rsp[idx] + 1, i64);
-			mem_to_cpy(pdx + rbx + rdi, pax + len_to_get(pax, i64), rbx, i64);
+	if (len) {
+		p64 mem = mem_to_set(obj, new_to_get(len, sizeof(i64)));
 
-			p64 obj = any_to_obj(rax = pax[rbx - 1], 1);
-			p64 mem = mem_to_get(obj, p64);
-			i64 len = len_to_get(obj, i64);
-
-			for (i64 idx = 0; idx < len; ++idx) {
-				i64 key = mem[idx + len];
-				i64 val = mem[idx];
-
-				any_to_key(key, rax, &nop, pax, rcx = 0, &rcx);
-
-				if (rcx < 0) {
-					pdx[rdx + rdi] = key;
-					pdx[rdx++] = val;
-				} else {
-					pdx[rcx + rdi] = key;
-					pdx[rcx] = val;
-				}
-			}
+		while (rax < len) {
+			mem[rax - len] = pax[rax++];
 		}
-
-		mem_to_cpy(pbx = new_to_get(rdx, sizeof(i64)), pdx, rdx, i64);
-		mem_to_cpy(pbx + rdx, pdx + rdx, len_to_set(pax, rdx), i64);
-	} else {
-		for (i64 idx = rbx = 0; idx < rsi; ++idx) {
-			mem_to_cpy(pbx + rbx, pax, rbx = rsp[idx] + 1, i64);
-
-			p64 obj = any_to_obj(rax = pax[rbx - 1], 1);
-			v64 mem = any_to_obj(obj, v64);
-			i64 len = len_to_get(obj, i64);
-
-			for (i64 idx = 0; idx < len; ++idx) {
-				switch (any_to_tag(rax, i08)) {
-					case IS_STR: pbx[idx + rbx++] = any_to_s32(mem)[idx];
-						break;
-					case IS_MEM: pbx[idx + rbx++] = any_to_p64(mem)[idx];
-						break;
-				}
-			}
-		}
-
-		mem_to_cpy(pbx, pax, len_to_set(rbp, rdi) - rbx, i64);
 	}
 
-	return pbx;
+	return mem_to_any(obj);
+}
+
+// membership accumulator
+i64 any_to_mat (i64 rax, i64 rbx, p64 pax, p64 pbx, i64 rsi, i64 rdi) {
+	i64 idx = 0;
+	i08 tag = any_is_nan(rbx) && any_to_tag(rbx);
+
+	if (tag < IS_STR) {
+		pbx[rsi] = rbx;
+	} else if (rdi = len_to_get(pax = any_to_obj(rbx, 1), i64)) {
+		if (pax) {
+			i64 cap = cap_to_get(pbx, i64) / sizeof(i64);
+			i64 len = len_to_get(pax, i64) + rdi;
+
+			if (cap < len_to_set(pbx, len)) {
+				mem_to_set(pbx, pbx = int_to_cpy(new_to_get(len, sizeof(i64)), new_to_del(cap, rbx, pbx), cap, i64));
+			}
+		}
+
+		do {
+			pbx[--rdi + rsi] = tag == IS_STR ? chr_to_any(mem_to_get(pax, s32)[idx++]) : mem_to_get(pax, p64)[idx++];
+		} while (rdi);
+	}
+
+	return idx;
+}
+
+// subroutine accumulator
+i64 any_to_sat (i64 rax, i64 rbx, p64 pax, p64 pbx, i64 rsi, i64 rdi) {
+	i64 idx = 0;
+	i08 tag = any_is_nan(rax) && any_to_tag(rax);
+
+	if (tag != IS_SUB) {
+		pbx[rsi] = rax;
+	} else {
+		p64 obj = any_to_obj(rax, 1);
+		p64 mem = mem_to_get(obj, p64);
+		i64 len = len_to_get(obj, i64);
+
+		if (len) {
+			i64 rbp = rdi + len;
+			i64 rsp[rbp * 2];
+
+			mem_to_cpy(rsp, pbx, rsi);
+			mem_to_del(rdi, rdi, pbx);
+
+			while (idx < len) {
+				i64 key = mem[idx + len];
+				i64 val = mem[idx++];
+
+				any_to_key(key, rax, &nop, pax, &rbx, rbx = 0, 0);
+
+				if (rbx < 0) {
+					rsp[idx - 1 + rdi + rbp] = key;
+					rsp[idx - 1 + rdi] = val;
+				} else {
+					rsp[rbx + rbp] = key;
+					rsp[rbx] = val;
+				}
+			}
+
+			mem_to_cpy(mem_to_set(pax, new_to_get(rdi += idx, sizeof(i64))), rsp, rdi, i64);
+			mem_to_cpy(mem_to_get(pax, p64), rsp + rbp, len_to_set(pax, rdi), i64);
+		}
+	}
+
+	return idx;
 }
 
 // heap
@@ -992,28 +1077,26 @@ p64 new_to_get (i64 rax, i64 rbx) {
 }
 
 // memory delocation
-i64 new_to_del (i64 rax, i64 rbx) {
-	return 0;
+p64 new_to_del (i64 rax, i64 rbx, p64 pax) {
+	return pax;
 }
 
 // number callable
-i64 fun_of_num (i64 arc, p64 arv, p64 are, p64 arg) {
+i64 fun_of_num (i64 arc, p64 arv, p64 are) {
 	return 0;
 }
 
 // string callable
-i64 fun_of_str (i64 arc, p64 arv, p64 are, p64 arg) {
+i64 fun_of_str (i64 arc, p64 arv, p64 are) {
 	return 0;
 }
 
 // member callable
-i64 fun_of_mem (i64 arc, p64 arv, p64 are, p64 arg) {
+i64 fun_of_mem (i64 arc, p64 arv, p64 are) {
 	return 0;
 }
 
 // object callable
-i64 fun_of_sub (i64 arc, p64 arv, p64 are, p64 arg) {
+i64 fun_of_sub (i64 arc, p64 arv, p64 are) {
 	return 0;
 }
-
-#endif
