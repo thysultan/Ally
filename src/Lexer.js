@@ -94,9 +94,9 @@ export class Lexer {
 		this.token_assignment_shift_logical_left = 4934952648
 		this.token_assignment_shift_logical_right = -2077153338
 		this.token_assignment_optional = 1675565828
-		this.token_assignment_membership: -91
-		this.token_assignment_properties: 2620402775
-		this.token_assignment_properties_optional: -1675565813
+		this.token_assignment_membership = -91
+		this.token_assignment_properties = 2620402775
+		this.token_assignment_properties_optional = -1675565813
 		this.token_less_than = -2620402761
 		this.token_greater_than = -2620402759
 		this.token_equal_less_than = 1675369031

@@ -143,7 +143,7 @@ window.main = main
 // main(`a[0][1]`)
 // main(`a(0)(1)`)
 // main(`1,2,3`)
-// main(`if 1,2,3 {}`)
+// main(`if 1,2,3 {4}`)
 // main(`while 1, 2, 3 {}`)
 // main(`do{}while 1`)
 // main(`({a=1})`)
@@ -170,9 +170,11 @@ window.main = main
 // 	c
 // }
 // `)
-// main(`
-// fun bar (a,b=1) {return faz(1,2)}
-// `)
+// main(`fun bar (a,b=1) {return 1}`)
+// main(`var bar bar(2)`)
+// main(`sizeof 'abc'`)
+// main(`'def'.length`)
+
 // main(`fun print (var a, var b) { return 1 }`)
 // main(`var string = "abc@(1)xyz"`)
 // main(`var number = 2.3e2`)
@@ -184,14 +186,15 @@ window.main = main
 // main(`switch 1 {case 1, 2 {}}`)
 // main(`var{a,b}=1`)
 
-main(`
-	var a=0
-	var b=1
-	{
-		var c=2
-		var d=3
-	}
-`)
+// main(`
+// 	var a=0
+// 	var b=1
+// 	var e=b
+// 	{
+// 		var c=2
+// 		var d=3
+// 	}
+// `)
 
 // main(`
 // 	import a from '../ally/a.js'
@@ -213,6 +216,6 @@ main(`
 // main('{1+2,3}')
 // main('(1,3)')
 
-// main('if 2 a = 3')
+main('if 2 a = 3')
 // main('if 2 var a = 3')
 

@@ -438,6 +438,7 @@ export class Parser extends Lexer {
 					case this.token_keyword:
 						break
 					default:
+						// parse arrow functions i.e a => ...
 						if (right.props == this.token_direction) {
 							switch (child.value) {
 								case this.token_identifier: child = this.parse_expression(this.token_expression, value, [child])
@@ -447,19 +448,22 @@ export class Parser extends Lexer {
 				}
 				break
 			case this.token_subroutine:
+				// parse functions i.e () {} or (a) {} but avoid keyword prefixed i.e if (a) {}
 				if (child.value == this.token_expression) {
 					switch (props) {
 						case this.token_keyword:
 							return child
 						default:
-							return this.parse_function(this.parse_parameters(child.types = child.props = this.token_parameters, child, right, props), right.token = right.props = right.value = this.token_expression, [child, this.parse_next()])
+							return this.parse_function(this.parse_parameters(child.props = this.token_parameters, child, right, props), right.token = right.props = right.value = this.token_expression, [child, this.parse_next()])
 					}
 				}
 				break
-			case this.token_membership: this.token_property(value) || this.parse_identifier(value, this.parse_indexation(value, child, this.parse_next(), props), this.parse_peek(), props)
-				break
-			case this.token_expression: this.token_property(value) || this.parse_identifier(value, this.parse_invocation(value, child, this.parse_next(), props), this.parse_peek(), props)
-				break
+			// either single access or multiplex access i.e a[0] or a[0,1,2] which is unrolled to a[0][1][2]
+			case this.token_membership: if (this.token_property(value)) break
+				return this.parse_identifier(value, this.parse_indexation(value, child, this.parse_next(), props), this.parse_peek(), props)
+			// either meethod invocation or something else i.e a.b vs a.b()
+			case this.token_expression: if (this.token_property(value)) break
+				return this.parse_identifier(value, this.parse_invocation(value, child, this.parse_next(), props), this.parse_peek(), props)
 		}
 
 		return child
@@ -520,6 +524,8 @@ export class Parser extends Lexer {
 									case this.token_initialize:
 									case this.token_assignment:
 										switch (child.child[0].types) {
+											// convert classes to functions that return an object
+											// i.e def bar (a) { var b = a } is converted to fun bar (a) return {a, b: a}
 											case this.token_definite: entry.types = entry.child[index].types = this.token_subroutine
 												break
 										}
@@ -529,16 +535,20 @@ export class Parser extends Lexer {
 				case this.token_operator:
 					break
 				case this.token_identifier:
+					// if not a definition, else if definition already defined in scope witin object, reuse initial definition i.e {var a = 1 var a = 2} is {var a = 1 a = 2}
 					if (!entry.types) {
+						// ignore if a property access i.e access.property
 						if (this.token_property(index ? child.props : index)) {
 							break
 						} else if (this.parse_lookup(value, entry, frame, stack, 0, count, state, scope)) {
+							// found variable, if object namespace convert i.e {a, b, c} to {a: a, b: b, c: c}
 							if (child.types == this.token_subroutine) {
 								child.child[index] = this.parse_operation(entry = {...entry, index, state}, this.token_assignment, [entry, child.child[index]])
 							} else {
 								break
 							}
 						} else {
+							// only error if not implicit assignment, i.e a = 1 is valid if a is not in any scope a is created within scope i.e a = 1 converted to var a = 1
 							switch (child.props) {
 								case this.token_initialize:
 								case this.token_assignment:
@@ -550,6 +560,9 @@ export class Parser extends Lexer {
 						}
 					} else if (this.parse_lookup(value, entry, frame, stack, child.types == this.token_subroutine ? frame.stack : count, count, state, scope)) {
 						break
+					} else {
+						// value is the stack reference offset of the current module
+						entry.value = value + entry.index
 					}
 				case this.token_identifier: stack[count++] = entry.types = entry
 					break
@@ -557,10 +570,12 @@ export class Parser extends Lexer {
 					break
 				default:
 					switch (entry.props) {
+						// upgrade reference identifier to declaration
 						case this.token_as: this.parse_identifiee(value, entry, child, value)
 							break
 						case this.token_in:
 						case this.token_of:
+							// upgrade to special in/of operator used in for statements i.e for var a in b {}
 							if (child.props == this.token_for) {
 								entry.props = -entry.props
 							}
@@ -568,11 +583,14 @@ export class Parser extends Lexer {
 						case this.token_assignment:
 						case this.token_assignment_optional:
 							switch (entry.child[0].value) {
+								// update destructuring syntax i.e {a, b} = c
 								case this.token_membership:
 								case this.token_subroutine: this.parse_identifiee(0, entry.child[0], child, entry.value = entry.props)
 									break
+								// a = 1
 								case this.token_identifier:
 									switch (child.types) {
+										// upgrade assignment identifier to declaration if not already
 										case this.token_subroutine: entry.child[0].types ||= this.token_variable
 									}
 							}
@@ -584,18 +602,22 @@ export class Parser extends Lexer {
 						case this.token_membership:
 						case this.token_properties:
 						case this.token_properties_optional:
+							// if the parent is a assigment variant
 							if (this.token_assignee(child.props)) {
 								entry.props = -entry.props
 							}
 					}
 
+					// recurse on subexpressions, updating the count after in case where there are more declaration
 					count = this.parse_verify(value, entry, frame, stack, 0, count, state, scope, queue).count
 			}
 
+			// mostly 0 or 1 for expressions, where 0 denotes the left hand side of an expression and 1 is the right
 			index++
 		}
 
 		if (child == frame) {
+			// traverse into function scopes
 			for (var entry of queue) {
 				this.parse_verify(value, entry, entry, stack, 0, count, state + 1, entry, [])
 			}
@@ -612,18 +634,23 @@ export class Parser extends Lexer {
 			var entry = stack[--count]
 
 			if (entry) {
+				// found reference
 				if (child.props == entry.props) {
 					child.types = 0
 					child.index = entry.index
 					child.state = frame.state - entry.state
 
+					// not a global variable or stack variable i.e is closure/object variable
 					if (state = entry.state) {
+						// not within the same scope i.e reference is higher up the scope chain
 						if (state < scope.state) {
+							// traverse up the scope chain, upgrading the scopes to heap allocated scopes as needed
 							while (scope = scope.frame, state < scope.state) {
 								scope.types ||= this.token_enviroment
 							}
 						}
 					} else {
+						// offset by the current modules offset
 						child.value = value + entry.index
 					}
 
@@ -633,20 +660,24 @@ export class Parser extends Lexer {
 		}
 	}
 	parse_export (value, child, frame, stack, index, count, state, scope) {
+		// top-level import only
 		if (frame.frame) {
 			return this.parse_report('invalid export', entry)
 		}
 	}
 	parse_import (value, child, frame, stack, index, count, state, scope) {
+		// top-level import only
 		if (frame.frame) {
 			return this.parse_report('invalid import', entry)
 		}
 
+		// WIP mambo-jambo, passes an offset to parse_program to be used for offset where globals should be registered in the stack
 		for (var entry of child.child) {
 			switch (entry.token) {
 				case this.token_literal:
 					switch (entry.value) {
 						case this.token_string: index = child.index = this.state_files.indexOf(entry = child.child.join(''))
+							// if the file already exits exit early
 							if (index == -1) {// TODO: parse url
 								return fetch(this.state_files[index = child.index = this.state_queue++] = entry).then(response => response.text()).then(value => {
 									this.state_count += (child.child[0] = this.parse_program(this.state_count, this.lexer_open(value))).count

@@ -2,7 +2,7 @@ import {Parser} from './Parser.js'
 
 export class Compiler extends Parser {
 	compile_program (value, child, frame, stack, index) {
-		return this.compile_assemble('main', this.compile_dispatch(value, child, null, stack, index), frame, stack, index)
+		return this.compile_assemble('main', this.compile_dispatch(value, child, null, stack, index), frame, stack, index).replace(/({|})/g, '\n$1\n').replace(/;/g, ';\n').replace(/\n{2,}/g, '\n')
 	}
 	/*
 	 * Dispatch
@@ -70,6 +70,7 @@ export class Compiler extends Parser {
 		return this.compile_identifier_prologue(value, child, frame, stack, index) + this.compile_identifier_epilogue(value, child, frame, stack, index)
 	}
 	compile_identifier_prologue (value, child, frame, stack, index) {
+		// closure/object scope
 		if (frame.types) {
 			if (child.types) {
 				if (frame.types == this.token_subroutine) {
@@ -81,8 +82,10 @@ export class Compiler extends Parser {
 
 			return this.compile_identifier_iterator(value, child, frame, stack, index) + 'pax=&mem_to_get(pax,p64)[' + index + '];'
 		} else if (child.state) {
-			return 'pax=&arv[' + child.stack + '];'
+			// non closure function scope
+			return 'pax=&arv[' + index + '];'
 		} else {
+			// global scope
 			return 'pax=&ars[' + child.value + '];'
 		}
 	}
@@ -238,7 +241,7 @@ export class Compiler extends Parser {
 			case this.token_assignment:
 				return this.compile_operator(value, child.child.reverse(), frame, stack, index)
 			case this.token_assignment_optional:
-				return 'if(rax==null)' + this.compile_destruct_prologue(this.token_assignment, child, frame, stack, index)
+				return 'if(rax==null)' + this.compile_destruct_prologue(this.token_assignment, child, frame, stack, index) + ';'
 			case this.token_subroutine:
 			case this.token_membership:
 				return this.compile_destruct_iterator(value, child, frame, stack, index)
@@ -303,7 +306,7 @@ export class Compiler extends Parser {
 			case this.token_logical_null:
 				return this.compile_operator_dispatch(value, child, frame, stack, index) + this.compile_dispatch(value, child, frame, stack, index)
 			case this.token_assignment_optional:
-				return this.compile_operator_dispatch(value, child, frame, stack, index) + this.compile_operator_dispatch(this.token_assignment, child, frame, stack, index)
+				return this.compile_operator_dispatch(value, child, frame, stack, index) + '{' + this.compile_dispatch(value, child, frame, stack, index) + this.compile_operator_dispatch(this.token_assignment, child, frame, stack, index) + '}'
 			case this.token_properties:
 			case this.token_properties_optional:
 			case this.token_assignment_properties:
@@ -330,7 +333,7 @@ export class Compiler extends Parser {
 			case this.token_generate:
 				return this.compile_operator_generate(value, child, frame, stack, index)
 			case this.token_iterable:
-				return this.compile_operator_iterable(frame.props = value, child, frame, stack, index)
+				return this.compile_operator_iterable(frame.types, child, frame.props = value, stack, index)
 			// :
 			case this.token_initialize:
 			// =
@@ -472,11 +475,11 @@ export class Compiler extends Parser {
 		}
 	}
 	compile_operator_iterable (value, child, frame, stack, index) {
-		switch (frame.types) {
+		switch (value) {
 			case this.token_parameters:
 				return 'rbx=any_to_pat(' + index + ',arc,arv);rax=*pax=rbx;'
 			case this.token_subroutine:
-				return 'rbx=any_to_sat(rax,rax,rbp,rsp,rsi+' + index + ',rdi);if(rbx){rsi+=rbx;rdi+=rbx-1;if(rbp)rsp=mem_to_get(rbp,p64);}' : ''
+				return 'rbx=any_to_sat(rax,rax,rbp,rsp,rsi+' + index + ',rdi);if(rbx){rsi+=rbx;rdi+=rbx-1;if(rbp)rsp=mem_to_get(rbp,p64);}'
 			case this.token_membership:
 				return 'rbx=any_to_mat(rax,rax,rbp,rsp,rsi+' + index + ',rdi);if(rbx){rsi+=rbx;rdi+=rbx-1;if(rbp)rsp=mem_to_get(rbp,p64);}'
 			default:
@@ -506,7 +509,7 @@ export class Compiler extends Parser {
 		return child ? 'if(!zfg){' + this.compile_dispatch(value, child[0] || child, frame, stack, index) + '}' : ''
 	}
 	compile_if (value, child, frame, stack, index) {
-		return this.compile_dispatch(value, child[0], frame, stack, index) + this.compile_if_epilogue(value, child[1], frame, stack, index) + this.compile_else(value, child[2], frame, stack, index)
+		return this.compile_if_prologue(value, child[0], frame, stack, index) + this.compile_if_epilogue(value, child[1], frame, stack, index) + this.compile_else(value, child[2], frame, stack, index)
 	}
 	compile_if_prologue (value, child, frame, stack, index) {
 		return this.compile_dispatch(value, child, frame, stack, index) + 'i64 zfg=any_to_bit(rax,i64);'
@@ -539,7 +542,7 @@ export class Compiler extends Parser {
 		return 'i64 rbp=any_to_obj(rax,1);p64 rsp=mem_to_get(rbp,p64);i64 rdi=len_to_get(rbp,i64);i64 rbx=sfg;'
 	}
 	compile_range_epilogue (value, child, frame, stack, index) {
-		return 'for(i64 rsi=0;rsi<rdi;rsi++){if(cfg)break;rax=rsp[rsi];' + this.compile_operator_dispatch(this.token_compare, child, frame, stack, index) + 'if(rax==true)zfg=cfg=1;}'
+		return 'for(i64 rsi=0;rsi<rdi;rsi++){if(cfg)break;rax=rsp[rsi];' + this.compile_operator_dispatch(this.token_compare, child, frame, stack, index) + 'if(rax==true)zfg=cfg=1;' + '}'
 	}
 	compile_do (value, child, frame, stack, index) {
 		return 'while(1){' + this.compile_do_prologue(value, child[0], frame, stack, index) + this.compile_do_epilogue(value, child[1], frame, stack, index) + this.compile_dispatch(value, child[2], frame, stack, index) + '}'
@@ -560,7 +563,7 @@ export class Compiler extends Parser {
 		return this.compile_dispatch(value, child, frame, stack, index)
 	}
 	compile_for (value, child, frame, stack, index) {
-		return '{' + this.compile_for_prologue(value, child[0], frame, stack, 0) + 'while(1){' + this.compile_for_epilogue(value, child, frame, stack, 0) + this.compile_dispatch(value, child[2], frame, stack, index) + '}}'
+		return '{' + this.compile_for_prologue(value, child[0], frame, stack, 0) + 'while(1){' + this.compile_for_epilogue(value, child, frame, stack, 0) + this.compile_dispatch(value, child[2], frame, stack, index) + '}' + '}'
 	}
 	compile_for_prologue (value, child, frame, stack, index) {
 		return child.child.reduce((state, entry, index, array) => index < array.length - 2 ? state + this.compile_dispatch(value, entry, frame, stack, index) : state, 'i64 rsi=0;i64 rdi=0;p64 rbp=0;')
@@ -590,7 +593,7 @@ export class Compiler extends Parser {
 		return '{i64 tfg;j64 rsi;i64 rdi=rip;rip=any_to_i64(&rsi);' + this.compile_try_prologue(value, child, frame, stack, index) + this.compile_try_epilogue(value, child, frame, stack, index) + '}'
 	}
 	compile_try_prologue (value, child, frame, stack, index) {
-		return '\n#undef return\n#define return rcx=rax;longjmp(rsi,-1);\nswitch(setjmp(rsi)){case -1:tfg=-1;break;case 0:tfg=0;break;case 1:tfg=1;}if(!tfg){' + this.compile_dispatch(value, child[0], frame, stack, index) + '}rip=rdi;'
+		return '\n#undef return\n#define return rcx=rax;longjmp(rsi,-1);\nswitch(setjmp(rsi)){case -1:tfg=-1;break;case 0:tfg=0;break;case 1:tfg=1;}if(!tfg){' + this.compile_dispatch(value, child[0], frame, stack, index) + '}' + 'rip=rdi;'
 	}
 	compile_try_epilogue (value, child, frame, stack, index) {
 		return this.compile_dispatch(value, child[1], frame, stack, index) + '\n#undef return\n' + this.compile_dispatch(value, child[2], frame, stack, index)
@@ -640,7 +643,7 @@ export class Compiler extends Parser {
 		return this.compile_assemble_prologue(value, child, frame, stack, index) + this.compile_assemble_epilogue(value, child, frame, stack, index)
 	}
 	compile_assemble_prologue (value, child, frame, stack, index) {
-		return 'static i64 are[' + this.state_files.length +'];static i64 ars[8388608];' + this.state_stack.join('')
+		return 'static i64 are[' + this.state_files.length +'];static i64 ars[8388608];\n' + this.state_stack.join('')
 	}
 	compile_assemble_epilogue (value, child, frame, stack, index) {return child
 		return 'int main(int argc, char** argv){arv=ars+' + this.state_count + ';do{' + child + '}while(0);return 0;}'
