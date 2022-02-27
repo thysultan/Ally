@@ -47,7 +47,7 @@ export class Parser extends Lexer {
 				}
 			default:
 				if (this.lexer_numb(value)) {
-					return this.parse_number(this.lexer_number(0))
+					return this.parse_number(this.lexer_number(this.state_caret = 0))
 				} else if (this.lexer_word(value)) {
 					return this.parse_identity(this.lexer_identity(0, value = this.state_index, 0), value, this.state_index)
 				} else {
@@ -214,6 +214,11 @@ export class Parser extends Lexer {
 								} else {
 									switch (this.token_argument(props)) {
 										case 1:
+											switch (this.lexer_look(-3)) {
+												// \t \n \s
+												case 9: case 10: case 32:
+													return child
+											}
 											return this.parse_dispatch(value, this.parse_operation(value, props, [child, this.parse_next()]), child, props)
 										case 2:
 											if (this.token_priority(props) >= this.token_priority(value)) {

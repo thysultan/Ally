@@ -2,7 +2,7 @@ import {Parser} from './Parser.js'
 
 export class Compiler extends Parser {
 	compile_program (value, child, frame, stack, index) {
-		return this.compile_assemble('main', this.compile_dispatch(value, child, null, stack, index), frame, stack, index).replace(/({|})/g, '\n$1\n').replace(/;/g, ';\n').replace(/\n{2,}/g, '\n')
+		return this.compile_assemble('main', this.compile_dispatch(value, child, null, stack, index), frame, stack, index)
 	}
 	/*
 	 * Dispatch

@@ -275,18 +275,20 @@ export class Lexer {
 				if (this.lexer_move(this.lexer_scan()) == 101) {
 					if (this.lexer_numb(this.lexer_char(0)) || this.lexer_scan() == 45) {
 						try {
-							this.state_caret = index - this.state_index + 1 + this.lexer_number(0)
+							this.state_caret += index - this.state_index + 1 + this.lexer_number(0)
 						} finally {
 							return value
 						}
 					}
+				} else {
+					this.state_caret += 1
 				}
 			} else {
 				break
 			}
 		} while (this.lexer_char(0))
 
-		this.state_caret = index ? index - this.state_index : index
+		this.state_caret += index ? index - this.state_index : index
 
 		return value
 	}
@@ -331,7 +333,7 @@ export class Lexer {
 	}
 	lexer_identity (value, index, props) {
 		do {
-			if (this.lexer_word(this.lexer_scan())) {
+			if (this.lexer_word(this.lexer_scan()) || this.lexer_numb(this.lexer_scan())) {
 				this.lexer_move(value = this.lexer_hash(props = value, this.state_index - index))
 			} else {
 				break
@@ -344,7 +346,9 @@ export class Lexer {
 		do {
 			if (this.lexer_sign(this.lexer_scan())) {
 				if (this.token_argument(this.lexer_move(value = this.lexer_hash(props = value, this.state_index - index))) < 2) {
-					return value
+					if (value !== this.token_logical_not || this.lexer_look(0) !== 61) {
+						return value
+					}
 				}
 			} else {
 				break
