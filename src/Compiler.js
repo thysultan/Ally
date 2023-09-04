@@ -646,6 +646,6 @@ export class Compiler extends Parser {
 		return '#include "lib.c"\nstatic i64 _re[' + this.state_files.length +'];\nstatic i64 _rs[8388608];\n' + this.state_stack.join('')
 	}
 	compile_assemble_epilogue (value, child, frame, stack, index) {
-		return 'int main(int argc, char** argv){art=_re;ars=_rs;arv=(p64)((i64)ars+' + this.state_count + ');do{' + child + '}while(0);return 0;}'
+		return 'int main(int argc, char** argv){art=_re;ars=_rs;arv=any_to_p64(any_to_i64(ars)+' + this.state_count + ');do{' + child + '}while(0);return 0;}'
 	}
 }

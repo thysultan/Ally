@@ -1,7 +1,6 @@
-// -Wno-int-conversion -Wno-unused-value -fpermissive -lm
+// -Wno-int-conversion -Wno-unused-value -fpermissive -O2 -lm
 #ifndef aly
 #define aly
-
 // includes
 #include <math.h> // pow, fmod, fabs
 #include <uchar.h> // U"..."
@@ -10,12 +9,10 @@
 #include <stdlib.h> // malloc, free
 #include <string.h> // memcpy
 #include <setjmp.h> // setjmp, longjmp, jmp_buf
-
 // redefinitions
 #ifdef sigsetjmp
 #define setjmp(a) sigsetjmp(a,0)
 #endif
-
 // typeings
 typedef char32_t c32;
 typedef char32_t* s32;
@@ -33,13 +30,11 @@ typedef i64* p64;
 typedef void* v64;
 typedef jmp_buf j64;
 typedef i64 (*x64)(i64, p64, p64, p64);
-
 // prototypes
 i64 fun_of_num(i64, p64, p64);
 i64 fun_of_str(i64, p64, p64);
 i64 fun_of_mem(i64, p64, p64);
 i64 fun_of_sub(i64, p64, p64);
-
 // 64 bit flagging
 i64 zfg, sfg, cfg, tfg;
 i64 dfg, ofg, ifg, afg;
@@ -95,38 +90,36 @@ static p64 ars; // stack
 #define int_to_sub(a,b,c) (__builtin_sub_overflow(a,b,&c))
 #define int_to_cpy(a,b,c,d) ((d*)memcpy(a,b,(c)*sizeof(d)))
 #define int_to_set(a,b,c,d) ((d*)memset(a,b,(c)*sizeof(d)))
-
 // object(data) setter
-#define env_to_set(a,b) (((p64)(a))[0]=(i64)(b))
-#define mem_to_set(a,b) (((p64)(a))[1]=(i64)(b))
-#define len_to_set(a,b) (((p64)(a))[2]=(i64)(b))
-#define fun_to_set(a,b) (((p64)(a))[3]=(i64)(b))
+#define env_to_set(a,b) (((p64)(a))[0]=((i64)(b)))
+#define mem_to_set(a,b) (((p64)(a))[1]=((i64)(b)))
+#define len_to_set(a,b) (((p64)(a))[2]=((i64)(b)))
+#define fun_to_set(a,b) (((p64)(a))[3]=((i64)(b)))
 // object(data) getter
-#define env_to_get(a,b) ((b)(p64)(a)[0])
-#define mem_to_get(a,b) ((b)(p64)(a)[1])
-#define len_to_get(a,b) ((b)(p64)(a)[2])
-#define fun_to_get(a,b) ((b)(p64)(a)[3])
+#define env_to_get(a,b) (((b)(p64)(a))[0])
+#define mem_to_get(a,b) (((b)(p64)(a))[1])
+#define len_to_get(a,b) (((b)(p64)(a))[2])
+#define fun_to_get(a,b) (((b)(p64)(a))[3])
 // memory(page) setter
-#define cap_to_set(a,b) ((p64)(a)[-1]=(i64)(b))
-#define pre_to_set(a,b) ((p64)(a)[-2]=(i64)(b))
+#define cap_to_set(a,b) (((p64)(a))[-1]=((i64)(b)))
+#define pre_to_set(a,b) (((p64)(a))[-2]=((i64)(b)))
 // memory(page) getter
-#define cap_to_get(a,b) ((b)(p64)(a)[-1])
-#define pre_to_get(a,b) ((b)(p64)(a)[-2])
+#define cap_to_get(a,b) (((b)(p64)(a))[-1])
+#define pre_to_get(a,b) (((b)(p64)(a))[-2])
 // castings
-#define any_to_u08(a) (u08)(a)
-#define any_to_i08(a) (i08)(a)
-#define any_to_c32(a) (c64)(a)
-#define any_to_s32(a) (s64)(a)
-#define any_to_u32(a) (u32)(a)
-#define any_to_i32(a) (i32)(a)
-#define any_to_u64(a) (u64)(a)
-#define any_to_i64(a) (i64)(a)
-#define any_to_f64(a) (f64)(a)
-#define any_to_p64(a) (p64)(a)
-#define any_to_v64(a) (v64)(a)
-#define any_to_j64(a) (j64)(a)
-#define any_to_x64(a) (x64)(a)
-
+#define any_to_u08(a) ((u08)(a))
+#define any_to_i08(a) ((i08)(a))
+#define any_to_c32(a) ((c64)(a))
+#define any_to_s32(a) ((s64)(a))
+#define any_to_u32(a) ((u32)(a))
+#define any_to_i32(a) ((i32)(a))
+#define any_to_u64(a) ((u64)(a))
+#define any_to_i64(a) ((i64)(a))
+#define any_to_f64(a) ((f64)(a))
+#define any_to_p64(a) ((p64)(a))
+#define any_to_v64(a) ((v64)(a))
+#define any_to_j64(a) ((j64)(a))
+#define any_to_x64(a) ((x64)(a))
 // nan boxing (64 bit):
 // FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-TTTT EEEE-EEEE
 // F = val (52 bits) T = tag (4 bit) E = exo (8 bit)
@@ -1101,3 +1094,5 @@ i64 fun_of_mem (i64 arc, p64 arv, p64 are) {
 i64 fun_of_sub (i64 arc, p64 arv, p64 are) {
 	return 0;
 }
+
+#endif
