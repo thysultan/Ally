@@ -1,18 +1,18 @@
 import {Compiler} from './src/Compiler.js'
+function fmt (s,e,t){
+	var R,i,n,b,r,c;R = () => Array(n).join(' ');
+	for(i=n=0,b=r='';c=t[i++];)~s.indexOf(c)?(r+=b,b='\n'+R(++n)+c+'\n '+R(++n)):~e.indexOf(c)?b+='\n'+((n-=2)?R()+' ':'')+c+'\n'+(n?R()+' ':''):b+=c;return (r+b).replaceAll('\n\n');
+}
 function main (value) {
 	var compile = new Compiler(value = value.trim())
 	var program = compile.parse_program(0, null)
 	var execute = compile.compile_program(0, program, null, [], 0)
-	execute = execute.replace(/static i64 are.*;/, '')
-	execute = execute.replace(/static i64 ars.*;/, '')
-	execute = execute
-		.replace(/({|})/g, '\n$1\n')
-		.replace(/;/g, ';\n')
-		.replace(/\n{2,}/g, '\n')
-		.trim()
+	// execute = execute.replace(/static i64 are.*;/, '')
+	// execute = execute.replace(/static i64 ars.*;/, '')
+	execute = fmt('{', '}', execute).split('\n').filter(v => v.trim() == '' ? '' : v).join('\n');
 	console.log(program)
 	console.warn(value)
-	console.info(execute)
+	console.info(document.body.innerHTML = `<pre>${execute}</pre>`)
 }
 
 // main(`

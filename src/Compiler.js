@@ -643,9 +643,9 @@ export class Compiler extends Parser {
 		return this.compile_assemble_prologue(value, child, frame, stack, index) + this.compile_assemble_epilogue(value, child, frame, stack, index)
 	}
 	compile_assemble_prologue (value, child, frame, stack, index) {
-		return 'static i64 are[' + this.state_files.length +'];static i64 ars[8388608];\n' + this.state_stack.join('')
+		return '#include "lib.c"\nstatic i64 _re[' + this.state_files.length +'];\nstatic i64 _rs[8388608];\n' + this.state_stack.join('')
 	}
-	compile_assemble_epilogue (value, child, frame, stack, index) {return child
-		return 'int main(int argc, char** argv){arv=ars+' + this.state_count + ';do{' + child + '}while(0);return 0;}'
+	compile_assemble_epilogue (value, child, frame, stack, index) {
+		return 'int main(int argc, char** argv){art=_re;ars=_rs;arv=(p64)((i64)ars+' + this.state_count + ');do{' + child + '}while(0);return 0;}'
 	}
 }

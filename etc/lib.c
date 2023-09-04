@@ -1,12 +1,6 @@
-// -Wno-int-conversion -Wno-unused-value -Wno-int-conversion -Wno-unused-value -lm
+// -Wno-int-conversion -Wno-unused-value -fpermissive -lm
 #ifndef aly
 #define aly
-
-// prototypes
-i64 fun_of_num(i64, p64, p64);
-i64 fun_of_str(i64, p64, p64);
-i64 fun_of_mem(i64, p64, p64);
-i64 fun_of_sub(i64, p64, p64);
 
 // includes
 #include <math.h> // pow, fmod, fabs
@@ -40,6 +34,12 @@ typedef void* v64;
 typedef jmp_buf j64;
 typedef i64 (*x64)(i64, p64, p64, p64);
 
+// prototypes
+i64 fun_of_num(i64, p64, p64);
+i64 fun_of_str(i64, p64, p64);
+i64 fun_of_mem(i64, p64, p64);
+i64 fun_of_sub(i64, p64, p64);
+
 // 64 bit flagging
 i64 zfg, sfg, cfg, tfg;
 i64 dfg, ofg, ifg, afg;
@@ -71,13 +71,14 @@ i64 ten[19] = {1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,
 i64 nop;
 // temporary(coefficent/exponent)
 static i64 cof;
-static i08 exp;
+static i08 exo;
 // constants
 static i64 arc; // count
 static i64 arv; // vector
 static i64 art; // this
-extern p64 are; // export
-extern p64 ars; // stack
+static p64 ars; // stack
+static p64 are; // export
+static p64 ars; // stack
 // variables
 #define null nil_to_any(0)
 #define true var_to_any(1)
@@ -96,10 +97,10 @@ extern p64 ars; // stack
 #define int_to_set(a,b,c,d) ((d*)memset(a,b,(c)*sizeof(d)))
 
 // object(data) setter
-#define env_to_set(a,b) ((p64)(a)[0]=(i64)(b))
-#define mem_to_set(a,b) ((p64)(a)[1]=(i64)(b))
-#define len_to_set(a,b) ((p64)(a)[2]=(i64)(b))
-#define fun_to_set(a,b) ((p64)(a)[3]=(i64)(b))
+#define env_to_set(a,b) (((p64)(a))[0]=(i64)(b))
+#define mem_to_set(a,b) (((p64)(a))[1]=(i64)(b))
+#define len_to_set(a,b) (((p64)(a))[2]=(i64)(b))
+#define fun_to_set(a,b) (((p64)(a))[3]=(i64)(b))
 // object(data) getter
 #define env_to_get(a,b) ((b)(p64)(a)[0])
 #define mem_to_get(a,b) ((b)(p64)(a)[1])
@@ -128,7 +129,7 @@ extern p64 ars; // stack
 
 // nan boxing (64 bit):
 // FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-FFFF FFFF-TTTT EEEE-EEEE
-// F = val (52 bits) T = tag (4 bit) E = exp (8 bit)
+// F = val (52 bits) T = tag (4 bit) E = exo (8 bit)
 //           val VVVVVVVVVVVVV
 //           tag -------------V
 //           nan --------------VV
@@ -163,11 +164,11 @@ extern p64 ars; // stack
 #define any_is_obj(a) (any_is_nan(a)&&any_to_tag(a,i64)>IS_STR)
 #define any_is_chr(a) (any_is_str(a)&&any_to_val(a)<0)
 // -128 reserved for nan and nan reserved for pointers etc
-#define any_is_nan(a) (any_to_exp(a)==-128)
+#define any_is_nan(a) (any_to_exo(a)==-128)
 // positive exponent equates to integer
-#define any_is_int(a) (any_to_exp(a)>=0)
+#define any_is_int(a) (any_to_exo(a)>=0)
 // negative exponent equates to float
-#define any_is_flt(a) (any_to_exp(a)<0)
+#define any_is_flt(a) (any_to_exo(a)<0)
 // convert from floating point, e = floor(log10(abs(x))) for the base-10-exponent and s = x/pow(10, e) for the base-10-significand
 #define flt_to_dec(a) (any_to_nod((a/pow(10,e=floor(log10(abs(a)))))*1e18,e-18))
 // coefficient to decimal
@@ -175,11 +176,11 @@ extern p64 ars; // stack
 // exponent to decimal
 #define exp_to_dec(a) ((a)&0x00000000000000FF)
 // set coefficient
-#define cof_to_dec(a) ((a)<<8)
+#define set_to_cof(a) ((a)<<8)
 // get coefficient
-#define any_to_cof(a) ((a)>>8)
+#define get_to_cof(a) ((a)>>8)
 // get exponent
-#define any_to_exp(a) (any_to_i08(a))
+#define any_to_exo(a) (any_to_i08(a))
 // convert to number
 #define any_to_num(a) (any_is_nan(a)?0:a)
 // convert to absolute
@@ -187,7 +188,7 @@ extern p64 ars; // stack
 // sign, if ltn 0, -1, if 0 else 1
 #define any_to_sig(a) (a<0?-cof_to_dec(1LL):cof_to_dec(1LL))
 // convert to floating point
-#define any_to_flt(a) (any_to_cof(a)*pow(10,any_to_exp(a)))
+#define any_to_flt(a) (get_to_cof(a)*pow(10,any_to_exo(a)))
 // ceil
 #define any_to_cil(a) (any_to_mid(a,+1))
 // floor
@@ -195,35 +196,35 @@ extern p64 ars; // stack
 // negation 0 - 1 == -1
 #define any_to_neg(a) (any_to_sub(0,a))
 // bitwise not ~
-#define any_to_not(a) (any_to_dec(~any_to_cof(a),0))
+#define any_to_not(a) (any_to_dec(~get_to_cof(a),0))
 // bitwise xor ^
-#define any_to_xor(a,b) (any_to_dec(any_to_cof(a)^any_to_cof(b),0))
+#define any_to_xor(a,b) (any_to_dec(get_to_cof(a)^get_to_cof(b),0))
 // bitwise and &
-#define any_to_and(a,b) (any_to_dec(any_to_cof(a)&any_to_cof(b),0))
+#define any_to_and(a,b) (any_to_dec(get_to_cof(a)&get_to_cof(b),0))
 // bitwise or |
-#define any_to_nor(a,b) (any_to_dec(any_to_cof(a)|any_to_cof(b),0))
+#define any_to_nor(a,b) (any_to_dec(get_to_cof(a)|get_to_cof(b),0))
 // shift left <<
-#define any_to_sal(a,b) (any_to_dec(any_to_cof(a)<<any_to_cof(b),0))
+#define any_to_sal(a,b) (any_to_dec(get_to_cof(a)<<get_to_cof(b),0))
 // shift right >>
-#define any_to_sar(a,b) (any_to_dec(any_to_cof(a)>>any_to_cof(b),0))
+#define any_to_sar(a,b) (any_to_dec(get_to_cof(a)>>get_to_cof(b),0))
 // shift left <<<
-#define any_to_sll(a,b) (any_to_dec(any_to_cof(a)<<any_to_cof(b),0))
+#define any_to_sll(a,b) (any_to_dec(get_to_cof(a)<<get_to_cof(b),0))
 // shift right >>>
-#define any_to_slr(a,b) (any_to_dec(any_to_cof(a)>>any_to_cof(b),0))
+#define any_to_slr(a,b) (any_to_dec(get_to_cof(a)>>get_to_cof(b),0))
 // less than < same exponent? compare coefficients, assuming normalized coefficients simply compare exponents i.e 1.234 < 12.34
-#define any_to_ltn(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a<b:e<f)
+#define any_to_ltn(a,b) ((e=any_to_exo(a))==(f=any_to_exo(b))?a<b:e<f)
 // greater than >
-#define any_to_gtn(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a>b:e>f)
+#define any_to_gtn(a,b) ((e=any_to_exo(a))==(f=any_to_exo(b))?a>b:e>f)
 // less than equal <=
-#define any_to_lte(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a<=b:e<=f)
+#define any_to_lte(a,b) ((e=any_to_exo(a))==(f=any_to_exo(b))?a<=b:e<=f)
 // greather than equal >=
-#define any_to_gte(a,b) ((e=any_to_exp(a))==(f=any_to_exp(b))?a>=b:e>=f)
+#define any_to_gte(a,b) ((e=any_to_exo(a))==(f=any_to_exo(b))?a>=b:e>=f)
 // addition + if 0 exponent add numbers, if overflow(unlikely) make it fit, otherwise if exponents match(they aren't different) and not nan do the same but zero out one exponent to avoid a carry into coefficients when added
-#define any_to_add(a,b) (!any_to_u08(a|b)?(int_to_add(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_add(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sad(a,+b)))
+#define any_to_add(a,b) (!any_to_u08(a|b)?(int_to_add(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_add(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exo(b)):a):any_to_sad(a,+b)))
 // subtraction - replacing addition with subtraction otherwise everything else is identical to addition
-#define any_to_sub(a,b) (!any_to_u08(a|b)?(int_to_sub(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_sub(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sad(a,-b)))
+#define any_to_sub(a,b) (!any_to_u08(a|b)?(int_to_sub(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_sub(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exo(b)):a):any_to_sad(a,-b)))
 // multiplication * replacing addition with multiplication otherwise everything else is identical to addition
-#define any_to_mul(a,b) (!any_to_u08(a|b)?(int_to_mul(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_mul(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exp(b)):a):any_to_sam(a,+b)))
+#define any_to_mul(a,b) (!any_to_u08(a|b)?(int_to_mul(a,b,a)?any_to_fit(a,0):a):(!any_to_u08(a^b)&&!any_is_nan(b)?(int_to_mul(a,cof_to_dec(b),a)?any_to_fit(a,any_to_exo(b)):a):any_to_sam(a,+b)))
 // equality == referential equal or if both strings compare characters
 #define any_to_cmp(a,b) (a==b||(any_is_str(a&b)&&str_to_cmp(a,b))?true:false)
 // non-equality != inverse of equality
@@ -237,7 +238,7 @@ extern p64 ars; // stack
 // sizeof
 #define any_to_len(a,b) (len_to_get(any_to_obj(a,1),f64))
 // convert to largest value that is less than or equal to (b == -1) or greater than or equal to when (b == 1), small fractional numbers will either yield 0, 1 or -1 for example 0.5 will yield 0 but if b = -1 then 0.5 will yield -1
-#define any_to_mid(a,b) ((e=any_to_exp(a))>=0||(c=any_to_cof(a))==0)?a:(a=c-(c=c/ten[e=e>-18?-e:18])*ten[e])?((a^b)>=0)*b+c:int_to_cof(c)
+#define any_to_mid(a,b) ((e=any_to_exo(a))>=0||(c=get_to_cof(a))==0)?a:(a=c-(c=c/ten[e=e>-18?-e:18])*ten[e])?((a^b)>=0)*b+c:int_to_cof(c)
 
 // normalize get exponent as close to 0 as possible without losing signficance
 i64 any_to_nod (i64 rax, i08 rbx) {
@@ -256,12 +257,12 @@ i64 any_to_nod (i64 rax, i08 rbx) {
 
 // rounding extract coefficient, exponent, rbx = decimal places to round i.e: -2: cent, 0: integer, 3: thousand, etc, increment exponent and divide coefficient by 10 till target exponent reached, round if necessary
 i64 any_to_rod (i64 rax, i08 rbx) {
-	if ((cof = any_to_cof(rax)) == 0 || (exp = any_to_exp(rax)) == -128) {
+	if ((cof = get_to_cof(rax)) == 0 || (exo = any_to_exo(rax)) == -128) {
 		return rax;
-	} else if (exp < rbx) {
+	} else if (exo < rbx) {
 		do {
 			if (int_to_div(cof, 10, rdx)) break; cof = rdx;
-		} while (++exp < rbx);
+		} while (++exo < rbx);
 	}
 
 	return any_to_dec(cof + (cof & 1), exp);
@@ -272,16 +273,16 @@ i64 any_to_mod (i64 rax, i64 rbx) {
 	if (any_to_u08(rax | rbx)) {
 		return ((rcx = any_to_div(rax, rbx)) && (rbx = any_to_mul(rbx, rcx))) && any_to_sub(rax, rbx);
 	} else {
-		return ((rax = any_to_cof(rax)) % (rbx = any_to_cof(rbx))) + (((rax >> (63 - 8)) ^ (rbx >> (63 - 8))) & rbx);
+		return ((rax = get_to_cof(rax)) % (rbx = get_to_cof(rbx))) + (((rax >> (63 - 8)) ^ (rbx >> (63 - 8))) & rbx);
 	}
 }
 
 // addition swap if 2nd greater than 1st, nan if smallest exponent is -128, while no overflow coefficient *= 10, decrement exponent, if overflow increment smallest exponent if significant or exit early
 i64 any_to_sad (i64 rax, i64 rbx) {
-	eax = any_to_exp(rax);
-	ebx = any_to_exp(rbx);
+	eax = any_to_exo(rax);
+	ebx = any_to_exo(rbx);
 	cof = eax > ebx ? rax : (rax ^= rbx, rbx ^= rax, rax ^= rbx);
-	exp = eax > ebx ? eax : (eax ^= ebx, ebx ^= eax, eax ^= ebx);
+	exo = eax > ebx ? eax : (eax ^= ebx, ebx ^= eax, eax ^= ebx);
 
 	if (ebx == -128) {
 		return rbx;
@@ -301,10 +302,10 @@ i64 any_to_sad (i64 rax, i64 rbx) {
 
 // multiply, same as slow addition only with multiplication instead of addition
 i64 any_to_sam (i64 rax, i64 rbx) {
-	eax = any_to_exp(rax);
-	ebx = any_to_exp(rbx);
+	eax = any_to_exo(rax);
+	ebx = any_to_exo(rbx);
 	cof = eax > ebx ? rax : (rax ^= rbx, rbx ^= rax, rax ^= rbx);
-	exp = eax > ebx ? eax : (eax ^= ebx, ebx ^= eax, eax ^= ebx);
+	exo = eax > ebx ? eax : (eax ^= ebx, ebx ^= eax, eax ^= ebx);
 
 	if (ebx == -128) {
 		return rbx;
@@ -322,22 +323,22 @@ i64 any_to_sam (i64 rax, i64 rbx) {
 	return int_to_mul(rax, rbx, rax) ? any_to_fit(rax, eax) : any_to_dec(rax, eax);
 }
 
-// division nan or zero else multiply numerator by 10 until denomiator fits without a remainder(max 18 digits of precision so exit early), if exponent > 0 normalize such that cof:exp 2:1 becomes 20:0 i.e 20
+// division nan or zero else multiply numerator by 10 until denomiator fits without a remainder(max 18 digits of precision so exit early), if exponent > 0 normalize such that cof:exo 2:1 becomes 20:0 i.e 20
 i64 any_to_div (i64 rax, i64 rbx) {
-	if ((eax = any_to_exp(rax)) == -128 || (ebx = any_to_exp(rbx)) == -128) {
+	if ((eax = any_to_exo(rax)) == -128 || (ebx = any_to_exo(rbx)) == -128) {
 		return 0;
-	} else if ((rax = any_to_cof(rax)) == 0 || (rbx = any_to_cof(rbx)) == 0) {
+	} else if ((rax = get_to_cof(rax)) == 0 || (rbx = get_to_cof(rbx)) == 0) {
 		return 0;
-	} else if (exp = 18) {
+	} else if (exo = 18) {
 		do {
 			if (!int_to_div(rax, rbx, cof) || int_to_mul(rax, 10, rdx)) break; rax = rdx; eax = eax - 1;
 		} while (--exp);
 
-		if ((exp = eax - ebx) > 0) {
+		if ((exo = eax - ebx) > 0) {
 			do {
 				if (int_to_mul(cof, 10, rdx)) break; cof = rdx;
 			} while (--exp);
-		} else if (exp < -127) {
+		} else if (exo < -127) {
 			return any_to_fit(cof, exp);
 		}
 
@@ -435,12 +436,12 @@ i64 any_to_str (i64 rax) {
 
 			return any_to_seq(rax, chr_to_any(125));
 		default:
-			i64 len = int_to_max(any_to_ctr(cof = any_to_cof(rax), exp = any_to_exp(rax)), int_to_abs(exp)) - 1;
+			i64 len = int_to_max(any_to_ctr(cof = get_to_cof(rax), exo = any_to_exo(rax)), int_to_abs(exp)) - 1;
 			s32 mem = new_to_get(len, sizeof(c32));
 			p64 obj = new_to_get(0, sizeof(i64));
 			i64 idx = 0;
 
-			if (exp > 0) {
+			if (exo > 0) {
 				do {
 		  		mem[len - idx++] = 48;
 				} while (--exp);
@@ -449,8 +450,8 @@ i64 any_to_str (i64 rax) {
 			if (cof < 0) cof = -cof;
 
 		  do {
-		  	if (exp != idx && exp == -idx) mem[len - idx++] = 46; mem[len - idx++] = (cof % 10) + 48;
-		  } while ((cof = cof / 10) > 0 || (exp = exp + 1) < 0);
+		  	if (exo != idx && exo == -idx) mem[len - idx++] = 46; mem[len - idx++] = (cof % 10) + 48;
+		  } while ((cof = cof / 10) > 0 || (exo = exo + 1) < 0);
 
 		  if (idx != len) mem[len - idx] = 45;
 
@@ -851,7 +852,7 @@ i64 any_to_has (i64 rax, i64 rbx) {
 
 // membership
 i64 any_to_idx (i64 rax, i64 rbx, p64 pax, p64 pbx) {
-	i64 idx = any_to_cof(rax);
+	i64 idx = get_to_cof(rax);
 	p64 obj = any_to_obj(rbx, 1);
 	p64 mem = mem_to_get(obj, p64);
 	i64 len = len_to_get(obj, i64);
